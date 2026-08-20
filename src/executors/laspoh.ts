@@ -44,7 +44,7 @@ export class LaspohExecutor implements Executor {
         signal: ctl.signal,
       });
       if (!res.ok) {
-        return { ok: false, failure: "transport", detail: `bridge returned HTTP ${res.status}`, pageText: "", url: "", outstandingRequired: [], identifiers: [] };
+        return { ok: false, failure: "transport", detail: `bridge returned HTTP ${res.status}`, pageText: "", url: "", outstandingRequired: [], formState: [], identifiers: [] };
       }
       const raw = (await res.json()) as Partial<Observation>;
       // Normalise defensively: an adapter must never let a malformed reply masquerade as success.
@@ -55,6 +55,7 @@ export class LaspohExecutor implements Executor {
         pageText: String(raw.pageText ?? ""),
         url: String(raw.url ?? ""),
         outstandingRequired: Array.isArray(raw.outstandingRequired) ? raw.outstandingRequired.map(String) : [],
+        formState: Array.isArray(raw.formState) ? raw.formState.map(String) : [],
         identifiers: Array.isArray(raw.identifiers) ? raw.identifiers.map(String) : [],
       };
     } catch (e) {
@@ -63,7 +64,7 @@ export class LaspohExecutor implements Executor {
         ok: false,
         failure: "transport",
         detail: aborted ? `the Laspoh bridge did not respond within ${this.timeoutMs}ms` : `bridge unreachable at ${this.bridgeUrl}: ${String(e).slice(0, 160)}`,
-        pageText: "", url: "", outstandingRequired: [], identifiers: [],
+        pageText: "", url: "", outstandingRequired: [], formState: [], identifiers: [],
       };
     } finally {
       clearTimeout(timer);

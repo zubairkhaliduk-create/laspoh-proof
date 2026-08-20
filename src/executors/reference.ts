@@ -53,25 +53,33 @@ export class ReferenceExecutor implements Executor {
    *  which is what lets the orchestrator know a form is incomplete without asking the model. */
   private async observe(page: Page, ok: boolean, failure: Observation["failure"], detail: string): Promise<Observation> {
     const pageText = (await page.evaluate(() => document.body?.innerText ?? "").catch(() => "")).slice(0, 20_000);
-    const outstandingRequired = await page.evaluate(() => {
-      const out: string[] = [];
-      for (const el of Array.from(document.querySelectorAll<HTMLElement>("input,select,textarea"))) {
+    // NOTE: no named inner functions in here. This body is serialised and re-parsed in the page,
+    // and the bundler's keep-names helper (`__name`) does not exist on that side — a named inner
+    // arrow makes the whole read throw, which shows up as "the form has no fields" rather than as
+    // an error. Everything below is deliberately inline.
+    const form = await page.evaluate(() => {
+      const outstanding: string[] = [];
+      const state: string[] = [];
+      for (const el of Array.from(document.querySelectorAll("input,select,textarea"))) {
         const f = el as HTMLInputElement;
+        const toggle = f.type === "checkbox" || f.type === "radio";
+        const empty = toggle ? !f.checked : !String(f.value ?? "").trim();
         const required = f.required || f.getAttribute("aria-required") === "true";
-        if (!required) continue;
-        const empty = f.type === "checkbox" || f.type === "radio" ? !(f as HTMLInputElement).checked : !String(f.value ?? "").trim();
-        if (!empty) continue;
-        const label =
+        const label = (
           (f.labels?.[0]?.innerText ?? "").trim() ||
           f.getAttribute("aria-label") ||
           f.getAttribute("placeholder") ||
           f.getAttribute("name") ||
-          f.id || "(unlabelled field)";
-        out.push(label.slice(0, 60));
+          f.id ||
+          "(unlabelled field)"
+        ).slice(0, 60);
+        if (required && empty) outstanding.push(label);
+        state.push(`${label} = ${toggle ? (f.checked ? "checked" : "not checked") : String(f.value ?? "").slice(0, 80) || "(empty)"}`);
       }
-      return out.slice(0, 20);
-    }).catch(() => [] as string[]);
-    return { ok, failure, detail, pageText, url: page.url(), outstandingRequired, identifiers: extractIdentifiers(pageText) };
+      return { outstanding: outstanding.slice(0, 20), state: state.slice(0, 30) };
+    }).catch(() => ({ outstanding: [] as string[], state: [] as string[] }));
+    const outstandingRequired = form.outstanding;
+    return { ok, failure, detail, pageText, url: page.url(), outstandingRequired, formState: form.state, identifiers: extractIdentifiers(pageText) };
   }
 
   /** Find a control by what a human would call it, not by a brittle selector. */
@@ -89,7 +97,7 @@ export class ReferenceExecutor implements Executor {
     try {
       page = await this.ensurePage();
     } catch (e) {
-      return { ok: false, failure: "transport", detail: `browser unavailable: ${String(e).slice(0, 200)}`, pageText: "", url: "", outstandingRequired: [], identifiers: [] };
+      return { ok: false, failure: "transport", detail: `browser unavailable: ${String(e).slice(0, 200)}`, pageText: "", url: "", outstandingRequired: [], formState: [], identifiers: [] };
     }
 
     try {
@@ -128,12 +136,24 @@ export class ReferenceExecutor implements Executor {
           const target = this.locate(page, action.target);
           if ((await target.count()) === 0) return this.observe(page, false, "not_found", `no control matching "${action.target}"`);
           if (await target.isDisabled().catch(() => false)) return this.observe(page, false, "not_actionable", `"${action.target}" is disabled`);
-          const before = `${page.url()}::${(await page.evaluate(() => document.body?.innerText?.length ?? 0).catch(() => 0))}`;
+          // Two independent effect signals, because either one alone lies. Page-level change misses
+          // a checkbox (ticking one alters no text); control-level state misses a navigation. A
+          // control that toggles ITSELF has done something, and calling that "no effect" is how an
+          // agent ends up re-clicking a box it already ticked.
+          const controlState = async () =>
+            await target.evaluate((el) => {
+              const f = el as HTMLInputElement;
+              return [f.checked === true ? "1" : "0", f.getAttribute("aria-checked") ?? "", f.getAttribute("aria-pressed") ?? "", f.getAttribute("aria-expanded") ?? "", String(f.value ?? "")].join("|");
+            }).catch(() => "");
+          const pageState = async () => `${page.url()}::${await page.evaluate(() => document.body?.innerText?.length ?? 0).catch(() => 0)}`;
+          const before = await pageState();
+          const beforeControl = await controlState();
           await target.click({ timeout: 8_000 });
           await page.waitForTimeout(SETTLE_MS);
-          const after = `${page.url()}::${(await page.evaluate(() => document.body?.innerText?.length ?? 0).catch(() => 0))}`;
+          const after = await pageState();
+          const afterControl = await controlState().catch(() => "");
           // A click that changes nothing observable is reported as no_effect rather than success.
-          const changed = before !== after;
+          const changed = before !== after || (beforeControl !== "" && beforeControl !== afterControl);
           return this.observe(page, changed, changed ? null : "no_effect", changed ? `clicked "${action.target}"` : `clicked "${action.target}" but nothing on the page changed`);
         }
 
@@ -142,7 +162,7 @@ export class ReferenceExecutor implements Executor {
       }
     } catch (e) {
       return this.observe(page, false, "transport", `${action.kind} threw: ${String(e).slice(0, 200)}`).catch(() => ({
-        ok: false, failure: "transport" as const, detail: String(e).slice(0, 200), pageText: "", url: "", outstandingRequired: [], identifiers: [],
+        ok: false, failure: "transport" as const, detail: String(e).slice(0, 200), pageText: "", url: "", outstandingRequired: [], formState: [], identifiers: [],
       }));
     }
   }

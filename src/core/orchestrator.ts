@@ -14,12 +14,13 @@
  * whether it worked.
  */
 import { randomUUID } from "node:crypto";
-import type { Executor } from "../executors/types.js";
+import type { Action, Executor, Observation } from "../executors/types.js";
 import { type Evidence, recordEvidence } from "./evidence.js";
 import { decide } from "./recovery.js";
 import { buildReceipt, type Receipt } from "./receipt.js";
 import { type MissionState, newMission, noteStep, provenCount, terminalStatus } from "./state.js";
 import { planFlow } from "../flows/plan.js";
+import { repairFlow } from "../flows/repair.js";
 import { verifyFlow } from "../flows/verify.js";
 import { modelIdentity } from "../genkit.js";
 
@@ -37,6 +38,42 @@ export interface RunResult {
   receipt: Receipt;
   evidence: Evidence[];
 }
+
+/** Which control a step is aimed at, whatever verb it uses. */
+function targetOf(a: Action): string {
+  switch (a.kind) {
+    case "fill":
+    case "select":
+      return a.field;
+    case "click":
+      return a.target;
+    default:
+      return "";
+  }
+}
+
+const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+/**
+ * The required controls the page is reporting that NO remaining step would fill.
+ *
+ * This is the whole anti-blindness mechanism, and it is deliberately a pure function over two
+ * facts: what the page says is outstanding, and what the plan still intends to do. Neither is a
+ * model opinion. A field already covered by a pending step is left alone — repairing it would
+ * duplicate work — so what survives this filter is exactly the set the agent would otherwise have
+ * discovered the hard way, by submitting and being refused.
+ */
+export function unaddressedRequired(outstanding: string[], pending: { action: Action }[]): string[] {
+  const targets = pending.map((s) => norm(targetOf(s.action))).filter((t) => t.length >= 3);
+  return outstanding.filter((label) => {
+    const l = norm(label);
+    if (l.length < 3) return false;
+    return !targets.some((t) => (t.length >= l.length ? t.includes(l) : l.includes(t)));
+  });
+}
+
+/** Repair is bounded. An agent allowed to repair indefinitely is an agent allowed to loop. */
+const MAX_REPAIR_ROUNDS = 2;
 
 export async function runMission(opts: RunOptions): Promise<RunResult> {
   const { goal, startUrl, executor, maxSteps = 24 } = opts;
@@ -65,7 +102,15 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
 
   // ── ACT → OBSERVE → VERIFY ───────────────────────────────────────────────────────────────
   let dispatched = 0;
-  for (const step of state.steps) {
+  let repairRounds = 0;
+  // Whether the previous dispatch changed anything at all. Tracked ACROSS steps, because "we are
+  // acting and the world is not moving" is only visible from one step to the next.
+  let worldChanged = false;
+  let lastObs: Observation | null = null;
+
+  while (true) {
+    const step = state.steps.find((s) => s.status === "pending");
+    if (!step) break;
     if (dispatched >= maxSteps) {
       state = { ...state, steps: state.steps.map((s) => (s.status === "pending" ? { ...s, status: "skipped", reason: "step budget reached before this step was attempted" } : s)) };
       emit({ type: "budget.exhausted", maxSteps });
@@ -73,10 +118,35 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
     }
 
     const provenBefore = provenCount(state);
-    let worldChanged = false;
+
+    // ── THE BLIND-SUBMIT GATE ──────────────────────────────────────────────────────────────
+    // Before dispatching anything, check what the page says is still required. If some required
+    // control has no step aimed at it, fix that FIRST. The alternative — carry on, submit, read
+    // the rejection, then come back for the fields the form had been advertising all along — is
+    // the behaviour that makes an agent look blind, and it is avoided here in code rather than by
+    // hoping the model remembers to look.
+    if (repairRounds < MAX_REPAIR_ROUNDS) {
+      const pendingSteps = state.steps.filter((s) => s.status === "pending");
+      const unaddressed = unaddressedRequired(lastObs?.outstandingRequired ?? [], pendingSteps);
+      if (unaddressed.length > 0) {
+        repairRounds += 1;
+        const repair = await repairFlow({ goal, outstanding: unaddressed, pageText: lastObs?.pageText ?? "" });
+        if (repair.steps.length > 0) {
+          const at = state.steps.findIndex((s) => s.id === step.id);
+          const inserted = repair.steps.map((r, i) => {
+            const id = `r${repairRounds}.${i + 1}`;
+            criteria.set(id, r.provenBy);
+            return { id, intent: r.intent, action: r.action, status: "pending" as const, attempts: 0, lastObservation: null, reason: "" };
+          });
+          state = { ...state, steps: [...state.steps.slice(0, at), ...inserted, ...state.steps.slice(at)] };
+          emit({ type: "repair.inserted", outstanding: unaddressed, steps: inserted.map((s) => ({ id: s.id, intent: s.intent, action: s.action })) });
+          continue;
+        }
+        emit({ type: "repair.empty", outstanding: unaddressed });
+      }
+    }
 
     // The recovery policy decides whether we may dispatch at all — in code, not by asking the model.
-    const lastObs = state.steps.find((s) => s.id === step.id)?.lastObservation ?? null;
     const known = (lastObs?.outstandingRequired ?? []).length > 0;
     const intervention = decide({
       attempts: step.attempts,
@@ -98,6 +168,7 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
     const obs = await executor.execute(step.action);
     dispatched += 1;
     worldChanged = obs.ok;
+    lastObs = obs;
 
     const ev = recordEvidence(step.id, step.action, obs);
     evidence.push(ev);

@@ -49,6 +49,12 @@ export const ObservationSchema = z.object({
   /** Field labels the executor can see are still REQUIRED and still EMPTY. Ground truth about the
    *  form, reported by the surface that can actually see it — never inferred by the model. */
   outstandingRequired: z.array(z.string()).default([]),
+  /** What the form's controls actually hold now, as "<label> = <value>" read from the DOM. A
+   *  filled input's value never appears in visible page text, so without this a fill can never be
+   *  proven from evidence no matter what it really did — the verifier would be judging a criterion
+   *  against material that structurally cannot contain the answer. This is still the page's own
+   *  state, read from the surface, never the agent's account of what it typed. */
+  formState: z.array(z.string()).default([]),
   /** Stable identifiers the page exposed (confirmation numbers, reference ids). Evidence candidates. */
   identifiers: z.array(z.string()).default([]),
 });

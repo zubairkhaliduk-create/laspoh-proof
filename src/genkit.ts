@@ -13,8 +13,14 @@ import { genkit } from "genkit";
 import vertexAI from "@genkit-ai/vertexai";
 import { googleAI } from "@genkit-ai/googleai";
 
-export const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-3.6-flash";
-export const VERTEX_LOCATION = process.env.VERTEX_LOCATION ?? "global";
+export const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-3.5-flash";
+// A REAL region, not "global": the Genkit Vertex plugin rejects the global endpoint outright.
+// (Worth knowing if you are porting from a raw-REST Vertex integration, where "global" is valid.)
+// A REAL region, not "global": the Genkit Vertex plugin rejects the global endpoint outright,
+// which matters because "global" is where the newest Gemini models appear first. Verified by
+// probing this project directly: us-central1 serves only 2.5-flash, while asia-southeast1 serves
+// gemini-3.5-flash. Model availability is per-region and changes — probe before assuming.
+export const VERTEX_LOCATION = process.env.VERTEX_LOCATION ?? "asia-southeast1";
 export const VERTEX_PROJECT = process.env.VERTEX_PROJECT ?? process.env.GOOGLE_CLOUD_PROJECT ?? "";
 
 /** An explicit API key wins, because its presence is a deliberate act by whoever is running this.

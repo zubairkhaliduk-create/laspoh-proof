@@ -9,7 +9,7 @@ cd "$(dirname "$0")"
 PROJECT="${PROJECT:-main-491010}"
 REGION="${REGION:-us-central1}"
 SERVICE="${SERVICE:-laspoh-proof}"
-MODEL="${GEMINI_MODEL:-gemini-3.6-flash}"
+MODEL="${GEMINI_MODEL:-gemini-3.5-flash}"
 
 echo "▶ Building and deploying ${SERVICE} to Cloud Run (${PROJECT}/${REGION})…"
 gcloud run deploy "$SERVICE" \
@@ -21,7 +21,7 @@ gcloud run deploy "$SERVICE" \
   --cpu 2 --memory 2Gi \
   --timeout 900 \
   --min-instances 0 --max-instances 3 \
-  --set-env-vars "GEMINI_MODEL=${MODEL},VERTEX_PROJECT=${PROJECT},VERTEX_LOCATION=${VERTEX_LOCATION:-global}"
+  --set-env-vars "GEMINI_MODEL=${MODEL},VERTEX_PROJECT=${PROJECT},VERTEX_LOCATION=${VERTEX_LOCATION:-asia-southeast1}"
 
 URL="$(gcloud run services describe "$SERVICE" --project "$PROJECT" --region "$REGION" --format='value(status.url)')"
 echo "✓ Live: $URL"

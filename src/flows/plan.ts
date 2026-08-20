@@ -31,12 +31,13 @@ export const planFlow = ai.defineFlow(
       prompt: `You plan a browser mission. Produce the SHORTEST sequence of concrete actions that achieves the goal.
 
 GOAL: ${goal}
-${startUrl ? `START URL: ${startUrl}` : ""}
+${startUrl ? `START URL: ${startUrl}\n\nYour FIRST step MUST be: {"kind":"navigate","url":"${startUrl}"}. The browser starts on a blank page, so every later step fails unless you navigate there first. Do not plan a step that clicks a link to reach it.` : ""}
 
 Rules:
 - Each step is ONE action a browser can perform: navigate, inspect, fill, select, click, read.
 - Use "select" for a dropdown, never "click". A native dropdown is set by value; clicking one opens a browser-drawn list the agent cannot see or dismiss.
 - Use "click" for checkboxes, buttons and links.
+- Refer to controls by their VISIBLE LABEL TEXT exactly as a person reading the page would say it — "Full name", "Email address", "Submit application". NEVER use CSS selectors, ids, or attribute syntax like #name or button[type=submit]: the executor finds controls by their accessible name, and a selector will simply not be found.
 - "inspect" reads the current page so later steps can target real fields. Use it before filling an unfamiliar form.
 - For every step, write provenBy: the specific thing that must be VISIBLE on the page afterwards for the step to count. A confirmation number, a success message, a value showing in a field. Never "the click worked" — a click firing proves nothing.
 - Do not plan a submit/confirm step until the steps that fill required fields come first.

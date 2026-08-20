@@ -18,6 +18,8 @@ export interface Evidence {
   /** Bounded: evidence must stay reviewable by a human and cheap to carry in a prompt. */
   excerpt: string;
   identifiers: string[];
+  /** The page's own report of what its form controls hold, at the moment of this observation. */
+  formState: string[];
   /** Hash of the full observed text, so truncation can never be mistaken for tampering. */
   sha256: string;
 }
@@ -26,7 +28,9 @@ const MAX_EXCERPT = 1200;
 
 export function recordEvidence(stepId: string, action: Action, obs: Observation): Evidence {
   const full = obs.pageText ?? "";
-  const sha256 = createHash("sha256").update(full).digest("hex");
+  const formState = obs.formState ?? [];
+  // The hash covers the form state too: it is evidence, so it must be as tamper-evident as the text.
+  const sha256 = createHash("sha256").update(`${full}\n${formState.join("\n")}`).digest("hex");
   return {
     id: `ev_${sha256.slice(0, 12)}`,
     stepId,
@@ -35,6 +39,7 @@ export function recordEvidence(stepId: string, action: Action, obs: Observation)
     url: obs.url,
     excerpt: full.length > MAX_EXCERPT ? `${full.slice(0, MAX_EXCERPT)}…[truncated ${full.length - MAX_EXCERPT} chars]` : full,
     identifiers: obs.identifiers ?? [],
+    formState,
     sha256,
   };
 }
