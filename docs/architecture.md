@@ -96,6 +96,11 @@ checkbox nobody predicted turns out to be mandatory.
         steps inserted BEFORE the pending step, then dispatch
 ```
 
+Once repair has acted, a later planned step aimed at the same control is **verified, not skipped** —
+the verifier still has to confirm its criterion from evidence. Dispatching it anyway would produce
+a no-effect result and record a completed piece of work as a failure, which is a lie in the
+safe-looking direction.
+
 The division of labour matters: **the page supplies the facts, the model supplies the values.** The
 list of outstanding controls is never model-generated, so the mechanism cannot be talked out of
 firing.

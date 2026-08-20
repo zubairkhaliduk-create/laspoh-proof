@@ -3,6 +3,10 @@
 **An autonomous agent that proves what it did.**
 Gemini 3.5 Flash · Genkit · Cloud Run
 
+**Live:** https://laspoh-proof-578405952710.us-central1.run.app
+([`/health`](https://laspoh-proof-578405952710.us-central1.run.app/health) ·
+[`/demo`](https://laspoh-proof-578405952710.us-central1.run.app/demo))
+
 Most agents report what they *attempted*. This one reports only what it can **prove**, and says so
 plainly when it cannot. A step counts as done when an independent verifier — which never sees the
 planner's reasoning or the executor's opinion — confirms it from what the page actually showed, and
@@ -124,6 +128,12 @@ It is fixed structurally, not with a better prompt:
    values belong in *these specific controls* — and explicitly not "what should we do next", which
    is re-planning and is how an agent talks itself into repeating a failed action. Bounded to two
    rounds, because an agent allowed to repair forever is an agent allowed to loop.
+
+The mirror image also matters. Once repair has set a control, a later planned step aimed at the
+same control has nothing left to do — and a no-effect re-attempt would be recorded as a *failed*
+step for work that was actually completed. Such a step is **verified rather than skipped**: its
+criterion still has to be confirmed from evidence, exactly as if the action had run. What is saved
+is a pointless action, not the burden of proof.
 
 A related gap this exposed: a filled input's value never appears in the page's visible text, so a
 fill could never be *proven* — the verifier was judging a criterion against material that
