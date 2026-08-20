@@ -16,6 +16,17 @@ import { modelIdentity } from "./genkit.js";
 import type { Receipt } from "./core/receipt.js";
 import { mountDemoTarget } from "./demo/target.js";
 
+// A mission runs AFTER its response has been sent, so any rejection it leaks has no request left to
+// fail — under Node's default it takes the whole process down instead. The service then restarts
+// with an empty mission map and answers "no such mission" for work it was really running, which is
+// precisely the silent failure this project exists to argue against. Log it, keep serving.
+process.on("unhandledRejection", (reason) => {
+  console.error("[laspoh-proof] unhandled rejection in background work:", String(reason).slice(0, 500));
+});
+process.on("uncaughtException", (err) => {
+  console.error("[laspoh-proof] uncaught exception:", err?.stack ?? String(err));
+});
+
 const app = express();
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -67,6 +78,7 @@ app.post("/missions", (req, res) => {
     } catch (e) {
       rec.status = "error";
       rec.error = String(e).slice(0, 500);
+      console.error(`[laspoh-proof] mission ${id} failed:`, (e as Error)?.stack ?? String(e));
     } finally {
       await executor.close?.().catch(() => {});
     }

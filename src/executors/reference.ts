@@ -43,7 +43,13 @@ export class ReferenceExecutor implements Executor {
 
   private async ensurePage(): Promise<Page> {
     if (this.page) return this.page;
-    this.browser = await chromium.launch({ headless: this.headless });
+    // Container-safe launch flags. Cloud Run gives a container a 64 MB /dev/shm, and Chromium does
+    // not degrade when it runs out — it dies, taking the process with it and leaving nothing in the
+    // logs to explain why. The image also runs as root, which Chromium refuses without --no-sandbox.
+    this.browser = await chromium.launch({
+      headless: this.headless,
+      args: ["--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+    });
     this.page = await this.browser.newPage({ viewport: { width: 1280, height: 900 } });
     return this.page;
   }

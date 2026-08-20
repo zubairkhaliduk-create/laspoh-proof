@@ -32,7 +32,7 @@ gcloud run deploy "$SERVICE" \
   --allow-unauthenticated \
   --service-account "$RUNTIME_SA" \
   --port 8080 \
-  --cpu 2 --memory 2Gi \
+  --cpu 2 --memory 4Gi \
   --timeout 900 \
   --min-instances 0 --max-instances 1 \
   --no-cpu-throttling \
