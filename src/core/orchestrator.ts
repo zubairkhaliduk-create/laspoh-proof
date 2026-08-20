@@ -72,6 +72,33 @@ export function unaddressedRequired(outstanding: string[], pending: { action: Ac
   });
 }
 
+/**
+ * Does the page ALREADY satisfy what this step was going to do?
+ *
+ * Repair inserts steps for controls the plan overlooked, which can leave a later planned step
+ * aiming at something now done. Dispatching it anyway is how an agent re-ticks a ticked box or
+ * re-selects a set dropdown — and when the re-attempt reports no_effect, the step is recorded as a
+ * FAILURE for work that was actually completed. That is a lie in the safe-looking direction, and
+ * it is still a lie.
+ *
+ * Deliberately narrow: satisfied means the intended end state is what the page reports right now.
+ * A control holding a DIFFERENT value is not satisfied — the step may exist precisely to change it.
+ */
+export function alreadySatisfied(action: Action, obs: Observation | null): boolean {
+  if (!obs) return false;
+  const target = norm(targetOf(action));
+  if (target.length < 3) return false;
+  const entry = (obs.formState ?? []).find((f) => {
+    const label = norm(f.slice(0, f.lastIndexOf(" = ")));
+    return label.length >= 3 && (label.length >= target.length ? label.includes(target) : target.includes(label));
+  });
+  if (!entry) return false;
+  const value = entry.slice(entry.lastIndexOf(" = ") + 3).trim();
+  if (action.kind === "click") return value === "checked";
+  if (action.kind === "fill" || action.kind === "select") return norm(value) === norm(action.value);
+  return false;
+}
+
 /** Repair is bounded. An agent allowed to repair indefinitely is an agent allowed to loop. */
 const MAX_REPAIR_ROUNDS = 2;
 
@@ -161,6 +188,29 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
       state = { ...state, escalated: true };
       emit({ type: "recovery.escalate", why: intervention.why });
       state = { ...state, steps: state.steps.map((s) => (s.id === step.id ? { ...s, status: "skipped", reason: intervention.why } : s)) };
+      continue;
+    }
+
+    // ── ALREADY DONE? ──────────────────────────────────────────────────────────────────────
+    // Not skipped — VERIFIED. The step's criterion still has to be confirmed by the verifier from
+    // evidence, exactly as if the action had run. The only thing saved is a pointless action; the
+    // burden of proof is unchanged.
+    if (alreadySatisfied(step.action, lastObs)) {
+      const ev = recordEvidence(step.id, step.action, lastObs as Observation);
+      evidence.push(ev);
+      const v = await verifyFlow({ criterion: criteria.get(step.id) ?? step.intent, evidence: [ev] });
+      verdicts.set(step.id, v);
+      state = {
+        ...state,
+        evidenceIds: [...state.evidenceIds, ev.id],
+        steps: state.steps.map((s) =>
+          s.id === step.id
+            ? { ...s, status: v.verdict === "proven" ? "proven" : "attempted", reason: v.verdict === "proven" ? "" : v.reasoning, lastObservation: lastObs }
+            : s,
+        ),
+      };
+      emit({ type: "step.already_satisfied", id: step.id, intent: step.intent, verdict: v.verdict, cited: v.citedEvidence });
+      state = noteStep(state, provenBefore);
       continue;
     }
 

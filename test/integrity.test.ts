@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { enforceCitation } from "../src/flows/verify.js";
-import { unaddressedRequired } from "../src/core/orchestrator.js";
+import { alreadySatisfied, unaddressedRequired } from "../src/core/orchestrator.js";
 import { newMission, noteStep, provenCount, terminalStatus, type MissionState, type Step } from "../src/core/state.js";
 import { decide } from "../src/core/recovery.js";
 import type { Action } from "../src/executors/types.js";
@@ -103,5 +103,38 @@ describe("recovery bounds", () => {
   it("does not escalate a stall while the page has told us exactly what is still needed", () => {
     const d = decide({ attempts: 0, worldChangedSinceLastAttempt: true, stepsSinceProgress: 20, totalSteps: 20, alreadyEscalated: false, hasKnownNextAction: true, humanAvailable: false });
     expect(d.kind).not.toBe("escalate");
+  });
+});
+
+describe("work the page reports as already done", () => {
+  const obs = (formState: string[]) => ({
+    ok: true, failure: null, detail: "", pageText: "", url: "", outstandingRequired: [], formState, identifiers: [],
+  });
+
+  it("recognises a checkbox that is already ticked", () => {
+    expect(alreadySatisfied({ kind: "click", target: "I confirm the information" }, obs(["I confirm the information given is accurate = checked"]))).toBe(true);
+  });
+
+  it("does not treat an unticked box as done", () => {
+    expect(alreadySatisfied({ kind: "click", target: "I confirm the information" }, obs(["I confirm the information given is accurate = not checked"]))).toBe(false);
+  });
+
+  it("recognises a dropdown already holding the intended value", () => {
+    expect(alreadySatisfied({ kind: "select", field: "Applying as", value: "Independent researcher" }, obs(["Applying as = Independent researcher"]))).toBe(true);
+  });
+
+  it("does NOT skip a control holding a different value — the step may exist to change it", () => {
+    expect(alreadySatisfied({ kind: "select", field: "Applying as", value: "University" }, obs(["Applying as = Independent researcher"]))).toBe(false);
+    expect(alreadySatisfied({ kind: "fill", field: "Full name", value: "Grace Hopper" }, obs(["Full name = Ada Lovelace"]))).toBe(false);
+  });
+
+  it("says no when the page reports nothing about that control", () => {
+    expect(alreadySatisfied({ kind: "click", target: "Submit application" }, obs(["Full name = Ada Lovelace"]))).toBe(false);
+    expect(alreadySatisfied({ kind: "fill", field: "Full name", value: "Ada Lovelace" }, null)).toBe(false);
+  });
+
+  it("never short-circuits navigation or inspection", () => {
+    expect(alreadySatisfied({ kind: "navigate", url: "https://example.com/" }, obs(["Full name = Ada Lovelace"]))).toBe(false);
+    expect(alreadySatisfied({ kind: "inspect" }, obs(["Full name = Ada Lovelace"]))).toBe(false);
   });
 });

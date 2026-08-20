@@ -20,6 +20,7 @@ const { receipt, state } = await runMission({
     if (e.type === "step.start") console.log(`  → ${(e as any).id} ${(e as any).intent}`);
     if (e.type === "step.observed") console.log(`    observed: ok=${(e as any).ok}${(e as any).failure ? ` (${(e as any).failure})` : ""} ${String((e as any).detail).slice(0,70)}`);
     if (e.type === "step.verdict") console.log(`    VERDICT: ${(e as any).verdict}`);
+    if (e.type === "step.already_satisfied") console.log(`  ✓ ${(e as any).id} ${(e as any).intent}\n    already done — verified without acting: ${(e as any).verdict}`);
     if (e.type === "repair.inserted") console.log(`  ⟲ REPAIR — the page still requires: ${(e as any).outstanding.join(" | ")}\n    inserting ${(e as any).steps.length} step(s) before submitting`);
     if (e.type === "repair.empty") console.log(`  ⟲ REPAIR produced no steps for: ${(e as any).outstanding.join(" | ")}`);
     if (e.type === "recovery.escalate") console.log(`    ESCALATED: ${(e as any).why}`);
