@@ -88,7 +88,13 @@ curl http://localhost:8080/missions/m_1a2b3c4d/receipt   # the proof
 ./deploy.sh          # PROJECT / REGION / SERVICE overridable by env var
 ```
 
-Vertex is reached with the service's own identity — **no API key is deployed**.
+Vertex is reached with the service's own identity — **no API key is deployed**. The service runs as
+`laspoh-proof-runtime`, which holds exactly one role (`roles/aiplatform.user`).
+
+**Known limit:** mission state is held in memory, and `--max-instances` is enforced per *revision*.
+During a rollout the previous revision keeps serving, so a mission started just before a deploy
+returns `404` from the new revision the moment traffic shifts. The work itself is unaffected — it
+runs to completion on the old revision — but don't deploy while a mission is in flight.
 
 ### Tests
 

@@ -21,9 +21,12 @@ RUNTIME_SA="${RUNTIME_SA:-laspoh-proof-runtime@${PROJECT}.iam.gserviceaccount.co
 #                        Cloud Run's default throttles CPU to near zero outside a request, so the
 #                        mission would crawl or stall after the response was sent — with nothing in
 #                        the logs to say why.
-#   --max-instances 1    Mission state is in memory. A second instance means a caller can start a
-#                        mission on one and poll another, getting a 404 for work that is running
-#                        fine. One instance is the honest fix until state is externalised.
+#   --max-instances 1    Mission state is in memory, so a caller must keep reaching the instance
+#                        that holds it. Note the limit is per REVISION, not global: during a
+#                        rollout the old revision keeps serving, and a mission started on it will
+#                        404 the moment traffic shifts — observed, and not a crash. Do not deploy
+#                        while a mission is in flight. The real fix is externalising state (pg is
+#                        already a dependency); until then this is a known limit, not a mystery.
 echo "▶ Building and deploying ${SERVICE} to Cloud Run (${PROJECT}/${REGION})…"
 gcloud run deploy "$SERVICE" \
   --source . \
