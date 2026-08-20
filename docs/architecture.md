@@ -15,8 +15,8 @@
               ┌─────────▼──────┐  ┌─────▼────────┐  ┌──▼─────────────────┐
               │ PLANNER (new)  │  │  EXECUTION   │  │ INDEPENDENT        │
               │ Genkit flow    │  │  INTERFACE   │  │ VERIFIER (new)     │
-              │ Gemini 3.6     │  │  (new)       │  │ Genkit flow        │
-              │                │  │              │  │ Gemini 3.6         │
+              │ Gemini 3.5     │  │  (new)       │  │ Genkit flow        │
+              │                │  │              │  │ Gemini 3.5         │
               │ writes each    │  └──┬────────┬──┘  │                    │
               │ step's proof   │     │        │     │ never sees the     │
               │ criterion      │     │        │     │ planner's reasoning│
@@ -44,7 +44,7 @@
                                       ▼
                           ┌─────────────────────────┐
                           │  RECEIPT (new)          │
-                          │  "Proven 3 of 5"        │
+                          │  "Proven 7 of 8"        │
                           │  + integrity hash       │
                           └─────────────────────────┘
 ```
@@ -74,6 +74,32 @@ agent is unchanged.
 Every receipt records which executor produced it and whether that executor is pre-existing work,
 so provenance is structural rather than a footnote.
 
+## The blind-submit gate
+
+The loop is not plan-then-execute. Between every dispatch it consults what the page says is still
+required, because a plan written before anything has seen the page is partly guesswork — a field
+the planner calls "Affiliation" turns out to be a dropdown called "Applying as", and a consent
+checkbox nobody predicted turns out to be mandatory.
+
+```
+   page  ──▶ outstandingRequired[]        (read from the DOM by the executor)
+                     │
+                     ▼
+        unaddressedRequired(outstanding, remaining plan)      ← pure, tested
+                     │  what no remaining step would fill
+                     ▼
+              REPAIR FLOW  (bounded: 2 rounds)
+              asked only "what values go in THESE controls"
+              never "what should we do next"
+                     │
+                     ▼
+        steps inserted BEFORE the pending step, then dispatch
+```
+
+The division of labour matters: **the page supplies the facts, the model supplies the values.** The
+list of outstanding controls is never model-generated, so the mechanism cannot be talked out of
+firing.
+
 ## Failure tolerance
 
 Recovery decisions are pure functions over counters, deliberately kept out of the model's hands —
@@ -86,11 +112,16 @@ an LLM asked "are you stuck?" will say no and try again.
 - **Known next action** — when the page itself names an unanswered required field, the mission is
   not stuck; it has a stated next move. Escalating over that ground truth is what pushes agents to
   submit incomplete forms, so the stall detector stands down.
+- **Silent blindness** — the worst class, because it does not look like a failure. When the DOM
+  read threw inside the page, the throw was caught and the form reported itself as having no
+  fields, which is indistinguishable from an empty form. Every downstream symptom pointed
+  elsewhere. `test/executor.test.ts` now asserts the read against a form that is definitely not
+  empty, because that is the only way this bug is visible.
 
 ## Google stack
 
 | Requirement | Used |
 |---|---|
-| Gemini 3.5+ | `gemini-3.6-flash` |
+| Gemini 3.5+ | `gemini-3.5-flash` (Vertex AI, `asia-southeast1`) |
 | Google agent framework | **Genkit** 1.41 (`@genkit-ai/vertexai`, `@genkit-ai/googleai`) |
 | Google Cloud infrastructure | **Cloud Run** (service + async mission execution) |

@@ -1,8 +1,11 @@
+# pnpm 11 refuses to install while any dependency's build script is neither approved nor declined,
+# and the file it reads is this one — not the "pnpm" key in package.json, which it ignores outright.
+# All four are already in the dependency tree; their scripts install or verify platform binaries.
 allowBuilds:
-  '@firebase/util': set this to true or false
-  '@google/genai': set this to true or false
-  esbuild: set this to true or false
-  protobufjs: set this to true or false
+  '@firebase/util': true
+  '@google/genai': true
+  esbuild: true
+  protobufjs: true
 minimumReleaseAgeExclude:
   - '@rolldown/binding-darwin-x64@1.2.5'
   - '@rolldown/binding-linux-arm64-gnu@1.2.5'

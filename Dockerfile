@@ -1,12 +1,15 @@
 # Cloud Run image. Playwright's own base image is used because the reference executor drives a real
 # Chromium — the browser and its system libraries are part of the runtime, not a dev-only extra.
-FROM mcr.microsoft.com/playwright:v1.56.0-noble
+# The tag MUST match playwright-core in package.json: the image ships a specific Chromium build,
+# and a mismatched client refuses to launch it.
+FROM mcr.microsoft.com/playwright:v1.62.1-noble
 
 WORKDIR /app
 ENV NODE_ENV=production
 
 # Dependencies first so a code change does not re-resolve the whole tree on every build.
-COPY package.json pnpm-lock.yaml* ./
+# pnpm-workspace.yaml carries the build-script approvals; without it the install refuses to run.
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
 RUN corepack enable && pnpm install --prod=false --no-frozen-lockfile
 
 COPY tsconfig.json ./

@@ -6,11 +6,11 @@
  * prompt a model may or may not honour on a given day.
  */
 import { describe, expect, it } from "vitest";
-import { enforceCitation } from "../flows/verify.js";
-import { unaddressedRequired } from "../core/orchestrator.js";
-import { newMission, noteStep, provenCount, terminalStatus, type MissionState, type Step } from "../core/state.js";
-import { decide } from "../core/recovery.js";
-import type { Action } from "../executors/types.js";
+import { enforceCitation } from "../src/flows/verify.js";
+import { unaddressedRequired } from "../src/core/orchestrator.js";
+import { newMission, noteStep, provenCount, terminalStatus, type MissionState, type Step } from "../src/core/state.js";
+import { decide } from "../src/core/recovery.js";
+import type { Action } from "../src/executors/types.js";
 
 const step = (over: Partial<Step> & { id: string }): Step => ({
   intent: "", action: { kind: "inspect" }, status: "pending", attempts: 0, lastObservation: null, reason: "", ...over,

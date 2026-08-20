@@ -22,13 +22,13 @@ You give it an outcome. It plans, drives a browser, and gathers evidence. Then a
 verifier** — which never sees the planner's reasoning or the executor's opinion — decides from the
 page's own output whether each step actually happened, and must cite the evidence to say yes.
 
-The result is a receipt: `Proven 3 of 5`, naming the two it couldn't prove and why. A step counts
+The result is a receipt: `Proven 7 of 8`, naming the one it couldn't prove and why. A step counts
 only when independently confirmed — not when the click fires, not when the planner is confident,
 not when no error appears.
 
 ## How I built it
 
-**Gemini 3.6 Flash** via **Genkit**, on **Cloud Run**.
+**Gemini 3.5 Flash** via **Genkit**, on **Cloud Run**.
 
 The design decision everything follows from is a seam between *the agent* and *actuation*. Above
 it: planning, state, evidence, verification, recovery. Below it: driving a page. Two executors ship
@@ -40,6 +40,26 @@ and tries again — which is how agents burn money in circles. So the decisions 
 ask a human are unit-testable predicates that can't be talked out of their verdict.
 
 ## Findings and learnings
+
+**The worst bug doesn't look like a bug.** The agent was submitting forms with required fields
+empty, then discovering the requirements from the rejection page — the exact behaviour that makes
+agents look careless. I spent a long time on the planner before finding the real cause: the DOM
+read was *throwing inside the page*. A named inner arrow function picked up the bundler's
+keep-names helper, which doesn't exist on the browser side of `evaluate`. The throw was caught, and
+the form reported itself as having no fields — indistinguishable from an empty form. Nothing
+errored, nothing logged, and every symptom pointed somewhere else. A silent read failure is now
+tested against a form that is definitely not empty, because that is the only way it is visible.
+
+**Don't ask the model to be careful — take the decision away from it.** The fix for blind
+submitting isn't a better prompt. The executor reports which controls the page says are required
+and still empty; a pure function subtracts what the remaining plan already covers; whatever is left
+gets filled *before* anything is dispatched. The model supplies values, the page supplies facts,
+and the mechanism can't be talked out of firing.
+
+**Evidence has to be able to contain the answer.** Fills kept coming back `unproven` and I assumed
+the verifier was being harsh. It wasn't — an input's value never appears in a page's visible text,
+so the verifier was judging a criterion against material that structurally could not confirm it.
+Being strict about evidence is worthless if you're strict about the wrong evidence.
 
 **"Proven" needs enforcing in code, not prompting.** The verifier is told every "proven" verdict
 must cite evidence. It doesn't always comply — so a proven verdict that cites nothing is downgraded
@@ -69,4 +89,5 @@ which executor produced a result and whether it is pre-existing.
 ## What's next
 
 Making the verifier cheap enough to run on every step of long missions, and letting it request
-*specific* additional evidence when a criterion is unproven rather than simply reporting it so.
+*specific* additional evidence when a criterion is unproven rather than simply reporting it so —
+the "evidence can't contain the answer" failure above is the general form of that problem.

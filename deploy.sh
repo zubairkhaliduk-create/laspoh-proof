@@ -10,6 +10,10 @@ PROJECT="${PROJECT:-main-491010}"
 REGION="${REGION:-us-central1}"
 SERVICE="${SERVICE:-laspoh-proof}"
 MODEL="${GEMINI_MODEL:-gemini-3.5-flash}"
+# A dedicated identity holding exactly one role (roles/aiplatform.user). The default compute
+# account carries far more than this service needs, and "it already works" is not a reason to run
+# a deployment on it.
+RUNTIME_SA="${RUNTIME_SA:-laspoh-proof-runtime@${PROJECT}.iam.gserviceaccount.com}"
 
 echo "▶ Building and deploying ${SERVICE} to Cloud Run (${PROJECT}/${REGION})…"
 gcloud run deploy "$SERVICE" \
@@ -17,6 +21,7 @@ gcloud run deploy "$SERVICE" \
   --project "$PROJECT" \
   --region "$REGION" \
   --allow-unauthenticated \
+  --service-account "$RUNTIME_SA" \
   --port 8080 \
   --cpu 2 --memory 2Gi \
   --timeout 900 \

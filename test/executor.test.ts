@@ -13,8 +13,8 @@
 import express from "express";
 import type { Server } from "node:http";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { mountDemoTarget } from "../demo/target.js";
-import { ReferenceExecutor } from "../executors/reference.js";
+import { mountDemoTarget } from "../src/demo/target.js";
+import { ReferenceExecutor } from "../src/executors/reference.js";
 
 let server: Server;
 let base: string;

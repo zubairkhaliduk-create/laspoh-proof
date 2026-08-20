@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "description": "An autonomous agent that proves what it did. Gemini + Genkit on Cloud Run.",
+  "packageManager": "pnpm@11.8.0",
   "engines": {
     "node": ">=22"
   },
