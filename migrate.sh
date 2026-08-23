@@ -75,6 +75,19 @@ ROLES="$(gcloud projects get-iam-policy "$PROJECT" --flatten='bindings[].members
   --filter="bindings.members:${SA}" --format='value(bindings.role)' 2>/dev/null | tr '\n' ' ')"
 ok "roles: ${ROLES:-none}"
 
+# ── 3b. Build identity ──────────────────────────────────────────────────────────────────────────
+# Separate from the runtime account on purpose. `gcloud run deploy --source` builds through Cloud
+# Build, and in projects created recently Google no longer auto-grants that identity its
+# permissions — the deploy then fails on a storage read with a message that names a service account
+# you never chose. The runtime account stays least-privilege; this role is build-time only.
+say "Build identity"
+PNUM="$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')"
+BUILD_SA="${PNUM}-compute@developer.gserviceaccount.com"
+gcloud projects add-iam-policy-binding "$PROJECT" \
+  --member="serviceAccount:${BUILD_SA}" --role="roles/cloudbuild.builds.builder" \
+  --condition=None --quiet >/dev/null 2>&1 || die "could not grant build permissions to ${BUILD_SA}"
+ok "${BUILD_SA} can build"
+
 # ── 4. Which region actually serves the model ───────────────────────────────────────────────────
 # Asked of Vertex directly. A docs table is not evidence, and a 401 is not a "no" — the probe below
 # distinguishes them, because reading an auth failure as unavailability once cost me a whole region.
@@ -119,10 +132,16 @@ URL="$(gcloud run services describe "$SERVICE" --project="$PROJECT" --region="$R
 
 # ── 6. Prove it works there, rather than assuming the deploy implies it ─────────────────────────
 say "Verifying the migrated service"
-curl -fsS --max-time 60 "${URL}/health" >/tmp/health.$$ || die "/health did not answer at ${URL}"
-grep -q '"ok":true' /tmp/health.$$ || die "/health answered but not ok: $(head -c 200 /tmp/health.$$)"
-ok "health: $(python3 -c 'import json,sys;d=json.load(open("/tmp/health.'$$'"));print(json.dumps(d["model"]))')"
-rm -f /tmp/health.$$
+HEALTH_FILE="$(mktemp)"
+curl -fsS --max-time 60 "${URL}/health" -o "$HEALTH_FILE" || die "/health did not answer at ${URL}"
+grep -q '"ok":true' "$HEALTH_FILE" || die "/health answered but not ok: $(head -c 200 "$HEALTH_FILE")"
+# Compute BEFORE reporting. Interpolating this straight into ok "..." meant a failure here printed a
+# traceback and a green tick on the same screen — a verification step that passes while erroring is
+# worse than no verification step.
+MODEL_LINE="$(python3 -c 'import json,sys;print(json.dumps(json.load(open(sys.argv[1]))["model"]))' "$HEALTH_FILE")" \
+  || die "/health returned something that is not a readable model identity"
+ok "health: ${MODEL_LINE}"
+rm -f "$HEALTH_FILE"
 
 say "Smoke mission (end to end, against the service's own ground truth)"
 MID="$(curl -fsS --max-time 90 -X POST "${URL}/missions" -H 'content-type: application/json' \
@@ -135,10 +154,13 @@ for _ in $(seq 1 90); do
   sleep 10
 done
 echo "  status: ${ST}"
-curl -fsS --max-time 60 "${URL}/missions/${MID}/receipt" -o /tmp/receipt.$$ || die "no receipt produced"
-python3 - "$URL" <<'PY' || die "the migrated service did not produce an honest, evidence-backed receipt"
-import json, sys, urllib.request, os, glob
-receipt = json.load(open(glob.glob("/tmp/receipt.*")[0]))
+RECEIPT_FILE="$(mktemp)"
+curl -fsS --max-time 60 "${URL}/missions/${MID}/receipt" -o "$RECEIPT_FILE" || die "no receipt produced"
+python3 - "$URL" "$RECEIPT_FILE" <<'PY' || die "the migrated service did not produce an honest, evidence-backed receipt"
+import json, sys, urllib.request
+# The receipt path is passed in, not globbed: picking up a stale /tmp/receipt.* from an earlier run
+# would verify the wrong mission and say so confidently.
+receipt = json.load(open(sys.argv[2]))
 truth = json.load(urllib.request.urlopen(f"{sys.argv[1]}/demo/submissions", timeout=60))
 cited = {c for l in receipt["lines"] for c in (l.get("citedEvidence") or [])}
 refs = {r for r in truth.get("refs", [])}
@@ -158,7 +180,7 @@ if not claimed:
     print("  ! no reference proven — the service runs, but this run proved nothing. Re-run before trusting it.")
 print("  ✓ every claim on the receipt is backed by something the server actually did")
 PY
-rm -f /tmp/receipt.$$
+rm -f "$RECEIPT_FILE"
 
 say "Done"
 echo "  service : ${URL}"

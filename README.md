@@ -3,9 +3,9 @@
 **An autonomous agent that proves what it did.**
 Gemini 3.5 Flash · Genkit · Cloud Run
 
-**Live:** https://laspoh-proof-578405952710.us-central1.run.app
-([`/health`](https://laspoh-proof-578405952710.us-central1.run.app/health) ·
-[`/demo`](https://laspoh-proof-578405952710.us-central1.run.app/demo))
+**Live:** https://laspoh-proof-cffubwieta-uc.a.run.app
+([`/health`](https://laspoh-proof-cffubwieta-uc.a.run.app/health) ·
+[`/demo`](https://laspoh-proof-cffubwieta-uc.a.run.app/demo))
 
 Most agents report what they *attempted*. This one reports only what it can **prove**, and says so
 plainly when it cannot. A step counts as done when an independent verifier — which never sees the
