@@ -91,6 +91,19 @@ curl http://localhost:8080/missions/m_1a2b3c4d/receipt   # the proof
 Vertex is reached with the service's own identity — **no API key is deployed**. The service runs as
 `laspoh-proof-runtime`, which holds exactly one role (`roles/aiplatform.user`).
 
+### Move it to another project
+
+```bash
+./migrate.sh TARGET_PROJECT_ID [BILLING_ACCOUNT_ID]
+```
+
+Idempotent and safe to re-run. It enables the required APIs, creates the least-privilege runtime
+account, **probes which region actually serves the model** (Vertex availability is per-region and
+differs between projects — it is asked, never assumed), deploys, and then proves the result with a
+real mission checked against the service's own ground truth. It distinguishes an auth failure from
+a model being unavailable, because reading the first as the second is how a working region gets
+written off.
+
 **Known limit:** mission state is held in memory, and `--max-instances` is enforced per *revision*.
 During a rollout the previous revision keeps serving, so a mission started just before a deploy
 returns `404` from the new revision the moment traffic shifts. The work itself is unaffected — it
