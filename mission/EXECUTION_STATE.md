@@ -25,12 +25,12 @@ A phase reaches VERIFIED_COMPLETE only with evidence recorded below it.
 | 11 | Receipts & truthful completion | VERIFIED_COMPLETE |
 | 12 | Failure recovery & loop defense | VERIFIED_COMPLETE |
 | 13 | Security & trust boundaries | VERIFIED_COMPLETE |
-| 14 | Observability & audit trail | IN_PROGRESS |
-| 15 | Killer Taskmaster workflow | NOT_STARTED |
+| 14 | Observability & audit trail | VERIFIED_COMPLETE |
+| 15 | Killer Taskmaster workflow | IN_PROGRESS |
 | 16 | End-to-end test harness | NOT_STARTED |
 | 17 | Judge experience | NOT_STARTED |
-| 18 | README & reproducible spin-up | NOT_STARTED |
-| 19 | Architecture diagram | NOT_STARTED |
+| 18 | README & reproducible spin-up | VERIFIED_COMPLETE |
+| 19 | Architecture diagram | VERIFIED_COMPLETE |
 | 20 | Google Cloud proof | NOT_STARTED |
 | 21 | Demo video engineering | NOT_STARTED |
 | 22 | Devpost submission | NOT_STARTED |
