@@ -38,7 +38,7 @@ Last audited: **2026-08-24** (Phase 00). Re-audited in full at Phase 25.
 
 | # | Requirement | Status | Implementation | Evidence |
 |---|---|---|---|---|
-| D1 | Public repository | RISK | Local only; not yet pushed to a remote | Phase 17 |
+| D1 | Public repository | PASS | https://github.com/zubairkhaliduk-create/laspoh-proof | PUBLIC, first commit 2026-08-20, CI green |
 | D2 | Working hosted project | PASS | Cloud Run, publicly reachable | HTTP 200 on `/health` and `/demo` |
 | D3 | Demo video ≤4 min | NEEDS_USER_ACTION | Script engineered in Phase 21 | UA-001 |
 | D4 | Devpost submission | NEEDS_USER_ACTION | Copy drafted in Phase 22 | UA-002 |
@@ -47,7 +47,5 @@ Last audited: **2026-08-24** (Phase 00). Re-audited in full at Phase 25.
 
 ## Open risks
 
-- **D1** the repository has no public remote. A judge cannot read the code. Highest-severity
-  open deliverable gap.
 - **T4** "Gemini makes meaningful decisions" is true but not yet *proven against a sceptic*.
 - **D6** the setup instructions have never been run on a clean machine.

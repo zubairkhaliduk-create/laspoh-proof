@@ -12,8 +12,8 @@ A phase reaches VERIFIED_COMPLETE only with evidence recorded below it.
 | Phase | Name | Status |
 |---|---|---|
 | 00 | Forensic baseline & eligibility boundary | VERIFIED_COMPLETE |
-| 01 | New hackathon repository | NOT_STARTED |
-| 02 | Verify & lock the Google stack | NOT_STARTED |
+| 01 | Project foundation (audit) | VERIFIED_COMPLETE |
+| 02 | Verify & lock the Google stack | IN_PROGRESS |
 | 03 | Core domain model & mission state machine | NOT_STARTED |
 | 04 | Gemini + Genkit mission orchestrator | NOT_STARTED |
 | 05 | Persistent state & checkpointing | NOT_STARTED |
@@ -117,3 +117,66 @@ Nothing.
 Phase 01 — audit the existing repository against what "create the new repository" demanded,
 and close gaps. Order change from "create" to "audit" is justified and recorded in
 `ARCHITECTURE_DECISIONS.md`.
+
+---
+
+## PHASE 01 — Project Foundation (executed as an audit)
+
+**Status:** VERIFIED_COMPLETE
+**Specification:** `mission/PHASE_01_PROJECT_FOUNDATION.md`
+**Date:** 2026-08-24
+**Order change:** AD-003 — audit rather than rebuild, to preserve in-period build history.
+
+### Start state
+`laspoh-proof` @ `67f4bdc`, clean, no remote, no linter, no CI, no licence.
+
+### Implementation summary
+Scaffolding only; no `src/` behaviour changed.
+
+### Files created
+`.env.example` · `LICENSE` (MIT) · `.github/workflows/ci.yml` · `oxlint` config via package.json
+script · `mission/PHASE_01_PROJECT_FOUNDATION.md`
+
+### Files modified
+`package.json` (lint script, packageManager pin) · `test/executor.test.ts` (one real lint finding)
+
+### Linting — three attempts, and the reason matters
+1. `eslint` + `typescript-eslint` → **"typescript-eslint does not support TS 7.0"**.
+2. Plain `eslint` → cannot parse TypeScript at all (`Unexpected token MissionState`).
+3. **`oxlint`** → parses TS natively, not coupled to the compiler version. Adopted.
+
+Downgrading a working compiler to satisfy a linter was rejected as the wrong trade — `tsc`
+already enforces types, and properly. oxlint found one genuine issue (a caret regex where
+`startsWith` belongs), fixed.
+
+### Secret scan — the gate before publication
+    for pat in AIza… / PRIVATE KEY / "private_key" / ghp_ / gho_ / Bearer…
+    git grep -I -l -E "$pat" $(git rev-list --all)
+    → zero findings across 11 commits
+    git log --all --diff-filter=A --name-only | grep -iE "\.env$|credential|key\.json|\.pem$"
+    → nothing ever committed
+
+### Evidence
+- **Public repository:** https://github.com/zubairkhaliduk-create/laspoh-proof (PUBLIC, `main`)
+- **First commit visible publicly:** `34674e7 2026-08-20 15:53:35 +0100` — inside the submission
+  window, independently verifiable by a judge
+- **CI run 32746045382 — success**, 1m26s (`gh run list`)
+- First CI run **failed** on `playwright install` (the CLI does not exist; this project depends on
+  `playwright-core`). Fixed and re-run green. Recorded because it is exactly the class of defect
+  CI exists to catch — it passed locally only because the browser was already on the machine.
+- `pnpm lint` clean · `pnpm typecheck` clean · **45 tests passing**
+
+### Eligibility implications
+Materially improved. The provenance claims in `PREEXISTING_DISCLOSURE.md` were previously
+unfalsifiable because no one could read the repository. A judge can now verify the first-commit
+date and the absence of pre-period history directly.
+
+### Outstanding risks
+1. Setup instructions have never been run on a clean machine → Phase 18.
+2. README still the pre-program skeleton → Phase 18.
+3. CI runs without model credentials by design; the model-dependent paths are therefore not
+   covered by CI → acceptable, but the reliability rate must come from Phase 16 instead.
+
+### Next phase
+Phase 02 — verify and lock the Google stack against current official sources rather than
+assumption, and prove the qualifying foundation end to end.
