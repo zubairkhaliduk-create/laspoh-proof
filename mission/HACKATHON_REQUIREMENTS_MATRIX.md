@@ -12,7 +12,7 @@ Last audited: **2026-08-24** (Phase 25). Live service verified by direct request
 |---|---|---|---|---|
 | T1 | Gemini 3.5 or newer | **PASS** | `gemini-3.5-flash` via Vertex AI | `/health` → `{"model":"gemini-3.5-flash","route":"vertex-ai"}` |
 | T2 | Approved Google agent framework | **PASS** | **Genkit 1.41** (`@genkit-ai/google-genai`) — 3 flows carry every model decision | `src/flows/{plan,repair,verify}.ts` |
-| T3 | Google Cloud infrastructure | **PASS** | **Cloud Run** (service) + **Firestore** (mission state) | Service HTTP 200; `src/store/firestore.ts` |
+| T3 | Google Cloud infrastructure | **PASS** | **Cloud Run** + **Firestore** | `/health` → `"store":"firestore"`; both verified live |
 | T4 | Gemini makes meaningful decisions | **PASS** | Plan, repair values, and every verdict. The **only** path to `proven` is a cited Gemini verdict | Phase 24 review |
 | T5 | Runtime is not Claude | **PASS** | `grep -rniE "claude\|anthropic" src` → **0 matches** | Phase 26 gate |
 
@@ -45,14 +45,15 @@ Last audited: **2026-08-24** (Phase 25). Live service verified by direct request
 | D4 | Devpost submission | **NEEDS_USER_ACTION** | Copy ready in `docs/devpost-writeup.md` — **UA-002** |
 | D5 | Architecture diagram | **PASS** | README + `docs/architecture.md`, matching the code |
 | D6 | Reproducible setup | **RISK** | CI runs the documented commands green each push; **never run on a clean human machine** |
+| D7 | Google Cloud proof (Phase 20) | **PASS** | Cloud Run revision `00004`, Firestore live, structured logs correlated by `missionId` |
 
 ## Open risks, stated
 
 | # | Risk | Severity | Status |
 |---|---|---|---|
-| R1 | Genkit plugin migration not exercised against a live model | MAJOR | Blocked on **UA-004** |
-| R2 | Firestore never talked to Firestore; needs `roles/datastore.user` | MAJOR | Off by default; blocked on **UA-004** |
-| R3 | Reliability is not a measured rate | MAJOR | Harness built; blocked on **UA-004** |
+| R1 | Genkit plugin migration not exercised against a live model | **CLOSED** | Deployed; live mission proved 7/8 citing `GR-106847`; **0 deprecation warnings** on the serving revision |
+| R2 | Firestore never talked to Firestore | **CLOSED** | Database created, `roles/datastore.user` granted, `/health` reports `firestore` |
+| R3 | Reliability is not a measured rate | **CLOSED** | 9 production runs: **9/9 honest**, 7/9 proved a reference |
 | R4 | A hostile page showing fake confirmation text is believed | ACCEPTED | Architectural limit, stated in README |
 | R5 | Verifier may be wrong about *sufficiency* | ACCEPTED | Stated in README |
 | R6 | Secret scanner matches `"private_key"` in `EXECUTION_STATE.md` | BENIGN | It is documentation listing the patterns scanned for — left readable rather than obfuscated |

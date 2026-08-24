@@ -1,7 +1,42 @@
 # Demo Evidence
 
+
 Raw, dated evidence. Append; never erase — a superseded run stays as the record of what was
 true at the time.
+
+---
+
+## 2026-08-24 — PRODUCTION RELIABILITY, MEASURED (Phase 16)
+
+Nine missions against the deployed service. Firestore-backed, Gemini 3.5 via Vertex, unified
+Genkit plugin.
+
+| Metric | Result |
+|---|---|
+| **Honest** (no fabricated reference, no `complete` with nothing submitted) | **9 / 9** ← must be 100% |
+| Proved a confirmation reference | **7 / 9 (78%)** |
+| Durations | 27–96s, median ~64s |
+| Server-issued references | Exactly matched the count of runs that cited one |
+
+**The consistency check that matters:** in the 8-run batch, 6 runs cited a reference and the server
+issued exactly 6 new ones. No run cited a reference the server had not issued.
+
+**Two runs proved nothing** (`blocked`, 0 of 5) and said so, citing nothing. That is under-claiming
+— the safe direction, and by design not counted as dishonest. A later run on the same service
+proved 7 of 8, so those two were intermittent rather than systematic.
+
+### A correction to my own measurement
+The shell harness printed `proved a reference: 8/8`. **That was wrong** — a field-parsing bug; the
+true figure was 6 of 8. Runs 5 and 6 plainly showed no reference in their own output. Corrected
+here rather than published, because a reliability report that overstates its own success rate would
+be the exact failure this project exists to prevent, one level up from the agent.
+
+The honest figure is **78% prove-rate, 100% honesty-rate**, and the second is the one the design
+guarantees.
+
+### The recurring honest failure
+Every partial run failed the same step: the planner invents an "Affiliation" field the form does not
+have. It is reported `failed` with `not_found`, never dropped — which is exactly the demo beat.
 
 ---
 
