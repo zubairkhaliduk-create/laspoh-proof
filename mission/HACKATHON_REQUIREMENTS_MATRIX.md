@@ -1,9 +1,8 @@
 # Hackathon Requirements Matrix
 
-**Statuses:** PASS · FAIL · NEEDS_USER_ACTION · NOT_APPLICABLE · RISK
-No row is marked PASS without evidence in the evidence column.
+**PASS · FAIL · NEEDS_USER_ACTION · NOT_APPLICABLE · RISK** — no row is PASS without evidence.
 
-Last audited: **2026-08-24** (Phase 00). Re-audited in full at Phase 25.
+Last audited: **2026-08-24** (Phase 25). Live service verified by direct request, not from a script's echo.
 
 ---
 
@@ -11,41 +10,49 @@ Last audited: **2026-08-24** (Phase 00). Re-audited in full at Phase 25.
 
 | # | Requirement | Status | Implementation | Evidence |
 |---|---|---|---|---|
-| T1 | Gemini 3.5 or newer | PASS | `gemini-3.5-flash` via Vertex AI | `/health` reports `{"model":"gemini-3.5-flash"}` on the live service |
-| T2 | Approved Google agent framework | PASS | **Genkit** 1.41 (`@genkit-ai/vertexai`) — three flows: plan, repair, verify | `src/genkit.ts`, `src/flows/*.ts` |
-| T3 | Google Cloud infrastructure | PASS | **Cloud Run** — deployed service, least-privilege SA | `https://laspoh-proof-cffubwieta-uc.a.run.app` returns 200 |
-| T4 | Gemini controls meaningful decisions | RISK | Planning, repair and verification are all model decisions | To be evidenced adversarially in Phase 24 |
+| T1 | Gemini 3.5 or newer | **PASS** | `gemini-3.5-flash` via Vertex AI | `/health` → `{"model":"gemini-3.5-flash","route":"vertex-ai"}` |
+| T2 | Approved Google agent framework | **PASS** | **Genkit 1.41** (`@genkit-ai/google-genai`) — 3 flows carry every model decision | `src/flows/{plan,repair,verify}.ts` |
+| T3 | Google Cloud infrastructure | **PASS** | **Cloud Run** (service) + **Firestore** (mission state) | Service HTTP 200; `src/store/firestore.ts` |
+| T4 | Gemini makes meaningful decisions | **PASS** | Plan, repair values, and every verdict. The **only** path to `proven` is a cited Gemini verdict | Phase 24 review |
+| T5 | Runtime is not Claude | **PASS** | `grep -rniE "claude\|anthropic" src` → **0 matches** | Phase 26 gate |
 
-## Eligibility
+## Eligibility — New Projects Only
 
-| # | Requirement | Status | Implementation | Evidence |
-|---|---|---|---|---|
-| E1 | Newly created during 3–31 Aug 2026 | PASS | First commit 2026-08-20; zero commits before 2026-08-03 | `git rev-list --count --before=2026-08-03 HEAD` → 0 |
-| E2 | Pre-existing work disclosed | PASS | `mission/PREEXISTING_DISCLOSURE.md`; `preExisting` on the interface | Every receipt carries executor provenance |
-| E3 | Submitted work built in period | PASS | All 18 source files created in period | `git log --diff-filter=A --format=%ad` per file |
-| E4 | Not a repackaging of pre-existing work | PASS | Zero imports; swap test passes; default path never touches Laspoh | Import audit → no matches |
+| # | Requirement | Status | Evidence |
+|---|---|---|---|
+| E1 | Created during 3–31 Aug 2026 | **PASS** | First commit 2026-08-20; `git rev-list --count --before=2026-08-03 HEAD` → **0** |
+| E2 | Pre-existing work disclosed | **PASS** | README, Devpost, `PREEXISTING_DISCLOSURE.md`; `preExisting` on the `Executor` interface |
+| E3 | Submitted work built in period | **PASS** | Every source file first added in-period |
+| E4 | Not a repackaging | **PASS** | Import audit: 0 references. Copy audit: 2/9/2 idiom lines. Adapter off by default |
+| E5 | Disclosure matches git history | **PASS** | Both generated from the same forensic facts; commands published for independent checking |
 
-## Track fit — Taskmaster
+## Track — Taskmaster
 
-| # | Requirement | Status | Implementation | Evidence |
-|---|---|---|---|---|
-| K1 | Complete autonomous workflow, not chat | PASS | plan → act → observe → evidence → verify → receipt | `run-demo.ts` end-to-end |
-| K2 | Multi-step reasoning | PASS | 8-step plan generated from one sentence | Live receipt: "Proven 7 of 8" |
-| K3 | Real state change in the world | PASS | Form submission the server records | `/demo/submissions` → `GR-133198` |
-| K4 | Truthful partial completion | PASS | `terminalStatus` refuses `complete` unless every step proven | `test/integrity.test.ts` |
+| # | Requirement | Status | Evidence |
+|---|---|---|---|
+| K1 | Complete autonomous workflow | **PASS** | plan → act → observe → evidence → verify → receipt |
+| K2 | Multi-step reasoning | **PASS** | 8-step plan from one sentence |
+| K3 | Real state change | **PASS** | Form submission recorded server-side; `GR-133198` in `/demo/submissions` |
+| K4 | Truthful partial completion | **PASS** | `Proven 7 of 8`; exhaustive property test that `complete` needs all-proven |
 
 ## Deliverables
 
-| # | Requirement | Status | Implementation | Evidence |
-|---|---|---|---|---|
-| D1 | Public repository | PASS | https://github.com/zubairkhaliduk-create/laspoh-proof | PUBLIC, first commit 2026-08-20, CI green |
-| D2 | Working hosted project | PASS | Cloud Run, publicly reachable | HTTP 200 on `/health` and `/demo` |
-| D3 | Demo video ≤4 min | NEEDS_USER_ACTION | Script engineered in Phase 21 | UA-001 |
-| D4 | Devpost submission | NEEDS_USER_ACTION | Copy drafted in Phase 22 | UA-002 |
-| D5 | Architecture diagram | RISK | ASCII exists; polished version pending | Phase 19 |
-| D6 | Judge-reproducible setup | RISK | README exists; not yet cold-tested | Phase 17/18 |
+| # | Requirement | Status | Evidence / blocker |
+|---|---|---|---|
+| D1 | Public repository | **PASS** | https://github.com/zubairkhaliduk-create/laspoh-proof — CI green |
+| D2 | Working hosted project | **PASS** | HTTP 200 |
+| D3 | Demo video ≤4 min | **NEEDS_USER_ACTION** | Script + shot list in `docs/demo-script.md` — **UA-001** |
+| D4 | Devpost submission | **NEEDS_USER_ACTION** | Copy ready in `docs/devpost-writeup.md` — **UA-002** |
+| D5 | Architecture diagram | **PASS** | README + `docs/architecture.md`, matching the code |
+| D6 | Reproducible setup | **RISK** | CI runs the documented commands green each push; **never run on a clean human machine** |
 
-## Open risks
+## Open risks, stated
 
-- **T4** "Gemini makes meaningful decisions" is true but not yet *proven against a sceptic*.
-- **D6** the setup instructions have never been run on a clean machine.
+| # | Risk | Severity | Status |
+|---|---|---|---|
+| R1 | Genkit plugin migration not exercised against a live model | MAJOR | Blocked on **UA-004** |
+| R2 | Firestore never talked to Firestore; needs `roles/datastore.user` | MAJOR | Off by default; blocked on **UA-004** |
+| R3 | Reliability is not a measured rate | MAJOR | Harness built; blocked on **UA-004** |
+| R4 | A hostile page showing fake confirmation text is believed | ACCEPTED | Architectural limit, stated in README |
+| R5 | Verifier may be wrong about *sufficiency* | ACCEPTED | Stated in README |
+| R6 | Secret scanner matches `"private_key"` in `EXECUTION_STATE.md` | BENIGN | It is documentation listing the patterns scanned for — left readable rather than obfuscated |
