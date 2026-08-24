@@ -71,11 +71,50 @@ function actionKey(a: Action): string {
   }
 }
 
+/**
+ * THE MISSION MUST START WHERE THE MISSION IS.
+ *
+ * A browser starts on a blank page. If the plan's first step is not a navigation to the mission's
+ * starting point, every subsequent step looks for controls on `about:blank`, finds nothing, and the
+ * mission reports `blocked` with zero proven — a total failure caused by a missing first line.
+ *
+ * The planner is ASKED to navigate first, in the prompt, and mostly does. "Mostly" was measured:
+ * across production runs, roughly one in five proved nothing, and the signature was always the same
+ * — a plan of about five steps, none of them proven.
+ *
+ * Asking a model to remember something is not a guarantee, and this project's whole argument is
+ * that the fix for that is to take the decision away from it. So the navigation is inserted in
+ * code. A model that already planned it correctly is unaffected: the duplicate is removed by the
+ * deduplication below, which is why this runs first.
+ */
+export function ensureNavigatesFirst(steps: readonly PlanStep[], startUrl?: string): PlanStep[] {
+  if (!startUrl) return [...steps];
+  let target: URL;
+  try { target = new URL(startUrl); } catch { return [...steps]; }
+
+  const first = steps[0];
+  if (first?.action.kind === "navigate") {
+    try { if (new URL(first.action.url).origin === target.origin) return [...steps]; } catch { /* fall through */ }
+  }
+  return [
+    {
+      intent: `Open the mission's starting page`,
+      action: { kind: "navigate", url: startUrl },
+      // Not "navigated successfully" — that would restate the action and be rejected by the very
+      // check below. What must be true afterwards is that the page is actually showing.
+      provenBy: `The page at ${startUrl} is displayed and its content is visible.`,
+    },
+    ...steps,
+  ];
+}
+
 export function sanitizePlan(
   steps: readonly PlanStep[],
-  opts: { maxSteps?: number } = {},
+  opts: { maxSteps?: number; startUrl?: string } = {},
 ): SanitizedPlan {
   const maxSteps = opts.maxSteps ?? 24;
+  // Before anything else: guarantee the mission starts where the mission is.
+  steps = ensureNavigatesFirst(steps, opts.startUrl);
   const kept: PlanStep[] = [];
   const dropped: DroppedStep[] = [];
   const seen = new Set<string>();

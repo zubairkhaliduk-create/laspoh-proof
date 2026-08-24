@@ -135,7 +135,7 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
   // proof criterion merely restates the action it is meant to prove, nothing beyond the budget.
   // Everything removed is reported rather than swallowed — a plan silently shortened is a plan
   // nobody can audit.
-  const sanitized = sanitizePlan(rawPlan.steps, { maxSteps });
+  const sanitized = sanitizePlan(rawPlan.steps, { maxSteps, ...(startUrl ? { startUrl } : {}) });
   if (sanitized.dropped.length > 0) emit({ type: "plan.sanitized", dropped: sanitized.dropped });
   const plan = { ...rawPlan, steps: sanitized.steps };
   state = {

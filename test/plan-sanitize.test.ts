@@ -7,7 +7,7 @@
  * action are what models do when a prompt asks for a plan.
  */
 import { describe, expect, it } from "vitest";
-import { isSelfCertifyingCriterion, sanitizePlan, type PlanStep } from "../src/core/plan-sanitize.js";
+import { ensureNavigatesFirst, isSelfCertifyingCriterion, sanitizePlan, type PlanStep } from "../src/core/plan-sanitize.js";
 import type { Action } from "../src/executors/types.js";
 
 const step = (intent: string, action: Action, provenBy: string): PlanStep => ({ intent, action, provenBy });
@@ -102,5 +102,70 @@ describe("sanitizing a plan", () => {
     const out = sanitizePlan(good);
     expect(out.steps).toEqual(good);
     expect(out.dropped).toHaveLength(0);
+  });
+});
+
+/**
+ * MEASURED FAILURE, FIXED IN CODE.
+ *
+ * Across production runs roughly one in five proved nothing, and the signature was always
+ * identical: a plan of about five steps, none proven. The cause was a missing first line — the
+ * plan did not navigate, so every step searched `about:blank`, found nothing, and the mission
+ * reported blocked.
+ *
+ * The planner is ASKED to navigate first and mostly complies. "Mostly" is not a guarantee, and
+ * this project's whole argument is that the fix for that is to stop asking.
+ */
+describe("the mission starts where the mission is", () => {
+  const nav = (url: string): PlanStep => step("go", { kind: "navigate", url }, "the page is displayed");
+
+  it("inserts the navigation when the plan forgot it — the measured failure", () => {
+    const out = sanitizePlan([step("Fill the name", fill("Full name", "Ada"), "the Full name field shows Ada")], {
+      startUrl: "https://grants.example.org/demo",
+    });
+    expect(out.steps[0]!.action).toEqual({ kind: "navigate", url: "https://grants.example.org/demo" });
+    expect(out.steps).toHaveLength(2);
+  });
+
+  it("leaves a plan that already navigates completely alone", () => {
+    const good = [nav("https://grants.example.org/demo"), step("Fill", fill("Name", "Ada"), "the Name field shows Ada")];
+    expect(sanitizePlan(good, { startUrl: "https://grants.example.org/demo" }).steps).toHaveLength(2);
+  });
+
+  it("does not duplicate when the plan navigates later instead of first", () => {
+    // The inserted step and the plan's own are the same action, so deduplication removes one —
+    // which is why the insertion runs before the dedupe rather than after.
+    const out = sanitizePlan(
+      [step("Fill", fill("Name", "Ada"), "the Name field shows Ada"), nav("https://grants.example.org/demo")],
+      { startUrl: "https://grants.example.org/demo" },
+    );
+    expect(out.steps.filter((s) => s.action.kind === "navigate")).toHaveLength(1);
+    expect(out.steps[0]!.action.kind, "the navigation must come FIRST, not merely exist").toBe("navigate");
+  });
+
+  it("inserts when the plan navigates somewhere else entirely", () => {
+    const out = sanitizePlan([nav("https://elsewhere.example.com/")], { startUrl: "https://grants.example.org/demo" });
+    expect((out.steps[0]!.action as { url: string }).url).toBe("https://grants.example.org/demo");
+  });
+
+  it("its own proof criterion is not self-certifying", () => {
+    // The inserted step has to survive the very check this module applies to everything else —
+    // "navigated successfully" would restate the action and be dropped, leaving the mission with
+    // no navigation at all and the bug reintroduced by the fix for it.
+    const out = sanitizePlan([step("Fill", fill("Name", "Ada"), "the Name field shows Ada")], {
+      startUrl: "https://grants.example.org/demo",
+    });
+    expect(out.steps[0]!.action.kind).toBe("navigate");
+    expect(out.dropped).toHaveLength(0);
+  });
+
+  it("does nothing when the mission has no starting URL", () => {
+    const out = sanitizePlan([step("Fill", fill("Name", "Ada"), "the Name field shows Ada")]);
+    expect(out.steps).toHaveLength(1);
+  });
+
+  it("survives a malformed startUrl rather than taking the mission down", () => {
+    const out = sanitizePlan([step("Fill", fill("Name", "Ada"), "the Name field shows Ada")], { startUrl: "not a url" });
+    expect(out.steps).toHaveLength(1);
   });
 });
