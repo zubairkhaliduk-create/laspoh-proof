@@ -20,9 +20,9 @@ A phase reaches VERIFIED_COMPLETE only with evidence recorded below it.
 | 06 | Executor abstraction | VERIFIED_COMPLETE |
 | 07 | New reference executor | VERIFIED_COMPLETE |
 | 08 | Optional Laspoh executor adapter | VERIFIED_COMPLETE |
-| 09 | Evidence collection system | IN_PROGRESS |
-| 10 | Independent verifier | NOT_STARTED |
-| 11 | Receipts & truthful completion | NOT_STARTED |
+| 09 | Evidence collection system | VERIFIED_COMPLETE |
+| 10 | Independent verifier | VERIFIED_COMPLETE |
+| 11 | Receipts & truthful completion | IN_PROGRESS |
 | 12 | Failure recovery & loop defense | NOT_STARTED |
 | 13 | Security & trust boundaries | NOT_STARTED |
 | 14 | Observability & audit trail | NOT_STARTED |
@@ -411,3 +411,48 @@ non-empty string. Now `raw.ok === true`, strictly, with a test enumerating the s
 
 ### Next phase
 Phase 09 — evidence, audited as first-class architecture rather than debugging metadata.
+
+---
+
+## PHASE 09 / 10 — Evidence and the Independent Verifier
+
+**Status:** VERIFIED_COMPLETE
+**Specification:** `mission/PHASE_10_INDEPENDENT_VERIFIER.md`
+
+### Phase 09 — evidence carries its own provenance
+Evidence now records **which executor produced it and whether that executor is pre-existing work**.
+Provenance on the evidence itself, not only in the receipt's summary: a receipt can be regenerated,
+and evidence gathered through a disclosed pre-existing runtime must carry that fact wherever it
+travels.
+
+### Phase 10 — the gap that mattered
+`enforceCitation` checked that a citation EXISTED. It never checked that the cited text appeared
+anywhere in the evidence — so a model could invent *"Confirmation reference: GR-000000"* and the
+verdict stood on it.
+
+Every other protection assumes the verifier is looking at real evidence: the isolation, the
+disbelief default, the pre-committed criterion. **A fabricated citation defeats all of them at
+once.** It is precisely what "can evidence be forged?" means, and until this phase the answer was
+yes.
+
+`groundCitations` now asks whether the characters are there. Mechanically — it does not ask a model
+whether the quote is fair, because asking a model to police a model moves the problem up a level
+rather than solving it. Normalised for case and wrapping, because a model that quotes accurately
+and re-wraps a line has fabricated nothing; verbatim beyond that.
+
+**A fabricated quote poisons the whole verdict**, rather than being dropped while the rest stands.
+A verifier that invented one quote will assert what the evidence does not contain, and the
+remaining citations came from the same answer.
+
+### Tests
+`106 passed` (was 91; +15 adversarial). No model involved in any of them, deliberately.
+
+### Residual risk, recorded rather than glossed
+A verifier that quotes **real** evidence but reasons badly about it — citing a genuine sentence
+that does not actually establish the criterion — is not caught by grounding. Grounding proves the
+quote is real, not that it is sufficient. That judgement stays with the model; the mitigations are
+isolation, the pre-committed criterion (Phase 04 stops it being self-certifying), and disbelief by
+default. This is the honest limit of the design.
+
+### Next phase
+Phase 11 — receipts, so all of this reaches the reader.

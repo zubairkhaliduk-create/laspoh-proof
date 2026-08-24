@@ -50,6 +50,55 @@ const ModelVerdictSchema = VerdictSchema.extend({
 });
 
 /**
+ * IS THIS QUOTE ACTUALLY IN THE EVIDENCE?
+ *
+ * `enforceCitation` used to check that a citation EXISTED. It never checked that the cited text
+ * appeared anywhere in the evidence — so a model could invent a plausible quote ("Confirmation
+ * reference: GR-000000") and the verdict stood on it. Every other guard in this system assumes the
+ * verifier is looking at real evidence; a fabricated citation defeats all of them at once, and
+ * it is precisely what a judge means by "can evidence be forged?".
+ *
+ * The check is deliberately mechanical. It does not ask a model whether the quote is fair, because
+ * asking a model to police a model reintroduces the problem one level up. It asks whether the
+ * characters are there.
+ *
+ * Matching is normalised — lowercase, whitespace collapsed, surrounding punctuation stripped —
+ * because a model that quotes accurately but re-wraps a line has not fabricated anything, and
+ * failing it would train the system to distrust honest work. Beyond that it is verbatim, which is
+ * exactly what the verifier is instructed to produce.
+ */
+const normaliseForMatch = (t: string): string =>
+  t.toLowerCase().replace(/[\s\u00a0]+/g, " ").replace(/^["'`\u201c\u201d\s.,:;-]+|["'`\u201c\u201d\s.,:;-]+$/g, "").trim();
+
+/** Everything the verifier was actually shown, as one searchable body. */
+export function evidenceCorpus(evidence: readonly Evidence[]): string {
+  return normaliseForMatch(
+    evidence
+      .map((e) => [e.excerpt, e.formState.join(" | "), e.identifiers.join(" "), e.url].join(" "))
+      .join(" "),
+  );
+}
+
+export interface GroundingResult {
+  grounded: string[];
+  fabricated: string[];
+}
+
+export function groundCitations(citations: readonly string[], evidence: readonly Evidence[]): GroundingResult {
+  const corpus = evidenceCorpus(evidence);
+  const grounded: string[] = [];
+  const fabricated: string[] = [];
+  for (const c of citations) {
+    const n = normaliseForMatch(c);
+    // Too short to be a meaningful quote — and a two-character "quote" would match almost any
+    // corpus, so accepting it would make the whole check decorative.
+    if (n.length < 4) { fabricated.push(c); continue; }
+    (corpus.includes(n) ? grounded : fabricated).push(c);
+  }
+  return { grounded, fabricated };
+}
+
+/**
  * THE CITATION RULE, enforced in code.
  *
  * "Proven" means the evidence says so, and a verdict that cannot quote the evidence has not shown
@@ -60,10 +109,29 @@ const ModelVerdictSchema = VerdictSchema.extend({
  *
  * Pure and exported so the guarantee can be tested without a model in the loop.
  */
-export function enforceCitation(v: { verdict: Verdict["verdict"]; citedEvidence?: string[]; reasoning?: string }): Verdict {
+export function enforceCitation(
+  v: { verdict: Verdict["verdict"]; citedEvidence?: string[]; reasoning?: string },
+  evidence: readonly Evidence[] = [],
+): Verdict {
   const citedEvidence = (v.citedEvidence ?? []).filter((c) => c.trim().length > 0);
   if (v.verdict === "proven" && citedEvidence.length === 0) {
     return { verdict: "unproven", citedEvidence: [], reasoning: `verifier claimed proven without citing evidence; downgraded. original reasoning: ${v.reasoning?.trim() || "(none given)"}` };
+  }
+  // A FABRICATED QUOTE POISONS THE WHOLE VERDICT.
+  //
+  // Not "drop the bad citation and keep the rest": a verifier that invented one quote has shown it
+  // will assert things the evidence does not contain, and the remaining citations come from the
+  // same answer. False negatives are cheap here and false completion is the failure this project
+  // exists to prevent, so the verdict goes down whole.
+  if (v.verdict === "proven" && evidence.length > 0) {
+    const { fabricated } = groundCitations(citedEvidence, evidence);
+    if (fabricated.length > 0) {
+      return {
+        verdict: "unproven",
+        citedEvidence: [],
+        reasoning: `verifier cited text that does not appear in the evidence (${fabricated.map((f) => `"${f.slice(0, 60)}"`).join(", ")}); downgraded. original reasoning: ${v.reasoning?.trim() || "(none given)"}`,
+      };
+    }
   }
   return { verdict: v.verdict, citedEvidence, reasoning: v.reasoning ?? "" };
 }
@@ -125,6 +193,6 @@ Rules you must follow:
     }
     // A "proven" verdict that cites nothing is not proven. Enforced in code so the guarantee does
     // not depend on the model choosing to honour it.
-    return enforceCitation(output);
+    return enforceCitation(output, evidence as Evidence[]);
   },
 );

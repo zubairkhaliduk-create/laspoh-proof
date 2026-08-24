@@ -22,11 +22,21 @@ export interface Evidence {
   formState: string[];
   /** Hash of the full observed text, so truncation can never be mistaken for tampering. */
   sha256: string;
+  /** WHICH executor produced this, and whether that executor is pre-existing work.
+   *  Provenance belongs on the evidence itself, not only on the receipt's summary: a receipt can
+   *  be regenerated, and evidence gathered through a disclosed pre-existing runtime must carry
+   *  that fact with it wherever it travels. */
+  producedBy: { executor: string; preExisting: boolean };
 }
 
 const MAX_EXCERPT = 1200;
 
-export function recordEvidence(stepId: string, action: Action, obs: Observation): Evidence {
+export function recordEvidence(
+  stepId: string,
+  action: Action,
+  obs: Observation,
+  producedBy: { executor: string; preExisting: boolean } = { executor: "unknown", preExisting: false },
+): Evidence {
   const full = obs.pageText ?? "";
   const formState = obs.formState ?? [];
   // The hash covers the form state too: it is evidence, so it must be as tamper-evident as the text.
@@ -41,5 +51,6 @@ export function recordEvidence(stepId: string, action: Action, obs: Observation)
     identifiers: obs.identifiers ?? [],
     formState,
     sha256,
+    producedBy,
   };
 }

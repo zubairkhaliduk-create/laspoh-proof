@@ -204,7 +204,7 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
     // evidence, exactly as if the action had run. The only thing saved is a pointless action; the
     // burden of proof is unchanged.
     if (alreadySatisfied(step.action, lastObs)) {
-      const ev = recordEvidence(step.id, step.action, lastObs as Observation);
+      const ev = recordEvidence(step.id, step.action, lastObs as Observation, { executor: executor.name, preExisting: executor.preExisting });
       evidence.push(ev);
       const v = await verifyFlow({ criterion: criteria.get(step.id) ?? step.intent, evidence: [ev] });
       verdicts.set(step.id, v);
@@ -228,7 +228,7 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
     worldChanged = obs.ok;
     lastObs = obs;
 
-    const ev = recordEvidence(step.id, step.action, obs);
+    const ev = recordEvidence(step.id, step.action, obs, { executor: executor.name, preExisting: executor.preExisting });
     evidence.push(ev);
     state = {
       ...state,
