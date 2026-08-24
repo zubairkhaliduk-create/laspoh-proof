@@ -22,8 +22,42 @@ export const StepStatus = z.enum([
   "proven",    // an independent verifier confirmed it from evidence
   "failed",    // attempted, and provably did not achieve its intent
   "skipped",   // deliberately abandoned, with a reason
+  // COULD NOT BE ATTEMPTED — which is a different fact from having tried and failed, and the
+  // receipt should not blur them. A missing input, a policy refusal or an unavailable executor
+  // means the work never happened; recording that as `failed` claims an attempt that was never
+  // made, and leaves the reason string doing a job the type should do.
+  "blocked",
 ]);
 export type StepStatus = z.infer<typeof StepStatus>;
+
+/**
+ * WHY A FAILURE IS TYPED RATHER THAN PROSE.
+ *
+ * `reason` is for a human. Recovery needs to know one thing prose cannot reliably carry: is
+ * another attempt meaningful at all? A transport blip and "there is no such control on this page"
+ * both read as failures and deserve opposite treatment, and re-deriving that from a string is how
+ * a recovery loop ends up retrying something that can never work.
+ *
+ * `retryable` is a FACT about the failure, not a decision. Whether to actually retry stays with
+ * the recovery policy, which is the only component that knows what else has been tried.
+ */
+export const FailureSchema = z.object({
+  class: z.enum([
+    "not_found", "not_actionable", "no_effect", "value_discarded",
+    "navigation_failed", "transport", "policy_refused", "missing_input",
+  ]),
+  detail: z.string().default(""),
+  retryable: z.boolean(),
+});
+export type Failure = z.infer<typeof FailureSchema>;
+
+/** Which failure classes are worth another attempt. Transport and timing problems can clear;
+ *  a control that does not exist will not come into existence because we asked twice. */
+export const RETRYABLE_FAILURES: ReadonlySet<Failure["class"]> = new Set(["transport", "no_effect", "navigation_failed"]);
+
+export function classifyFailure(cls: Failure["class"], detail = ""): Failure {
+  return { class: cls, detail, retryable: RETRYABLE_FAILURES.has(cls) };
+}
 
 export const StepSchema = z.object({
   id: z.string(),
@@ -34,6 +68,9 @@ export const StepSchema = z.object({
   lastObservation: z.custom<Observation>().nullable().default(null),
   /** Why it is not `proven`, in the system's own words. Never blank when status is failed/skipped. */
   reason: z.string().default(""),
+  /** The typed failure, when there is one. Carries retryability so recovery does not have to
+   *  guess it from `reason`. */
+  failure: FailureSchema.nullable().default(null),
 });
 export type Step = z.infer<typeof StepSchema>;
 
@@ -72,16 +109,32 @@ export function attemptedCount(s: MissionState): number {
   return s.steps.filter((x) => x.status === "attempted").length;
 }
 
+/** Work that never happened, for either reason. Reported, because a mission that skipped most of
+ *  its steps and proved one is not meaningfully "partial" in the way that word suggests. */
+export function unattemptedCount(s: MissionState): number {
+  return s.steps.filter((x) => x.status === "skipped" || x.status === "blocked").length;
+}
+
 /**
  * The honest terminal status. `complete` requires EVERY step proven — a partial result is
  * `partial` with the real number, never a green tick over an incomplete run. `blocked` is for a
  * mission that cannot proceed at all, which is a different fact from having done some of the work.
  */
 export function terminalStatus(s: MissionState): MissionStatus {
+  if (s.steps.length === 0) return "blocked";
   const proven = provenCount(s);
-  if (s.steps.length > 0 && proven === s.steps.length) return "complete";
-  if (proven > 0) return "partial";
-  return "blocked";
+  // `complete` requires EVERY step proven. Written as "no step is unproven" rather than a count
+  // comparison so that adding a status later cannot quietly widen what counts as success — a new
+  // status is unproven by default, which is the safe direction.
+  const allProven = s.steps.every((x) => x.status === "proven");
+  if (allProven) return "complete";
+  if (proven === 0) return "blocked";
+  // Proven work exists, so this is genuinely partial — but if NOTHING was ever attempted beyond
+  // what was proven, and the rest was skipped or blocked, say blocked instead of dressing it as
+  // progress. A mission that proved one step and never tried the other nine is not "partial" in
+  // any sense the reader would recognise.
+  if (unattemptedCount(s) === s.steps.length - proven && proven * 2 < s.steps.length) return "blocked";
+  return "partial";
 }
 
 /** Advance the no-progress counter. Cleared ONLY by proven work rising — page changes, dispatched

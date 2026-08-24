@@ -8,12 +8,12 @@
 import { describe, expect, it } from "vitest";
 import { enforceCitation } from "../src/flows/verify.js";
 import { alreadySatisfied, unaddressedRequired } from "../src/core/orchestrator.js";
-import { newMission, noteStep, provenCount, terminalStatus, type MissionState, type Step } from "../src/core/state.js";
+import { classifyFailure, newMission, noteStep, provenCount, terminalStatus, unattemptedCount, type MissionState, type Step, type StepStatus } from "../src/core/state.js";
 import { decide } from "../src/core/recovery.js";
 import type { Action } from "../src/executors/types.js";
 
 const step = (over: Partial<Step> & { id: string }): Step => ({
-  intent: "", action: { kind: "inspect" }, status: "pending", attempts: 0, lastObservation: null, reason: "", ...over,
+  intent: "", action: { kind: "inspect" }, status: "pending", attempts: 0, lastObservation: null, reason: "", failure: null, ...over,
 });
 const withSteps = (steps: Step[]): MissionState => ({ ...newMission("m", "goal", "reference"), steps });
 
@@ -136,5 +136,83 @@ describe("work the page reports as already done", () => {
   it("never short-circuits navigation or inspection", () => {
     expect(alreadySatisfied({ kind: "navigate", url: "https://example.com/" }, obs(["Full name = Ada Lovelace"]))).toBe(false);
     expect(alreadySatisfied({ kind: "inspect" }, obs(["Full name = Ada Lovelace"]))).toBe(false);
+  });
+});
+
+describe("completion is a property, not a happy path", () => {
+  const ALL: StepStatus[] = ["pending", "attempted", "proven", "failed", "skipped", "blocked"];
+  const s = (status: StepStatus, id: string) => step({ id, status });
+
+  it("NO combination containing a non-proven step can ever report complete", () => {
+    // Exhaustive rather than illustrative. An example test passes for the case someone thought of;
+    // this one passes for every case, INCLUDING statuses added later — a new status is unproven by
+    // default, so widening the union cannot quietly widen what counts as success.
+    for (const a of ALL) {
+      for (const b of ALL) {
+        const state = withSteps([s(a, "1"), s(b, "2")]);
+        const outcome = terminalStatus(state);
+        if (a === "proven" && b === "proven") {
+          expect(outcome, "all-proven must be complete").toBe("complete");
+        } else {
+          expect(outcome, `[${a}, ${b}] reported complete without every step proven`).not.toBe("complete");
+        }
+      }
+    }
+  });
+
+  it("a single unproven step among many defeats completion", () => {
+    for (const bad of ALL.filter((x) => x !== "proven")) {
+      const state = withSteps([...Array.from({ length: 9 }, (_, i) => s("proven", `p${i}`)), s(bad, "x")]);
+      expect(terminalStatus(state), `9 proven + one ${bad} must not be complete`).not.toBe("complete");
+    }
+  });
+
+  it("an empty mission is blocked, never complete — nothing proven is not everything proven", () => {
+    // `every` on an empty array is true, which is exactly how a vacuous truth becomes a false
+    // success claim. Guarded explicitly.
+    expect(terminalStatus(withSteps([]))).toBe("blocked");
+  });
+});
+
+describe("work that never happened is reported as such", () => {
+  it("blocked is a different fact from failed, and neither is progress", () => {
+    const state = withSteps([step({ id: "a", status: "blocked" }), step({ id: "b", status: "failed" })]);
+    expect(provenCount(state)).toBe(0);
+    expect(unattemptedCount(state)).toBe(1); // blocked counts; failed was genuinely attempted
+    expect(terminalStatus(state)).toBe("blocked");
+  });
+
+  it("one proven step among nine never attempted is not dressed up as partial progress", () => {
+    // Technically "partial" is true here, and materially it misleads: the number is right and the
+    // impression is wrong. Most of the work never happened, so say so.
+    const state = withSteps([step({ id: "p", status: "proven" }), ...Array.from({ length: 9 }, (_, i) => step({ id: `s${i}`, status: "skipped" }))]);
+    expect(terminalStatus(state)).toBe("blocked");
+  });
+
+  it("genuine partial work still reports partial", () => {
+    const state = withSteps([
+      step({ id: "a", status: "proven" }), step({ id: "b", status: "proven" }),
+      step({ id: "c", status: "proven" }), step({ id: "d", status: "failed" }),
+    ]);
+    expect(terminalStatus(state)).toBe("partial");
+  });
+});
+
+describe("a failure knows whether trying again is meaningful", () => {
+  it("a control that does not exist will not exist on the second attempt", () => {
+    expect(classifyFailure("not_found").retryable).toBe(false);
+    expect(classifyFailure("policy_refused").retryable).toBe(false);
+    expect(classifyFailure("missing_input").retryable).toBe(false);
+  });
+
+  it("transport and timing problems can clear", () => {
+    expect(classifyFailure("transport").retryable).toBe(true);
+    expect(classifyFailure("navigation_failed").retryable).toBe(true);
+  });
+
+  it("carries the detail for a human without letting control flow parse it", () => {
+    const f = classifyFailure("not_found", 'no field matching "Affiliation"');
+    expect(f.detail).toContain("Affiliation");
+    expect(f.class).toBe("not_found");
   });
 });

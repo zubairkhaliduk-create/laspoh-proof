@@ -13,9 +13,9 @@ A phase reaches VERIFIED_COMPLETE only with evidence recorded below it.
 |---|---|---|
 | 00 | Forensic baseline & eligibility boundary | VERIFIED_COMPLETE |
 | 01 | Project foundation (audit) | VERIFIED_COMPLETE |
-| 02 | Verify & lock the Google stack | IN_PROGRESS |
-| 03 | Core domain model & mission state machine | NOT_STARTED |
-| 04 | Gemini + Genkit mission orchestrator | NOT_STARTED |
+| 02 | Verify & lock the Google stack | PARTIAL (deploy blocked, UA-004) |
+| 03 | Core domain model & mission state machine | VERIFIED_COMPLETE |
+| 04 | Gemini + Genkit mission orchestrator | IN_PROGRESS |
 | 05 | Persistent state & checkpointing | NOT_STARTED |
 | 06 | Executor abstraction | NOT_STARTED |
 | 07 | New reference executor | NOT_STARTED |
@@ -180,3 +180,87 @@ date and the absence of pre-period history directly.
 ### Next phase
 Phase 02 — verify and lock the Google stack against current official sources rather than
 assumption, and prove the qualifying foundation end to end.
+
+---
+
+## PHASE 02 — Verify and Lock the Google Stack
+
+**Status:** PARTIAL — code complete and locally verified; deployment blocked on UA-004
+**Specification:** `mission/PHASE_02_GOOGLE_STACK.md`
+**Commit:** `0d18b61`
+
+### Finding that changed the plan
+`@genkit-ai/vertexai` and `@genkit-ai/googleai` are **superseded** by the unified
+`@genkit-ai/google-genai`. Evidence, strongest first:
+
+1. **Our own runtime.** Every cold start of the sibling service prints: *"The @genkit-ai/vertexai
+   plugin is deprecated and will be REMOVED in a future release — migrate to
+   @genkit-ai/google-genai."*
+2. `npm view @genkit-ai/google-genai version` → **1.41.0**, same as the rest of the stack;
+   description: "Genkit AI framework plugin for Google AI & Vertex APIs".
+3. genkit.dev's Vertex AI page documents the unified package as the one to install.
+
+Also recorded, because it constrains future design rather than today's code: the JS plugins do not
+yet persist Gemini 3 `thought_signature` across turns and return 400 on multi-turn reasoning. All
+three flows here are single-turn, so it does not apply — but it is why "use the newest model" is
+not automatically correct.
+
+### Implementation
+One file. `src/genkit.ts` is the only vendor-aware module, so nothing above it changed — that is
+what the seam was for, and this migration is the first real test of it.
+
+### Verified
+`45 tests green` (at the time of migration) · typecheck clean · lint clean.
+
+### NOT verified — stated plainly
+The migration has **not** been exercised against a live model. That needs the deployed service,
+and deployment is blocked: the hackathon project `laspoh-proof-260823` belongs to
+**zubair@samstar.org**, whose token and ADC have both expired. The other account on this machine
+(`zubair@blissio.ai`) is **refused** by the project — checked, not assumed:
+`ERROR: does not have permission to access projects instance [laspoh-proof-260823]`.
+
+The deployed service remains up on the previous revision (HTTP 200), so nothing is down.
+
+### Blocked
+**UA-004** — `gcloud auth login` AND `gcloud auth application-default login` as zubair@samstar.org.
+
+---
+
+## PHASE 03 — Core Domain Model & Mission State Machine
+
+**Status:** VERIFIED_COMPLETE
+**Specification:** `mission/PHASE_03_DOMAIN_MODEL.md`
+
+### Gaps found by auditing every transition, and closed
+
+| # | Gap | Closure |
+|---|---|---|
+| G1 | No `blocked` status — work that could not be attempted was recorded as `failed` | `blocked` added; distinct in type and in the terminal status |
+| G2 | Failures were prose only | Typed `Failure { class, detail, retryable }`; `classifyFailure` decides retryability from the class |
+| G3 | `terminalStatus` passed over skipped work | A mission whose unproven steps were never attempted, and which proved less than half, reports `blocked` rather than `partial` |
+| G4 | Completion tested by example | Replaced with an **exhaustive property test** |
+
+### The property that now holds
+`complete` is written as *"no step is unproven"* rather than a count comparison, so adding a status
+later cannot quietly widen success — a new status is unproven by default, which is the safe
+direction. The test enumerates every pair over the six-status set (36 combinations) and asserts
+`complete` appears only for all-proven.
+
+Also guarded: an **empty** mission. `[].every(...)` is `true`, which is exactly how a vacuous truth
+becomes a false success claim.
+
+### Tests
+`54 passed` (was 45; +9). Typecheck clean, lint clean.
+
+### Eligibility implications
+None — internal to the new code. No pre-existing dependency touched.
+
+### Outstanding risks
+1. New statuses are not yet persisted anywhere (state is in memory) → Phase 05.
+2. `blocked` is defined and enforced but the orchestrator does not yet emit it for policy refusals
+   or missing input; those paths arrive with Phase 12/13. Recorded so the gap is not mistaken for
+   completeness.
+
+### Next phase
+Phase 04 — audit the Genkit/Gemini orchestrator against its specification, with adversarial tests
+for malformed output, hallucinated actions and impossible plans.

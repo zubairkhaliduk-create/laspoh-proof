@@ -18,7 +18,7 @@ import type { Action, Executor, Observation } from "../executors/types.js";
 import { type Evidence, recordEvidence } from "./evidence.js";
 import { decide } from "./recovery.js";
 import { buildReceipt, type Receipt } from "./receipt.js";
-import { type MissionState, newMission, noteStep, provenCount, terminalStatus } from "./state.js";
+import { classifyFailure, type MissionState, newMission, noteStep, provenCount, terminalStatus } from "./state.js";
 import { planFlow } from "../flows/plan.js";
 import { repairFlow } from "../flows/repair.js";
 import { verifyFlow } from "../flows/verify.js";
@@ -122,7 +122,7 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
     steps: plan.steps.map((s, i) => {
       const id = `s${i + 1}`;
       criteria.set(id, s.provenBy);
-      return { id, intent: s.intent, action: s.action, status: "pending" as const, attempts: 0, lastObservation: null, reason: "" };
+      return { id, intent: s.intent, action: s.action, status: "pending" as const, attempts: 0, lastObservation: null, reason: "", failure: null };
     }),
   };
   emit({ type: "plan.ready", understanding: plan.understanding, steps: state.steps.map((s) => ({ id: s.id, intent: s.intent, provenBy: criteria.get(s.id) })) });
@@ -163,7 +163,7 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
           const inserted = repair.steps.map((r, i) => {
             const id = `r${repairRounds}.${i + 1}`;
             criteria.set(id, r.provenBy);
-            return { id, intent: r.intent, action: r.action, status: "pending" as const, attempts: 0, lastObservation: null, reason: "" };
+            return { id, intent: r.intent, action: r.action, status: "pending" as const, attempts: 0, lastObservation: null, reason: "", failure: null };
           });
           state = { ...state, steps: [...state.steps.slice(0, at), ...inserted, ...state.steps.slice(at)] };
           emit({ type: "repair.inserted", outstanding: unaddressed, steps: inserted.map((s) => ({ id: s.id, intent: s.intent, action: s.action })) });
@@ -225,7 +225,20 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
     state = {
       ...state,
       evidenceIds: [...state.evidenceIds, ev.id],
-      steps: state.steps.map((s) => (s.id === step.id ? { ...s, attempts: s.attempts + 1, lastObservation: obs, status: obs.ok ? "attempted" : "failed", reason: obs.ok ? "" : `${obs.failure ?? "unknown"}: ${obs.detail}` } : s)),
+      steps: state.steps.map((s) =>
+        s.id === step.id
+          ? {
+              ...s,
+              attempts: s.attempts + 1,
+              lastObservation: obs,
+              status: obs.ok ? ("attempted" as const) : ("failed" as const),
+              reason: obs.ok ? "" : `${obs.failure ?? "unknown"}: ${obs.detail}`,
+              // The typed failure rides alongside the prose so recovery can read retryability
+              // instead of pattern-matching a sentence.
+              failure: obs.ok ? null : classifyFailure(obs.failure ?? "transport", obs.detail),
+            }
+          : s,
+      ),
     };
     emit({ type: "step.observed", id: step.id, ok: obs.ok, failure: obs.failure, detail: obs.detail, outstandingRequired: obs.outstandingRequired });
 
