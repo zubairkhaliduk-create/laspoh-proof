@@ -10,16 +10,19 @@ importers:
     dependencies:
       '@genkit-ai/express':
         specifier: ^1.41.0
-        version: 1.41.0(express@5.2.1)(genkit@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0))
+        version: 1.41.0(express@5.2.1)(genkit@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0))
       '@genkit-ai/google-genai':
         specifier: ^1.41.0
-        version: 1.41.0(genkit@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0))
+        version: 1.41.0(genkit@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0))
+      '@google-cloud/firestore':
+        specifier: ^9.0.0
+        version: 9.0.0
       express:
         specifier: ^5.2.1
         version: 5.2.1
       genkit:
         specifier: ^1.41.0
-        version: 1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0)
+        version: 1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0)
       pg:
         specifier: ^8.23.0
         version: 8.23.0
@@ -300,6 +303,10 @@ packages:
     resolution: {integrity: sha512-Ohjxjvusr65+SiEVBrilpyn1ir9CM8ZqWjcf7bA8ph1GCunxI6bbwtcl7iGl67A7Lr4Nz7WpNzITNETwggc7pw==}
     engines: {node: '>=18'}
 
+  '@google-cloud/firestore-api@0.2.0':
+    resolution: {integrity: sha512-wfHJPZmLqzpy6FN6U+7HkkP/AKhGsbHSpEy/qL2TyI3/pKRAvpamQxZ2qvps5hMRgAjfuHCim+oeJj9RveCaqg==}
+    engines: {node: '>=18'}
+
   '@google-cloud/firestore@7.11.6':
     resolution: {integrity: sha512-EW/O8ktzwLfyWBOsNuhRoMi8lrC3clHM5LVFhGvO1HCsLozCOOXRAlHrYBoE6HL42Sc8yYMuCb2XqcnJ4OOEpw==}
     engines: {node: '>=14.0.0'}
@@ -307,6 +314,10 @@ packages:
   '@google-cloud/firestore@8.7.1':
     resolution: {integrity: sha512-Hp/WI8sH569ANitsko6RNvCUkzTCYudHoINOkQjiJq2FBG6kKnofBAW7PtS823cu6RMxHqK2RxRcspdjrRpUFA==}
     engines: {node: '>=18'}
+
+  '@google-cloud/firestore@9.0.0':
+    resolution: {integrity: sha512-EMEIJ4YaH+QotasSq+6mx5nw/99bSdcpG+jqlM7+ViKi3OnvhFKwtlj4dDqNpKt2F7gedcDCwrCWljdJ0ms+KA==}
+    engines: {node: '>=22'}
 
   '@google-cloud/logging-api@0.2.0':
     resolution: {integrity: sha512-VQ9YohbLMh4wtWfrXLRfEbAjy8JyC1OSXA6dX/A2hpB/0sqnb/97Hs+Ai2fR8t83V4c3u1l2G7CPVuZN8wlG+A==}
@@ -3012,9 +3023,9 @@ snapshots:
       tslib: 2.8.1
     optional: true
 
-  '@genkit-ai/ai@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0)(genkit@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0))':
+  '@genkit-ai/ai@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0)(genkit@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0))':
     dependencies:
-      '@genkit-ai/core': 1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0)(genkit@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0))
+      '@genkit-ai/core': 1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0)(genkit@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0))
       '@opentelemetry/api': 1.9.1
       '@types/node': 20.19.43
       colorette: 2.0.20
@@ -3035,7 +3046,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@genkit-ai/core@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0)(genkit@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0))':
+  '@genkit-ai/core@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0)(genkit@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0))':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/api-logs': 0.52.1
@@ -3059,7 +3070,7 @@ snapshots:
       zod-to-json-schema: 3.25.2(zod@3.25.76)
     optionalDependencies:
       '@cfworker/json-schema': 4.1.1
-      '@genkit-ai/firebase': 1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0)(genkit@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0))
+      '@genkit-ai/firebase': 1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0)(genkit@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0))
     transitivePeerDependencies:
       - '@google-cloud/firestore'
       - bufferutil
@@ -3070,27 +3081,27 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@genkit-ai/express@1.41.0(express@5.2.1)(genkit@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0))':
+  '@genkit-ai/express@1.41.0(express@5.2.1)(genkit@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0))':
     dependencies:
       body-parser: 1.20.6
       cors: 2.8.6
       express: 5.2.1
-      genkit: 1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0)
+      genkit: 1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0)
     transitivePeerDependencies:
       - supports-color
 
-  '@genkit-ai/firebase@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0)(genkit@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0))':
+  '@genkit-ai/firebase@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0)(genkit@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0))':
     dependencies:
-      '@genkit-ai/google-cloud': 1.41.0(genkit@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0))
-      '@google-cloud/firestore': 8.7.1
+      '@genkit-ai/google-cloud': 1.41.0(genkit@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0))
+      '@google-cloud/firestore': 9.0.0
       firebase-admin: 14.2.0
-      genkit: 1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0)
+      genkit: 1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0)
     transitivePeerDependencies:
       - encoding
       - supports-color
     optional: true
 
-  '@genkit-ai/google-cloud@1.41.0(genkit@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0))':
+  '@genkit-ai/google-cloud@1.41.0(genkit@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0))':
     dependencies:
       '@google-cloud/firestore': 7.11.6
       '@google-cloud/logging-winston': 6.0.2(winston@3.19.0)
@@ -3108,7 +3119,7 @@ snapshots:
       '@opentelemetry/sdk-metrics': 1.25.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-node': 0.52.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-trace-base': 1.25.1(@opentelemetry/api@1.9.1)
-      genkit: 1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0)
+      genkit: 1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0)
       google-auth-library: 9.15.1
       node-fetch: 3.3.2
       winston: 3.19.0
@@ -3117,9 +3128,9 @@ snapshots:
       - supports-color
     optional: true
 
-  '@genkit-ai/google-genai@1.41.0(genkit@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0))':
+  '@genkit-ai/google-genai@1.41.0(genkit@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0))':
     dependencies:
-      genkit: 1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0)
+      genkit: 1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0)
       google-auth-library: 9.15.1
       jsonpath-plus: 10.4.0
     transitivePeerDependencies:
@@ -3140,6 +3151,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
     optional: true
+
+  '@google-cloud/firestore-api@0.2.0':
+    dependencies:
+      google-gax: 5.0.8
+    transitivePeerDependencies:
+      - supports-color
 
   '@google-cloud/firestore@7.11.6':
     dependencies:
@@ -3163,6 +3180,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
     optional: true
+
+  '@google-cloud/firestore@9.0.0':
+    dependencies:
+      '@google-cloud/firestore-api': 0.2.0
+      '@opentelemetry/api': 1.9.1
+      fast-deep-equal: 3.1.3
+      functional-red-black-tree: 1.0.1
+      google-gax: 5.0.8
+      protobufjs: 7.6.5
+    transitivePeerDependencies:
+      - supports-color
 
   '@google-cloud/logging-api@0.2.0':
     dependencies:
@@ -3318,7 +3346,6 @@ snapshots:
       strip-ansi-cjs: strip-ansi@6.0.1
       wrap-ansi: 8.1.0
       wrap-ansi-cjs: wrap-ansi@7.0.0
-    optional: true
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
@@ -4409,15 +4436,13 @@ snapshots:
 
   ansi-regex@5.0.1: {}
 
-  ansi-regex@6.3.0:
-    optional: true
+  ansi-regex@6.3.0: {}
 
   ansi-styles@4.3.0:
     dependencies:
       color-convert: 2.0.1
 
-  ansi-styles@6.2.3:
-    optional: true
+  ansi-styles@6.2.3: {}
 
   anynum@1.0.1:
     optional: true
@@ -4444,8 +4469,7 @@ snapshots:
   asynckit@0.4.0:
     optional: true
 
-  balanced-match@1.0.2:
-    optional: true
+  balanced-match@1.0.2: {}
 
   base64-js@1.5.1: {}
 
@@ -4485,7 +4509,6 @@ snapshots:
   brace-expansion@2.1.4:
     dependencies:
       balanced-match: 1.0.2
-    optional: true
 
   buffer-equal-constant-time@1.0.1: {}
 
@@ -4571,7 +4594,6 @@ snapshots:
       path-key: 3.1.1
       shebang-command: 2.0.0
       which: 2.0.2
-    optional: true
 
   data-uri-to-buffer@4.0.1: {}
 
@@ -4614,10 +4636,8 @@ snapshots:
       inherits: 2.0.4
       readable-stream: 3.6.2
       stream-shift: 1.0.3
-    optional: true
 
-  eastasianwidth@0.2.0:
-    optional: true
+  eastasianwidth@0.2.0: {}
 
   ecdsa-sig-formatter@1.0.11:
     dependencies:
@@ -4627,8 +4647,7 @@ snapshots:
 
   emoji-regex@8.0.0: {}
 
-  emoji-regex@9.2.2:
-    optional: true
+  emoji-regex@9.2.2: {}
 
   enabled@2.0.0:
     optional: true
@@ -4638,7 +4657,6 @@ snapshots:
   end-of-stream@1.4.5:
     dependencies:
       once: 1.4.0
-    optional: true
 
   es-define-property@1.0.1: {}
 
@@ -4859,7 +4877,6 @@ snapshots:
     dependencies:
       cross-spawn: 7.0.6
       signal-exit: 4.1.0
-    optional: true
 
   form-data@2.5.6:
     dependencies:
@@ -4886,8 +4903,7 @@ snapshots:
 
   function-bind@1.1.2: {}
 
-  functional-red-black-tree@1.0.1:
-    optional: true
+  functional-red-black-tree@1.0.1: {}
 
   gaxios@6.7.1:
     dependencies:
@@ -4908,7 +4924,6 @@ snapshots:
       rimraf: 5.0.10
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   gaxios@7.3.1:
     dependencies:
@@ -4917,7 +4932,6 @@ snapshots:
       node-fetch: 3.3.2
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   gcp-metadata@6.1.1:
     dependencies:
@@ -4944,12 +4958,11 @@ snapshots:
       json-bigint: 1.0.0
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
-  genkit@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0):
+  genkit@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0):
     dependencies:
-      '@genkit-ai/ai': 1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0)(genkit@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0))
-      '@genkit-ai/core': 1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0)(genkit@1.41.0(@google-cloud/firestore@8.7.1)(firebase-admin@14.2.0))
+      '@genkit-ai/ai': 1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0)(genkit@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0))
+      '@genkit-ai/core': 1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0)(genkit@1.41.0(@google-cloud/firestore@9.0.0)(firebase-admin@14.2.0))
       uuid: 10.0.0
     transitivePeerDependencies:
       - '@google-cloud/firestore'
@@ -4990,7 +5003,6 @@ snapshots:
       minipass: 7.1.3
       package-json-from-dist: 1.0.1
       path-scurry: 1.11.1
-    optional: true
 
   google-auth-library@10.5.0:
     dependencies:
@@ -5003,7 +5015,6 @@ snapshots:
       jws: 4.0.1
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   google-auth-library@10.9.1:
     dependencies:
@@ -5063,12 +5074,10 @@ snapshots:
       rimraf: 5.0.10
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   google-logging-utils@0.0.2: {}
 
-  google-logging-utils@1.1.3:
-    optional: true
+  google-logging-utils@1.1.3: {}
 
   googleapis-common@7.2.0:
     dependencies:
@@ -5108,7 +5117,6 @@ snapshots:
       jws: 4.0.1
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   handlebars@4.7.9:
     dependencies:
@@ -5159,7 +5167,6 @@ snapshots:
       debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   https-proxy-agent@5.0.1:
     dependencies:
@@ -5211,15 +5218,13 @@ snapshots:
   is-unsafe@2.0.2:
     optional: true
 
-  isexe@2.0.0:
-    optional: true
+  isexe@2.0.0: {}
 
   jackspeak@3.4.3:
     dependencies:
       '@isaacs/cliui': 8.0.2
     optionalDependencies:
       '@pkgjs/parseargs': 0.11.0
-    optional: true
 
   jose@6.2.9:
     optional: true
@@ -5377,8 +5382,7 @@ snapshots:
 
   long@5.3.2: {}
 
-  lru-cache@10.4.3:
-    optional: true
+  lru-cache@10.4.3: {}
 
   lru-cache@11.5.2:
     optional: true
@@ -5425,12 +5429,10 @@ snapshots:
   minimatch@9.0.9:
     dependencies:
       brace-expansion: 2.1.4
-    optional: true
 
   minimist@1.2.8: {}
 
-  minipass@7.1.3:
-    optional: true
+  minipass@7.1.3: {}
 
   module-details-from-path@1.0.4: {}
 
@@ -5460,8 +5462,7 @@ snapshots:
 
   object-assign@4.1.1: {}
 
-  object-hash@3.0.0:
-    optional: true
+  object-hash@3.0.0: {}
 
   object-inspect@1.13.4: {}
 
@@ -5507,8 +5508,7 @@ snapshots:
       yocto-queue: 0.1.0
     optional: true
 
-  package-json-from-dist@1.0.1:
-    optional: true
+  package-json-from-dist@1.0.1: {}
 
   parseurl@1.3.3: {}
 
@@ -5517,8 +5517,7 @@ snapshots:
   path-expression-matcher@1.6.2:
     optional: true
 
-  path-key@3.1.1:
-    optional: true
+  path-key@3.1.1: {}
 
   path-parse@1.0.7: {}
 
@@ -5526,7 +5525,6 @@ snapshots:
     dependencies:
       lru-cache: 10.4.3
       minipass: 7.1.3
-    optional: true
 
   path-to-regexp@0.1.13: {}
 
@@ -5599,7 +5597,6 @@ snapshots:
   proto3-json-serializer@3.0.4:
     dependencies:
       protobufjs: 7.6.5
-    optional: true
 
   protobufjs@7.6.5:
     dependencies:
@@ -5661,7 +5658,6 @@ snapshots:
       inherits: 2.0.4
       string_decoder: 1.3.0
       util-deprecate: 1.0.2
-    optional: true
 
   require-directory@2.1.1: {}
 
@@ -5698,7 +5694,6 @@ snapshots:
       teeny-request: 10.1.4
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   retry@0.13.1:
     optional: true
@@ -5706,7 +5701,6 @@ snapshots:
   rimraf@5.0.10:
     dependencies:
       glob: 10.5.0
-    optional: true
 
   rolldown@1.2.5:
     dependencies:
@@ -5805,10 +5799,8 @@ snapshots:
   shebang-command@2.0.0:
     dependencies:
       shebang-regex: 3.0.0
-    optional: true
 
-  shebang-regex@3.0.0:
-    optional: true
+  shebang-regex@3.0.0: {}
 
   shimmer@1.2.1: {}
 
@@ -5842,8 +5834,7 @@ snapshots:
 
   siginfo@2.0.0: {}
 
-  signal-exit@4.1.0:
-    optional: true
+  signal-exit@4.1.0: {}
 
   source-map-js@1.2.1: {}
 
@@ -5863,10 +5854,8 @@ snapshots:
   stream-events@1.0.5:
     dependencies:
       stubs: 3.0.0
-    optional: true
 
-  stream-shift@1.0.3:
-    optional: true
+  stream-shift@1.0.3: {}
 
   string-width@4.2.3:
     dependencies:
@@ -5879,12 +5868,10 @@ snapshots:
       eastasianwidth: 0.2.0
       emoji-regex: 9.2.2
       strip-ansi: 7.2.0
-    optional: true
 
   string_decoder@1.3.0:
     dependencies:
       safe-buffer: 5.2.1
-    optional: true
 
   strip-ansi@6.0.1:
     dependencies:
@@ -5893,15 +5880,13 @@ snapshots:
   strip-ansi@7.2.0:
     dependencies:
       ansi-regex: 6.3.0
-    optional: true
 
   strnum@2.4.2:
     dependencies:
       anynum: 1.0.1
     optional: true
 
-  stubs@3.0.0:
-    optional: true
+  stubs@3.0.0: {}
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
@@ -5913,7 +5898,6 @@ snapshots:
       stream-events: 1.0.5
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   teeny-request@9.0.0:
     dependencies:
@@ -6004,8 +5988,7 @@ snapshots:
   url-template@2.0.8:
     optional: true
 
-  util-deprecate@1.0.2:
-    optional: true
+  util-deprecate@1.0.2: {}
 
   utils-merge@1.0.1: {}
 
@@ -6079,7 +6062,6 @@ snapshots:
   which@2.0.2:
     dependencies:
       isexe: 2.0.0
-    optional: true
 
   why-is-node-running@2.3.0:
     dependencies:
@@ -6121,7 +6103,6 @@ snapshots:
       ansi-styles: 6.2.3
       string-width: 5.1.2
       strip-ansi: 7.2.0
-    optional: true
 
   wrappy@1.0.2: {}
 

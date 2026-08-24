@@ -16,8 +16,8 @@ A phase reaches VERIFIED_COMPLETE only with evidence recorded below it.
 | 02 | Verify & lock the Google stack | PARTIAL (deploy blocked, UA-004) |
 | 03 | Core domain model & mission state machine | VERIFIED_COMPLETE |
 | 04 | Gemini + Genkit mission orchestrator | VERIFIED_COMPLETE |
-| 05 | Persistent state & checkpointing | IN_PROGRESS |
-| 06 | Executor abstraction | NOT_STARTED |
+| 05 | Persistent state & checkpointing | PARTIAL (Firestore unverified until deploy) |
+| 06 | Executor abstraction | IN_PROGRESS |
 | 07 | New reference executor | NOT_STARTED |
 | 08 | Optional Laspoh executor adapter | NOT_STARTED |
 | 09 | Evidence collection system | NOT_STARTED |
@@ -308,3 +308,52 @@ model — a live model produces bad plans unpredictably, and a suite needs them 
 
 ### Next phase
 Phase 05 — durable mission state, so a Cloud Run restart does not lose a mission.
+
+---
+
+## PHASE 05 — Persistent State & Checkpointing
+
+**Status:** PARTIAL — in-memory path verified; Firestore unverified until deployment (UA-004)
+**Specification:** `mission/PHASE_05_PERSISTENT_STATE.md`
+
+### The problem, from observed evidence rather than theory
+Mission state lived in a process-local `Map`. A mission started before a deploy completed on the
+**old** revision while the new one answered `404` for it — which looks exactly like a crash, and
+was misdiagnosed as one for the better part of an hour (Phase 01 evidence). `--max-instances 1`
+existed solely to make in-memory state survivable, so a data-model decision had become a scaling
+ceiling.
+
+### Implementation
+- `MissionStore` — the only persistence surface the server touches
+- `InMemoryStore` — the default; **no cloud, no credentials**, so a judge cloning the repo can run
+  a mission immediately. A project whose quick-start begins "first, set up Firestore" is one most
+  judges will not run.
+- `FirestoreStore` — one document per mission, appends inside a transaction
+- Idempotent creation via `idempotencyKey` / `Idempotency-Key`
+
+### Two design decisions worth stating
+**`appendEvent` is separate from `update`, and `update` strips `events`.** The event list is the
+evidence trail a receipt is built from. An update path able to overwrite it is a path a bug can use
+to erase what happened, in a system whose entire claim is that it only reports what it can prove.
+Tested directly: an update carrying `events: []` leaves the log intact.
+
+**Firestore degrades loudly.** If it cannot be reached the service falls back to memory and says
+so, because a silent downgrade would reintroduce the exact bug this replaces while appearing to
+have fixed it. Connectivity is probed at boot rather than discovered on the first mission.
+
+**Event cap keeps the ends, not the middle.** The beginning explains what the mission set out to
+do and the end explains how it finished; the middle of a runaway mission is the least informative
+part. The dropped count is reported — a store that quietly stops recording lies about what happened.
+
+### Verified
+`76 tests green` (was 65; +11). Typecheck and lint clean. The server boots with **no cloud
+configuration at all** and serves `/health` — checked by actually starting it, not by reasoning.
+
+### NOT verified
+`FirestoreStore` has never talked to Firestore. It is off by default (`MISSION_STORE=firestore`),
+and enabling it in production also needs `roles/datastore.user` added to the runtime service
+account — a deliberate privilege increase, recorded here rather than made quietly. Both blocked on
+UA-004.
+
+### Next phase
+Phase 06 — audit the executor abstraction, the boundary the eligibility argument rests on.

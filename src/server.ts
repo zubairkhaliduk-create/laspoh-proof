@@ -13,8 +13,9 @@ import { LaspohExecutor } from "./executors/laspoh.js";
 import type { Executor } from "./executors/types.js";
 import { runMission } from "./core/orchestrator.js";
 import { modelIdentity } from "./genkit.js";
-import type { Receipt } from "./core/receipt.js";
 import { mountDemoTarget } from "./demo/target.js";
+import { selectStore } from "./store/firestore.js";
+import type { MissionRecord, MissionStore } from "./store/types.js";
 
 // A mission runs AFTER its response has been sent, so any rejection it leaks has no request left to
 // fail — under Node's default it takes the whole process down instead. The service then restarts
@@ -35,8 +36,10 @@ app.use(express.urlencoded({ extended: true }));
 // and cannot be broken by a third party changing their site.
 mountDemoTarget(app);
 
-type Record_ = { id: string; status: string; goal: string; events: unknown[]; receipt: Receipt | null; error: string | null };
-const missions = new Map<string, Record_>();
+// Persistence lives behind one interface (see src/store). The server does not know whether a
+// mission is in a Map or in Firestore, which is what lets the default clone-and-run path need no
+// cloud at all while the deployed service survives a restart.
+const store: MissionStore = await selectStore();
 
 function pickExecutor(name?: string): Executor {
   return name === "laspoh" ? new LaspohExecutor() : new ReferenceExecutor(process.env.HEADFUL !== "1");
@@ -51,16 +54,26 @@ app.get("/health", (_req, res) => {
       { name: "reference", preExisting: false },
       { name: "laspoh", preExisting: true, note: "disclosed pre-existing browser runtime (June 2026), reached over a bridge" },
     ],
-    missions: missions.size,
+    store: store.kind,
   });
 });
 
-app.post("/missions", (req, res) => {
+app.post("/missions", async (req, res) => {
   const goal = String(req.body?.goal ?? "").trim();
   if (!goal) return res.status(400).json({ error: "goal is required" });
+
+  // IDEMPOTENCY. The difference between "the browser retried the request" and "the agent applied
+  // for the same job twice" is one header, and only one of those is recoverable by apologising.
+  const idempotencyKey = String(req.body?.idempotencyKey ?? req.get("idempotency-key") ?? "").trim();
+  if (idempotencyKey) {
+    const existing = await store.findByIdempotencyKey(idempotencyKey);
+    if (existing) return res.status(200).json({ id: existing.id, status: existing.status, poll: `/missions/${existing.id}`, deduplicated: true });
+  }
+
   const id = `m_${randomUUID().slice(0, 8)}`;
-  const rec: Record_ = { id, status: "running", goal, events: [], receipt: null, error: null };
-  missions.set(id, rec);
+  const now = new Date().toISOString();
+  const rec: MissionRecord = { id, status: "running", goal, events: [], receipt: null, error: null, createdAt: now, updatedAt: now, ...(idempotencyKey ? { idempotencyKey } : {}) };
+  await store.create(rec);
 
   const executor = pickExecutor(req.body?.executor);
   // Fire and forget: the mission outlives the request, which is the point.
@@ -71,13 +84,12 @@ app.post("/missions", (req, res) => {
         startUrl: req.body?.startUrl,
         executor,
         maxSteps: Number(req.body?.maxSteps ?? 24),
-        onEvent: (e) => rec.events.push({ at: new Date().toISOString(), ...e }),
+        // Persisting an event must never be able to kill the mission producing it.
+        onEvent: (e) => { void store.appendEvent(id, { at: new Date().toISOString(), ...e } as never).catch(() => {}); },
       });
-      rec.receipt = receipt;
-      rec.status = receipt.outcome;
+      await store.update(id, { receipt, status: receipt.outcome });
     } catch (e) {
-      rec.status = "error";
-      rec.error = String(e).slice(0, 500);
+      await store.update(id, { status: "error", error: String(e).slice(0, 500) }).catch(() => {});
       console.error(`[laspoh-proof] mission ${id} failed:`, (e as Error)?.stack ?? String(e));
     } finally {
       await executor.close?.().catch(() => {});
@@ -87,14 +99,14 @@ app.post("/missions", (req, res) => {
   res.status(202).json({ id, status: "running", poll: `/missions/${id}` });
 });
 
-app.get("/missions/:id", (req, res) => {
-  const rec = missions.get(String(req.params.id));
+app.get("/missions/:id", async (req, res) => {
+  const rec = await store.get(String(req.params.id));
   if (!rec) return res.status(404).json({ error: "no such mission" });
   res.json(rec);
 });
 
-app.get("/missions/:id/receipt", (req, res) => {
-  const rec = missions.get(String(req.params.id));
+app.get("/missions/:id/receipt", async (req, res) => {
+  const rec = await store.get(String(req.params.id));
   if (!rec) return res.status(404).json({ error: "no such mission" });
   if (!rec.receipt) return res.status(409).json({ error: "mission has not produced a receipt yet", status: rec.status });
   res.json(rec.receipt);
