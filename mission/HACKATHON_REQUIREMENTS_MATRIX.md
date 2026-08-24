@@ -53,7 +53,7 @@ Last audited: **2026-08-24** (Phase 25). Live service verified by direct request
 |---|---|---|---|
 | R1 | Genkit plugin migration not exercised against a live model | **CLOSED** | Deployed; live mission proved 7/8 citing `GR-106847`; **0 deprecation warnings** on the serving revision |
 | R2 | Firestore never talked to Firestore | **CLOSED** | Database created, `roles/datastore.user` granted, `/health` reports `firestore` |
-| R3 | Reliability is not a measured rate | **CLOSED** | 9 production runs: **9/9 honest**, 7/9 proved a reference |
+| R3 | Reliability is not a measured rate | **CLOSED** | **8/8 honest, 8/8 proved** after the navigate-first fix (was 7/9) |
 | R4 | A hostile page showing fake confirmation text is believed | ACCEPTED | Architectural limit, stated in README |
 | R5 | Verifier may be wrong about *sufficiency* | ACCEPTED | Stated in README |
 | R6 | Secret scanner matches `"private_key"` in `EXECUTION_STATE.md` | BENIGN | It is documentation listing the patterns scanned for — left readable rather than obfuscated |

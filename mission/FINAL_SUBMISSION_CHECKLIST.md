@@ -27,7 +27,7 @@ Last updated: 2026-08-24, after Phase 26.
 | Full quality gate | clean install · typecheck · lint · build · **143 tests** · secret scan |
 | Genkit migration verified live | Production mission proved 7/8 citing `GR-106847`; 0 deprecation warnings |
 | Firestore live | `/health` → `"store":"firestore"` |
-| Production reliability measured | 9 runs — **9/9 honest**, 7/9 proved a reference |
+| Production reliability measured | **8/8 honest, 8/8 proved a reference, 0 blocked** after the navigate-first fix |
 | Adversarial self-review | `PHASE_24_ADVERSARIAL_REVIEW.md` — 4 findings, 2 fixed here |
 | README, architecture diagram, Devpost copy, demo script, article, social post | `README.md`, `docs/` |
 
@@ -41,9 +41,8 @@ Last updated: 2026-08-24, after Phase 26.
 
 ## KNOWN-INCOMPLETE — honest status
 
-- **Prove-rate is 78%, not 100%.** Nine production runs: 9/9 honest, 7/9 proved a reference. The
-  honesty rate is what the design guarantees and it held; the prove-rate is a reliability figure and
-  it is stated as measured, not rounded up.
+- **Prove-rate is now 8/8** after enforcing navigation in code. The earlier 78% is kept in
+  `DEMO_EVIDENCE.md` as the measurement that found the bug, not erased.
 - **Setup has never been run on a clean human machine** — only on CI's clean runner.
 - **A hostile page showing fake confirmation text would be believed** — architectural limit, in the
   README.

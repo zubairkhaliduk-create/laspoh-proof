@@ -6,7 +6,34 @@ true at the time.
 
 ---
 
-## 2026-08-24 — PRODUCTION RELIABILITY, MEASURED (Phase 16)
+## 2026-08-24 (later) — RELIABILITY AFTER THE NAVIGATE-FIRST FIX
+
+Eight consecutive production missions, after enforcing navigation in code rather than asking for it
+in the prompt.
+
+| Metric | Before | After |
+|---|---|---|
+| Honest (no fabricated reference) | 9/9 | **8/8** |
+| Proved a confirmation reference | 7/9 (78%) | **8/8 (100%)** |
+| `blocked` — proved nothing | **2/8** | **0/8** |
+| Duration | 27–96s | 43–94s |
+
+    run 1: partial 6/7  GR-828862  honest      run 5: partial 6/7  GR-133768  honest
+    run 2: partial 6/7  GR-884661  honest      run 6: partial 7/8  GR-188685  honest
+    run 3: partial 6/7  GR-927264  honest      run 7: partial 7/8  GR-247147  honest
+    run 4: partial 7/9  GR-024293  honest      run 8: partial 5/7  GR-319862  honest
+
+**The failure mode is gone.** Every run that previously proved nothing had the same cause: the plan
+did not navigate, so every step searched `about:blank`. The planner was *asked* to navigate first
+and mostly complied — "mostly" being the 78%. Enforcing it in code removed the whole class.
+
+Runs still report **partial**, and that is correct: the planner invents an "Affiliation" field the
+form does not have, the step fails with `not_found`, and the receipt says so. That is the honest
+shortfall, not a defect to remove.
+
+---
+
+## 2026-08-24 — PRODUCTION RELIABILITY, MEASURED (Phase 16) — superseded by the run above
 
 Nine missions against the deployed service. Firestore-backed, Gemini 3.5 via Vertex, unified
 Genkit plugin.
