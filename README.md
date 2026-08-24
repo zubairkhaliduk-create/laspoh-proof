@@ -1,194 +1,265 @@
 # Laspoh Proof
 
-**An autonomous agent that proves what it did.**
-Gemini 3.5 Flash · Genkit · Cloud Run
+**An autonomous agent that proves what it did — or says plainly that it could not.**
+
+Gemini 3.5 Flash · Genkit · Cloud Run · Firestore
 
 **Live:** https://laspoh-proof-cffubwieta-uc.a.run.app
 ([`/health`](https://laspoh-proof-cffubwieta-uc.a.run.app/health) ·
 [`/demo`](https://laspoh-proof-cffubwieta-uc.a.run.app/demo))
 
-Most agents report what they *attempted*. This one reports only what it can **prove**, and says so
-plainly when it cannot. A step counts as done when an independent verifier — which never sees the
-planner's reasoning or the executor's opinion — confirms it from what the page actually showed, and
-cites that evidence. Everything else is reported as unproven rather than rounded up.
-
-The output is a **receipt**: `Proven 7 of 8`, with the reason for each one it could not prove.
-
 ---
 
-## ⚠️ Disclosure of pre-existing work
+## The problem
 
-**Laspoh** is a pre-existing experimental browser-automation platform. Its repository dates from
-**June 2026**, before this hackathon's submission period, and it is **not** presented as work
-created during the hackathon.
+Ask an agent to do ten things and it will tell you it did ten things.
 
-**Everything in this repository was built during the submission period (3–31 August 2026):** the
-mission orchestrator, planner, state machine, evidence model, independent verifier, recovery
-policy, receipts, the reference executor, the demo target, and the Cloud Run deployment.
+You cannot tell whether that is true. The transcript reads the same whether the work happened or
+not — every click "succeeded", no errors appeared, and the summary is green. The agent is not
+malfunctioning when this happens. It is reporting its **intentions** and calling them results.
 
-The single point of contact with the pre-existing platform is
-[`src/executors/laspoh.ts`](src/executors/laspoh.ts) — a ~100-line adapter (new) that exposes it
-through the same `Executor` interface the reference executor implements. It contains no automation
-logic of its own.
+Once you have seen that, you stop trusting any agent that cannot show its work.
 
-The agent does not depend on it. The default executor
-([`src/executors/reference.ts`](src/executors/reference.ts)) is new, and the demo runs on it. Two
-executors behind one interface exist precisely so the separation is demonstrable: **swap the
-executor and the agent is unchanged.** Every receipt records which executor produced it and whether
-that executor is pre-existing work.
+## The solution
 
----
+Give Laspoh Proof an outcome. It plans, drives a browser, and gathers evidence. Then a **separate
+verifier** — which never sees the planner's reasoning or the executor's opinion — decides from the
+page's own output whether each step actually happened, and **must quote the evidence** to say yes.
 
-## Spin-up
+The output is a receipt:
 
-### Prerequisites
-- Node 22+, `pnpm`
-- Either a **Gemini API key**, or `gcloud` with Application Default Credentials for **Vertex AI**
-- A Google Cloud project (for deployment)
+    Proven 7 of 8. The rest is reported unproven, not counted.
+      [proven] Submit the grant application
+               cited: "Your application has been submitted successfully."
+      [failed] Fill in the applicant's affiliation
+               reason: not_found: no field matching "Affiliation"   (retryable: false)
 
-### Run locally
+Seven were proven. One was not, and it says which and why. That receipt is the product.
 
-```bash
-pnpm install
-npx playwright install chromium
+## No proof, no done
 
-# Route A — Gemini API (simplest; no cloud credentials needed)
-export GEMINI_API_KEY="your-key"
+This is not a slogan applied afterwards — it is a property of the code, and each part is testable
+without a model in the loop:
 
-# Route B — Vertex AI (used by the deployed service; no key involved)
-#   gcloud auth application-default login
-#   export VERTEX_PROJECT="your-project"
+| Guarantee | Enforced by | Why it exists |
+|---|---|---|
+| A step becomes `proven` only on an independent verdict | `orchestrator.ts` | The component doing the work never grades it |
+| A "proven" verdict must **quote** the evidence | `enforceCitation` | A verdict that cannot cite is not a verdict |
+| **A quote must actually appear in the evidence** | `groundCitations` | Otherwise a model can invent proof and everything else is defeated at once |
+| `complete` requires **every** step proven | `terminalStatus` | Written as "no step is unproven", so a new status can never widen success |
+| Attempted ≠ progress | `provenCount` | Activity is not achievement |
+| A proof criterion cannot restate the action | `sanitizePlan` | "The button was clicked" hands success back to the agent to redefine |
 
-pnpm dev            # http://localhost:8080
-```
+The system is permitted, by design, to report **less** than it achieved. It is never permitted to
+report more.
 
-The route in use is logged at boot and reported by `/health`, so which model answered is never
-ambiguous.
+## Taskmaster fit
 
-### Run a mission
+A complete autonomous workflow, not a chat: one sentence in, a real state change in the world out,
+with evidence for what happened and an honest account of what did not.
 
-```bash
-# The demo target is served by this same service, so the demo is reproducible with no third-party
-# credentials and cannot break because someone else changed their markup.
-curl -X POST http://localhost:8080/missions \
-  -H 'content-type: application/json' \
-  -d '{
-    "goal": "Apply for the research grant as Ada Lovelace (ada@example.com), an independent researcher. Get a confirmation reference.",
-    "startUrl": "http://localhost:8080/demo"
-  }'
-# → { "id": "m_1a2b3c4d", "status": "running", "poll": "/missions/m_1a2b3c4d" }
-
-curl http://localhost:8080/missions/m_1a2b3c4d           # live state + event stream
-curl http://localhost:8080/missions/m_1a2b3c4d/receipt   # the proof
-```
-
-### Deploy to Cloud Run
-
-```bash
-./deploy.sh          # PROJECT / REGION / SERVICE overridable by env var
-```
-
-Vertex is reached with the service's own identity — **no API key is deployed**. The service runs as
-`laspoh-proof-runtime`, which holds exactly one role (`roles/aiplatform.user`).
-
-### Move it to another project
-
-```bash
-./migrate.sh TARGET_PROJECT_ID [BILLING_ACCOUNT_ID]
-```
-
-Idempotent and safe to re-run. It enables the required APIs, creates the least-privilege runtime
-account, **probes which region actually serves the model** (Vertex availability is per-region and
-differs between projects — it is asked, never assumed), deploys, and then proves the result with a
-real mission checked against the service's own ground truth. It distinguishes an auth failure from
-a model being unavailable, because reading the first as the second is how a working region gets
-written off.
-
-**Known limit:** mission state is held in memory, and `--max-instances` is enforced per *revision*.
-During a rollout the previous revision keeps serving, so a mission started just before a deploy
-returns `404` from the new revision the moment traffic shifts. The work itself is unaffected — it
-runs to completion on the old revision — but don't deploy while a mission is in flight.
-
-### Tests
-
-```bash
-pnpm test
-```
-
-- `test/core.test.ts` — the guarantees that must hold whatever the model says: attempted never
-  counts as proven; partial results report the true number; the stall detector stands down when
-  the page states the next action.
-- `test/integrity.test.ts` — the citation rule (a "proven" verdict that quotes nothing is
-  downgraded, in code, not by prompt), success accounting, and the blind-submit gate.
-- `test/executor.test.ts` — the executor against a **real Chromium and a real server**: what the
-  form reports as required, what its controls actually hold, and that ticking a checkbox counts as
-  an effect even though no page text changes.
-- `test/loop.e2e.test.ts` — a fill is `ok` only when the value stayed in the field, a click only
-  when something changed, and submitting with a required box unticked is reported as the rejection
-  it is.
-
----
-
-## The agent does not submit blind
-
-The failure this project kept hitting is the one that makes agents look careless: plan every field
-up front, fill what was guessed, submit, get refused, read the refusal, and only *then* go back for
-the controls the form had been advertising as required the whole time.
-
-It is fixed structurally, not with a better prompt:
-
-1. The executor reads the DOM after every action and reports which controls are **required and
-   still empty** (`Observation.outstandingRequired`). That list is ground truth from the surface
-   that can actually see the form — never a model's recollection.
-2. Before dispatching anything, the orchestrator subtracts what the remaining plan already covers.
-   `unaddressedRequired` is a pure, tested function; what survives it is exactly the set the agent
-   would otherwise have discovered by being rejected.
-3. If anything survives, a narrow **repair flow** runs first. It is asked one question — what
-   values belong in *these specific controls* — and explicitly not "what should we do next", which
-   is re-planning and is how an agent talks itself into repeating a failed action. Bounded to two
-   rounds, because an agent allowed to repair forever is an agent allowed to loop.
-
-The mirror image also matters. Once repair has set a control, a later planned step aimed at the
-same control has nothing left to do — and a no-effect re-attempt would be recorded as a *failed*
-step for work that was actually completed. Such a step is **verified rather than skipped**: its
-criterion still has to be confirmed from evidence, exactly as if the action had run. What is saved
-is a pointless action, not the burden of proof.
-
-A related gap this exposed: a filled input's value never appears in the page's visible text, so a
-fill could never be *proven* — the verifier was judging a criterion against material that
-structurally could not contain the answer. Observations now carry the page's own report of what its
-controls hold, hashed alongside the rest of the evidence.
-
----
-
-## Why the demo target has a trap
-
-`/demo` is a grant application with a consent checkbox that is easy to miss, and a server that
-**rejects** an incomplete submission. The confirmation reference appears only on genuine success.
-
-That makes the failure mode legible: an agent that submits early gets a rejection page, and a
-receipt claiming success without a reference is provably wrong. It is the smallest honest test of
-whether a system is reporting reality or its own intentions.
-
----
+    goal → plan → act → observe → evidence → independent verdict → receipt
 
 ## Architecture
 
-See [`docs/architecture.md`](docs/architecture.md).
+```
+                     ┌──────────────────────────────────────────────┐
+   USER GOAL  ──────▶│  POST /missions            (returns 202)      │
+                     │  Cloud Run · Node 22 · Express                │
+                     └───────────────────────┬──────────────────────┘
+                                             │  mission runs in the background
+                                             ▼
+                     ┌──────────────────────────────────────────────┐
+                     │         MISSION ORCHESTRATOR                 │
+                     │  the only component allowed to change state   │
+                     └──┬──────────────┬───────────────┬────────────┘
+                        │              │               │
+              ┌─────────▼──────┐  ┌────▼─────────┐  ┌──▼──────────────────┐
+              │ PLANNER        │  │  EXECUTOR    │  │ INDEPENDENT         │
+              │ Genkit flow    │  │  INTERFACE   │  │ VERIFIER            │
+              │ Gemini 3.5     │  │              │  │ Genkit flow · Gemini│
+              │                │  └──┬────────┬──┘  │                     │
+              │ writes each    │     │        │     │ never sees the      │
+              │ step's proof   │     │        │     │ planner's reasoning │
+              │ criterion      │     │        │     │ or the executor's   │
+              │ BEFORE it runs │     │        │     │ opinion             │
+              └────────────────┘     │        │     └──▲──────────────────┘
+                                     │        │        │
+                      ┌──────────────▼─┐  ┌───▼─────────────────┐
+                      │ REFERENCE      │  │ LASPOH ADAPTER      │
+                      │ EXECUTOR       │  │ ── DISCLOSED ────── │
+                      │ (new,          │  │ PRE-EXISTING        │
+                      │  Playwright)   │  │ (June 2026), OFF    │
+                      └────────┬───────┘  └───┬─────────────────┘
+                               │              │
+              ═════════════════▼══════════════▼═════════════  TRUST BOUNDARY
+                     page content is UNTRUSTED beyond this line
+                               │
+                               ▼
+                      ┌────────────────────────┐
+                      │ OBSERVATION            │      ┌──────────────────┐
+                      │ what the page SHOWED   │─────▶│ EVIDENCE         │
+                      │ (never a conclusion)   │      │ excerpt + sha256 │
+                      └────────────────────────┘      │ + provenance     │
+                                                      └────────┬─────────┘
+                                                               ▼
+                                                      ┌──────────────────┐
+                       FIRESTORE ◀── mission state ──▶│ RECEIPT          │
+                       (durable, resumable)           │ "Proven 7 of 8"  │
+                                                      └──────────────────┘
+```
 
-| Requirement | Used |
-|---|---|
-| Gemini 3.5+ | `gemini-3.5-flash`, via Vertex AI (`asia-southeast1`) or the Gemini API |
-| Google agent framework | **Genkit** 1.41 |
-| Google Cloud infrastructure | **Cloud Run** |
+Detail in [`docs/architecture.md`](docs/architecture.md).
 
-## Endpoints
+## Required Google technology
 
-| | |
-|---|---|
-| `GET /health` | model route, model id, available executors |
-| `POST /missions` | start a mission; returns immediately (`202`) |
-| `GET /missions/:id` | live state and event stream |
-| `GET /missions/:id/receipt` | the receipt, with evidence and integrity hash |
-| `GET /demo` | the demo target |
-| `GET /demo/submissions` | ground truth — what the server actually received |
+| Requirement | Used | Meaningfully? |
+|---|---|---|
+| **Gemini 3.5+** | `gemini-3.5-flash` via Vertex AI | Every plan, repair and verdict is a model decision |
+| **Google agent framework** | **Genkit** — three flows (`plan`, `repair`, `verify`) with zod-typed structured output | The flows *are* the agent's reasoning |
+| **Google Cloud infrastructure** | **Cloud Run** (the service) · **Firestore** (durable mission state) | The demo runs there; missions survive a restart |
+
+Vertex is reached with the service's **own identity** — no API key is deployed.
+
+## Repository structure
+
+    src/core/         orchestrator · state · evidence · receipt · recovery · plan-sanitize
+    src/flows/        plan · repair · verify        (Genkit + Gemini)
+    src/executors/    types (the seam) · reference (new) · laspoh (disclosed adapter)
+    src/security/     trust boundaries — fencing, injection detection, navigation policy
+    src/store/        MissionStore · in-memory · Firestore
+    src/obs/          structured, redacted, mission-correlated logging
+    src/demo/         the self-hosted demo target
+    mission/          the engineering programme: specs, decisions, evidence, disclosure
+    test/             142 tests
+
+## Quick start
+
+    pnpm install
+    pnpm exec playwright-core install chromium
+
+    # Route A — Gemini API key. Simplest; no cloud credentials needed.
+    export GEMINI_API_KEY="your-key"
+
+    # Route B — Vertex AI (what the deployed service uses; no key involved)
+    #   gcloud auth application-default login
+    #   export VERTEX_PROJECT="your-project"
+
+    pnpm dev            # http://localhost:8080
+
+The route in use is logged at boot and reported by `/health`, so which model answered is never in
+doubt. **No cloud setup is required to run a mission** — the default store is in-memory and the
+demo target is served by this same process.
+
+### Run a mission
+
+    curl -X POST http://localhost:8080/missions \
+      -H 'content-type: application/json' \
+      -d '{
+        "goal": "Apply for the research grant as Ada Lovelace (ada@example.com), an independent researcher. Obtain the confirmation reference that proves the application was submitted.",
+        "startUrl": "http://localhost:8080/demo"
+      }'
+    # → { "id": "m_1a2b3c4d", "status": "running", "poll": "/missions/m_1a2b3c4d" }
+
+    curl http://localhost:8080/missions/m_1a2b3c4d            # live state + event stream
+    curl http://localhost:8080/missions/m_1a2b3c4d/receipt    # the proof
+    curl http://localhost:8080/demo/submissions               # ground truth the agent cannot write to
+
+Send an `Idempotency-Key` header and a retry returns the same mission instead of starting a second
+one — the difference between "the browser retried" and "the agent applied for the same job twice".
+
+### Deploy
+
+    ./deploy.sh                       # PROJECT / REGION / SERVICE overridable
+    ./migrate.sh TARGET_PROJECT_ID    # move it to another project, self-verifying
+
+`migrate.sh` probes which region actually serves the model rather than assuming — availability is
+per-region *and* per-project, and it differs.
+
+## Why the demo target has a trap
+
+`/demo` is a grant application with a consent checkbox that is easy to miss and a server that
+**rejects** an incomplete submission. The confirmation reference appears only on genuine success,
+and `/demo/submissions` is ground truth the agent cannot write to.
+
+That makes the failure mode legible: a receipt claiming success without a reference is **provably**
+wrong, and the check is asymmetric — under-claiming is honest, over-claiming is the only failure.
+
+## Security
+
+Four sources of text reach a model, and they do not have equal standing: system policy, the user's
+goal, tool output, and **page content — untrusted, data, never instruction**.
+
+- Untrusted content is **fenced** with a per-call nonce (a fixed marker is one a page can print)
+- A page addressing the agent is **reported, never silently edited** — editing evidence corrupts
+  the thing the system reasons about
+- Navigation is bounded to the mission's origin; `javascript:`, `file:` and `data:` are refused
+- Refusals are recorded as `blocked`, not `failed` — the step was never attempted
+
+**What this does not defend against:** a hostile page displaying convincing fake confirmation text.
+The verifier will ground that citation, because the quote really is on the page. Grounding proves a
+quote is real, not that the page is honest. The answer is architectural — an independent
+ground-truth source — and where none exists the receipt reflects what the page showed.
+
+## Tests
+
+    pnpm test        # 142
+    pnpm typecheck
+    pnpm lint
+
+Highlights: an exhaustive property test that `complete` is unreachable with any unproven step; 15
+adversarial verifier tests including fabricated citations; 16 trust-boundary tests including
+false-positives on honest pages; the executor against a real Chromium and a real server.
+
+## Limitations
+
+- The **verifier can be wrong about sufficiency.** Grounding proves a quote is real, not that it
+  establishes the criterion. Isolation and a pre-committed criterion mitigate this; nothing
+  eliminates it.
+- **Firestore is opt-in and unverified in production** at the time of writing (`MISSION_STORE=firestore`).
+- One workflow is reliable, not twenty.
+
+## Hackathon disclosure
+
+**Laspoh** is a pre-existing experimental browser-automation platform. Its repository begins
+**24 June 2026** — forty days before this hackathon's submission period — and 462 of its 542
+commits predate 3 August 2026. **It is not this submission and is not presented as hackathon work.**
+
+**Laspoh Proof** is a new Gemini + Genkit agent built during the **3–31 August 2026** submission
+period. First commit **20 August 2026**; **zero** commits before 3 August. Its planning,
+orchestration, mission state, reference executor, evidence pipeline, independent verification,
+recovery, security boundaries and receipts were all developed during the period.
+
+The only point of contact is [`src/executors/laspoh.ts`](src/executors/laspoh.ts) — a 73-line HTTP
+adapter written during the period, carrying `preExisting = true` into every receipt produced
+through it. **It is off by default.** The demo, the deployed service and the entire test suite run
+on the new reference executor.
+
+Verify any of this yourself:
+
+    git log --reverse --format='%h %ad' --date=iso | head -1   # 2026-08-20
+    git rev-list --count --before=2026-08-03 HEAD              # 0
+    grep -rn "andiwal/laspoh\|@laspoh/" src test               # no matches
+
+Full provenance ledger: [`mission/PREEXISTING_DISCLOSURE.md`](mission/PREEXISTING_DISCLOSURE.md).
+
+## Learnings
+
+**The worst bug does not look like a bug.** The DOM read threw inside the page, the throw was
+caught, and the form reported itself as having no fields — indistinguishable from an empty form.
+Nothing errored. The agent went blind and every symptom pointed elsewhere.
+
+**Don't ask a model to be careful — take the decision away from it.** The fix for submitting with
+required fields empty is not a better prompt. The page reports what is required; a pure function
+subtracts what the plan already covers; whatever is left gets filled first.
+
+**Evidence has to be able to contain the answer.** Fills kept coming back unproven and the verifier
+looked harsh. It wasn't — an input's value never appears in a page's visible text, so it was
+judging a criterion against material that structurally could not confirm it.
+
+**A citation that is never checked is not a citation.** `enforceCitation` verified that a quote
+existed for months before anyone checked the quote was *in the evidence*.
+
+## Licence
+
+MIT — see [LICENSE](LICENSE).
