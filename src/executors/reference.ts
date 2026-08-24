@@ -12,7 +12,7 @@
  * when something about the page demonstrably changed. "The call did not throw" is not success.
  */
 import { chromium, type Browser, type Page } from "playwright-core";
-import type { Action, Executor, Observation } from "./types.js";
+import type { Action, ExecuteContext, Executor, Observation } from "./types.js";
 
 const NAV_TIMEOUT = 20_000;
 const SETTLE_MS = 350;
@@ -98,7 +98,12 @@ export class ReferenceExecutor implements Executor {
       .first();
   }
 
-  async execute(action: Action): Promise<Observation> {
+  async execute(action: Action, ctx?: ExecuteContext): Promise<Observation> {
+    // Cancellation is checked before the action rather than only during it: the cheapest place to
+    // stop is before starting, and an aborted mission should not begin one more thing.
+    if (ctx?.signal?.aborted) {
+      return { ok: false, failure: "transport", detail: "cancelled before dispatch", pageText: "", url: "", outstandingRequired: [], formState: [], identifiers: [] };
+    }
     let page: Page;
     try {
       page = await this.ensurePage();
@@ -165,6 +170,23 @@ export class ReferenceExecutor implements Executor {
 
         case "read":
           return this.observe(page, true, null, `read: ${action.of}`);
+
+        case "wait": {
+          // A timeout here is an OBSERVATION, not an exception. "The thing I was waiting for did
+          // not appear" is a fact about the page and belongs in the same channel as every other
+          // fact about the page — throwing would make it indistinguishable from a bug in the agent.
+          const deadline = Date.now() + action.maxMs;
+          const want = action.forText?.trim();
+          const gone = action.forGone?.trim();
+          if (!want && !gone) return this.observe(page, false, "not_actionable", "a wait must state what it is waiting for");
+          while (Date.now() < deadline) {
+            const text = await page.evaluate(() => document.body?.innerText ?? "").catch(() => "");
+            const satisfied = want ? text.includes(want) : !text.includes(gone!);
+            if (satisfied) return this.observe(page, true, null, want ? `"${want}" appeared` : `"${gone}" disappeared`);
+            await page.waitForTimeout(250);
+          }
+          return this.observe(page, false, "no_effect", want ? `"${want}" never appeared within ${action.maxMs}ms` : `"${gone}" was still present after ${action.maxMs}ms`);
+        }
       }
     } catch (e) {
       return this.observe(page, false, "transport", `${action.kind} threw: ${String(e).slice(0, 200)}`).catch(() => ({

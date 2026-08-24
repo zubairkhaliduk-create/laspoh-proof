@@ -17,10 +17,10 @@ A phase reaches VERIFIED_COMPLETE only with evidence recorded below it.
 | 03 | Core domain model & mission state machine | VERIFIED_COMPLETE |
 | 04 | Gemini + Genkit mission orchestrator | VERIFIED_COMPLETE |
 | 05 | Persistent state & checkpointing | PARTIAL (Firestore unverified until deploy) |
-| 06 | Executor abstraction | IN_PROGRESS |
-| 07 | New reference executor | NOT_STARTED |
-| 08 | Optional Laspoh executor adapter | NOT_STARTED |
-| 09 | Evidence collection system | NOT_STARTED |
+| 06 | Executor abstraction | VERIFIED_COMPLETE |
+| 07 | New reference executor | VERIFIED_COMPLETE |
+| 08 | Optional Laspoh executor adapter | VERIFIED_COMPLETE |
+| 09 | Evidence collection system | IN_PROGRESS |
 | 10 | Independent verifier | NOT_STARTED |
 | 11 | Receipts & truthful completion | NOT_STARTED |
 | 12 | Failure recovery & loop defense | NOT_STARTED |
@@ -357,3 +357,57 @@ UA-004.
 
 ### Next phase
 Phase 06 — audit the executor abstraction, the boundary the eligibility argument rests on.
+
+---
+
+## PHASE 06 / 07 / 08 — The Executor Seam
+
+**Status:** VERIFIED_COMPLETE
+**Specifications:** `PHASE_06_EXECUTOR_ABSTRACTION.md`, `PHASE_08_LASPOH_ADAPTER.md`
+
+### Phase 06 — gaps found and closed
+
+| # | Gap | Closure |
+|---|---|---|
+| E1 | No `wait` verb — asynchronous pages handled by repeated `inspect` | `wait` added, and it must state its condition |
+| E2 | No cancellation — a mission could not be stopped mid-action | `ExecuteContext.signal`, checked before dispatch |
+| E3 | The CONTRACT permitted a hang — only the implementation had timeouts | `execute` now documents two guarantees callers may rely on: it resolves, and it is bounded |
+| E4 | Could an executor plan or judge? | **Not a gap.** `execute(action) -> Observation` is structurally incapable of either |
+
+A wait must say what it is waiting **for**. A bare "wait five seconds" is a sleep dressed as an
+observation: it makes every mission slower without making any more reliable, and it hides that
+nobody knows what the page is supposed to do next. Expressed as a verb rather than left to
+repeated `inspect`, because a wait implemented as repeated inspection is a loop the recovery layer
+then has to be taught is not a loop.
+
+A wait timeout returns `ok:false`, never throws. "The thing I was waiting for did not appear" is a
+fact about the page and belongs in the same channel as every other fact about the page.
+
+Adding `wait` to the union made **TypeScript fail two exhaustive switches** — exactly what a
+discriminated union is for, and the reason the verb set is modelled this way.
+
+### Phase 07 — reference executor
+Already built in-period; `wait` and cancellation added here. It remains the default and the demo
+path. No pre-existing code involved.
+
+### Phase 08 — the adapter, and the risk Phase 00 recorded
+
+Phase 00 wrote down the weakness rather than glossing it: *"the two-executor claim is proven by
+INTERFACE, not by both running."* This phase closes it as far as is honest.
+
+**Demonstrated:** the adapter satisfies the contract over real HTTP — unreachable bridge, HTTP
+error, a body that never arrives, malformed replies — and returns Observations the agent consumes
+identically to the reference executor's.
+
+**Not demonstrated, and stated as such:** that the pre-existing Laspoh runtime works through it.
+The bridge is a stub speaking the protocol, because the real one is not running.
+
+**A real defect this found:** the adapter used `Boolean(raw.ok)`. `Boolean("yes")` is true — so is
+`Boolean("failed")`. A malformed or hostile bridge could have reported success by sending any
+non-empty string. Now `raw.ok === true`, strictly, with a test enumerating the shapes that coerce.
+
+### Tests
+`91 passed` (was 76; +15). Typecheck and lint clean.
+
+### Next phase
+Phase 09 — evidence, audited as first-class architecture rather than debugging metadata.

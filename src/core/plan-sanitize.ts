@@ -67,6 +67,7 @@ function actionKey(a: Action): string {
     case "select": return `select|${a.field}|${a.value}`;
     case "click": return `click|${a.target}`;
     case "read": return `read|${a.of}`;
+    case "wait": return `wait|${a.forText ?? ""}|${a.forGone ?? ""}`;
   }
 }
 

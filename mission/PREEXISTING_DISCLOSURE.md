@@ -66,6 +66,27 @@ code** — an import audit of the new source tree returns zero references to the
 and the three colliding filenames share between two and nine lines of type declarations and
 comment markers apiece.
 
+## What has been demonstrated about the adapter, and what has not
+
+**Demonstrated (Phase 08, `test/adapter.test.ts`):** the adapter satisfies the executor contract
+over the real HTTP transport. It sends the action, normalises the reply, survives an unreachable
+bridge, an HTTP error, a body that never arrives, and a malformed reply — and the agent consumes
+its Observations in exactly the shape it consumes the reference executor's.
+
+**Not demonstrated:** that the pre-existing Laspoh runtime works through it. The bridge in those
+tests is a **stub speaking the bridge protocol**, because the real bridge is not a running service.
+Claiming the adapter had exercised Laspoh would be exactly the kind of overclaim this project is
+built to prevent, so it is stated here instead.
+
+What that means for the swap test is unchanged and, if anything, stronger: the submission runs on
+the new reference executor, and the second implementation has now been shown to satisfy the same
+interface at runtime rather than only at compile time.
+
+**A defect this found:** the adapter used `Boolean(raw.ok)`, and `Boolean("yes")` is true — so is
+`Boolean("failed")`. A malformed or hostile bridge could have reported success by sending any
+non-empty string. Now `raw.ok === true`, strictly. Recorded because the test that found it exists
+only because Phase 00 wrote the weakness down instead of glossing it.
+
 ## Verifying this disclosure
 
     # dates

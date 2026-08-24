@@ -20,7 +20,7 @@
  * It also preserves the property that matters in the real product: actions run in the user's own
  * already-authenticated browser, which a cloud browser cannot do.
  */
-import type { Action, Executor, Observation } from "./types.js";
+import type { Action, ExecuteContext, Executor, Observation } from "./types.js";
 
 /** Where the pre-existing runtime is reachable. It exposes a single execute endpoint; this adapter
  *  neither knows nor cares how the work is performed on the other side. */
@@ -33,7 +33,10 @@ export class LaspohExecutor implements Executor {
 
   constructor(private readonly bridgeUrl: string = DEFAULT_BRIDGE, private readonly timeoutMs = 30_000) {}
 
-  async execute(action: Action): Promise<Observation> {
+  async execute(action: Action, ctx?: ExecuteContext): Promise<Observation> {
+    if (ctx?.signal?.aborted) {
+      return { ok: false, failure: "transport", detail: "cancelled before dispatch", pageText: "", url: "", outstandingRequired: [], formState: [], identifiers: [] };
+    }
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), this.timeoutMs);
     try {
@@ -49,7 +52,11 @@ export class LaspohExecutor implements Executor {
       const raw = (await res.json()) as Partial<Observation>;
       // Normalise defensively: an adapter must never let a malformed reply masquerade as success.
       return {
-        ok: Boolean(raw.ok),
+        // STRICTLY true, not merely truthy. Boolean("yes") is true, and so is Boolean("failed") —
+        // coercion here would let a malformed or hostile bridge reply report success by sending
+        // any non-empty string. In a system whose whole claim is that it only counts what it can
+        // prove, the one field that means "this worked" must not be inferrable from junk.
+        ok: raw.ok === true,
         failure: (raw.failure ?? null) as Observation["failure"],
         detail: String(raw.detail ?? ""),
         pageText: String(raw.pageText ?? ""),

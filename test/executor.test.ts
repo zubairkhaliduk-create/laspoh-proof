@@ -82,3 +82,43 @@ describe("what the executor can see", () => {
     expect(obs.formState.join(" | ")).toContain("Applying as = Independent researcher");
   });
 });
+
+describe("waiting is bounded and states its condition", () => {
+  it("returns as soon as the text it was waiting for is present", async () => {
+    const obs = await exec.execute({ kind: "wait", forText: "Research Grant Application", maxMs: 5_000 });
+    expect(obs.ok).toBe(true);
+    expect(obs.detail).toContain("appeared");
+  });
+
+  it("a timeout is an OBSERVATION, not an exception", async () => {
+    // "The thing I was waiting for did not appear" is a fact about the page. Throwing would make
+    // it indistinguishable from a bug in the agent, and the mission would die instead of adapting.
+    const obs = await exec.execute({ kind: "wait", forText: "this text is definitely not present", maxMs: 1_200 });
+    expect(obs.ok).toBe(false);
+    expect(obs.failure).toBe("no_effect");
+    expect(obs.detail).toContain("never appeared");
+  });
+
+  it("refuses a wait that does not say what it is waiting for", async () => {
+    // A bare sleep makes every mission slower without making any of them more reliable.
+    const obs = await exec.execute({ kind: "wait", maxMs: 500 });
+    expect(obs.ok).toBe(false);
+    expect(obs.failure).toBe("not_actionable");
+  });
+});
+
+describe("cancellation", () => {
+  it("an aborted mission does not begin one more action", async () => {
+    const ctl = new AbortController();
+    ctl.abort();
+    const obs = await exec.execute({ kind: "click", target: "Submit application" }, { signal: ctl.signal });
+    expect(obs.ok).toBe(false);
+    expect(obs.detail).toContain("cancelled");
+  });
+
+  it("cancellation resolves rather than throwing", async () => {
+    const ctl = new AbortController();
+    ctl.abort();
+    await expect(exec.execute({ kind: "inspect" }, { signal: ctl.signal })).resolves.toBeDefined();
+  });
+});

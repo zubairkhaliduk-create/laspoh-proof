@@ -28,6 +28,17 @@ export const ActionSchema = z.discriminatedUnion("kind", [
   // than leaving every executor to rediscover it.
   z.object({ kind: z.literal("select"), field: z.string().min(1), value: z.string().min(1) }),
   z.object({ kind: z.literal("read"), of: z.string().min(1) }),
+  // A wait must say what it is waiting FOR, and for how long. A bare "wait five seconds" is a
+  // sleep dressed as an observation: it makes every mission slower without making any of them more
+  // reliable, and it hides the fact that nobody knows what the page is supposed to do next.
+  // Expressed as a verb rather than left to repeated `inspect`, because a wait implemented as
+  // repeated inspection is a loop the recovery layer then has to be taught is not a loop.
+  z.object({
+    kind: z.literal("wait"),
+    forText: z.string().min(1).optional().describe("Wait until this text appears on the page."),
+    forGone: z.string().min(1).optional().describe("Wait until this text disappears from the page."),
+    maxMs: z.number().int().positive().max(60_000).default(10_000),
+  }),
 ]);
 export type Action = z.infer<typeof ActionSchema>;
 
@@ -60,12 +71,28 @@ export const ObservationSchema = z.object({
 });
 export type Observation = z.infer<typeof ObservationSchema>;
 
+/** Cooperative cancellation. An agent that cannot be stopped mid-action is a liability in a live
+ *  demo, and `close()` disposes the executor without interrupting anything already in flight. */
+export interface ExecuteContext {
+  signal?: AbortSignal;
+}
+
 export interface Executor {
   /** Which executor this is — recorded on every receipt so provenance is never ambiguous. */
   readonly name: string;
   /** True when this executor is pre-existing work rather than built for this project. Surfaced in
    *  receipts and the API so disclosure is structural, not a line in a README someone may not read. */
   readonly preExisting: boolean;
-  execute(action: Action): Promise<Observation>;
+  /**
+   * Perform ONE action and report what was observed.
+   *
+   * Two guarantees a caller may rely on, and which the contract requires rather than hopes for:
+   *   1. It RESOLVES. Every failure — timeout, cancellation, transport — comes back as an
+   *      Observation with `ok: false`. A rejected promise from here would make a failure to act
+   *      indistinguishable from a bug in the agent.
+   *   2. It is BOUNDED. An implementation must impose its own deadline; without that requirement
+   *      an executor could block forever and still satisfy this interface.
+   */
+  execute(action: Action, ctx?: ExecuteContext): Promise<Observation>;
   close?(): Promise<void>;
 }
