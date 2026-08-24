@@ -56,6 +56,20 @@ export function isWandering(g: {
  * across the orchestrator. Order matters: a known next action outranks everything, because acting
  * on stated ground truth is always better than reasoning about being stuck.
  */
+/**
+ * Should this specific failure be retried at all?
+ *
+ * Separate from `decide`, which answers "may we dispatch anything". This answers the narrower
+ * question the typed failure now makes answerable: a control that does not exist will not come
+ * into existence because we asked twice, while a transport blip genuinely might clear. Before the
+ * failure was typed, recovery had to infer this from a prose reason — which is how a loop ends up
+ * retrying something that can never work.
+ */
+export function worthRetrying(failure: { retryable: boolean } | null | undefined, attempts: number, bound = 2): boolean {
+  if (!failure?.retryable) return false;
+  return attempts < bound;
+}
+
 export function decide(g: {
   attempts: number;
   worldChangedSinceLastAttempt: boolean;

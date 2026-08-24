@@ -22,9 +22,9 @@ A phase reaches VERIFIED_COMPLETE only with evidence recorded below it.
 | 08 | Optional Laspoh executor adapter | VERIFIED_COMPLETE |
 | 09 | Evidence collection system | VERIFIED_COMPLETE |
 | 10 | Independent verifier | VERIFIED_COMPLETE |
-| 11 | Receipts & truthful completion | IN_PROGRESS |
-| 12 | Failure recovery & loop defense | NOT_STARTED |
-| 13 | Security & trust boundaries | NOT_STARTED |
+| 11 | Receipts & truthful completion | VERIFIED_COMPLETE |
+| 12 | Failure recovery & loop defense | VERIFIED_COMPLETE |
+| 13 | Security & trust boundaries | IN_PROGRESS |
 | 14 | Observability & audit trail | NOT_STARTED |
 | 15 | Killer Taskmaster workflow | NOT_STARTED |
 | 16 | End-to-end test harness | NOT_STARTED |
@@ -456,3 +456,46 @@ default. This is the honest limit of the design.
 
 ### Next phase
 Phase 11 — receipts, so all of this reaches the reader.
+
+---
+
+## PHASE 11 / 12 — Receipts and Recovery
+
+**Status:** VERIFIED_COMPLETE
+
+### Phase 11 — what the receipt can now say against itself
+The failure mode for a report like this is rarely a lie. It is an **omission** — a number that is
+technically correct beside a category the reader was never shown. So the receipt gained the
+categories, not more adjectives:
+
+- `failed` and `unattempted` counted **separately**. "We tried and it did not work" and "we never
+  got to it" are different facts and a reader deserves both.
+- Each failed line carries its **class and retryability**, so "this could not have worked" is
+  distinguishable from "this did not work this time".
+- **Dropped steps** — what the sanitiser removed before execution, and why. The commonest removal
+  is a proof criterion that restated the action, which tells a reader something real about the plan
+  they were given.
+- `usedPreExistingExecutor` — set if ANY evidence came through the disclosed pre-existing runtime.
+  Structural disclosure travelling with the result, not living in a README.
+- `startedAt` / `durationMs`.
+
+**A mistake I made and fixed here:** rewriting the headline produced *"Proven 0 of 1. 0 step(s)
+were never attempted"* — clumsier than what it replaced, and it broke an existing assertion. The
+existing test was right and my change was wrong. Rewritten so every branch states the proven number
+**and** what stands against it, since a number alone is where an honest report quietly becomes a
+flattering one.
+
+### Phase 12 — retrying only what could work
+`worthRetrying` uses the typed `retryable` from Phase 03 instead of inferring intent from prose. A
+control that does not exist will not come into existence because we asked twice; a transport blip
+genuinely might clear. Bounded, because unbounded retry is a loop by another name.
+
+Loop defence itself (`isBlindRepeat`, `isWandering`, `decide`) was already in place and unchanged —
+progress is measured in **proven work alone**, so page churn cannot reset the stall counter.
+
+### Tests
+`120 passed` (was 106; +14). Typecheck and lint clean.
+
+### Next phase
+Phase 13 — security and trust boundaries. Prompt injection from page content is the largest
+untouched risk in the system: the agent reads attacker-controlled text on every single step.

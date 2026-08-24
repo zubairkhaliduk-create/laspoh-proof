@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { decide, isBlindRepeat, isWandering, WANDERING_BOUND, WANDERING_MIN_STEPS } from "../src/core/recovery.js";
+import { classifyFailure } from "../src/core/state.js";
+import { decide, isBlindRepeat, isWandering, WANDERING_BOUND, WANDERING_MIN_STEPS , worthRetrying } from "../src/core/recovery.js";
 import { newMission, noteStep, provenCount, terminalStatus, type MissionState } from "../src/core/state.js";
 import { buildReceipt } from "../src/core/receipt.js";
 
@@ -103,5 +104,25 @@ describe("the receipt is capable of being unflattering", () => {
   it("records which executor produced it, and whether that executor is pre-existing work", () => {
     const r = buildReceipt({ state: mission([{ status: "proven" }]), evidence: [], verdicts: new Map(), executor: { name: "laspoh", preExisting: true }, model: {} });
     expect(r.executor).toEqual({ name: "laspoh", preExisting: true });
+  });
+});
+
+describe("retrying only what could work", () => {
+  it("does not retry a control that does not exist", () => {
+    // Before the failure was typed, recovery inferred this from prose. That is how a loop ends up
+    // re-attempting something that can never succeed, burning budget to reach the same answer.
+    expect(worthRetrying(classifyFailure("not_found"), 0)).toBe(false);
+    expect(worthRetrying(classifyFailure("policy_refused"), 0)).toBe(false);
+  });
+
+  it("retries a transport blip, within a bound", () => {
+    expect(worthRetrying(classifyFailure("transport"), 0)).toBe(true);
+    expect(worthRetrying(classifyFailure("transport"), 1)).toBe(true);
+    expect(worthRetrying(classifyFailure("transport"), 2), "unbounded retry is a loop").toBe(false);
+  });
+
+  it("treats an absent failure as nothing to retry", () => {
+    expect(worthRetrying(null, 0)).toBe(false);
+    expect(worthRetrying(undefined, 0)).toBe(false);
   });
 });

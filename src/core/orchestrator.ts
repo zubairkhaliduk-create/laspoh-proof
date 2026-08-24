@@ -278,6 +278,7 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
     verdicts,
     executor: { name: executor.name, preExisting: executor.preExisting },
     model: modelIdentity() as unknown as Record<string, string>,
+    dropped: sanitized.dropped,
   });
   emit({ type: "mission.done", outcome: receipt.outcome, headline: receipt.headline });
   return { state, receipt, evidence };
