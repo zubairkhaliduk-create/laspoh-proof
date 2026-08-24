@@ -20,6 +20,7 @@ import { decide } from "./recovery.js";
 import { buildReceipt, type Receipt } from "./receipt.js";
 import { classifyFailure, type MissionState, newMission, noteStep, provenCount, terminalStatus } from "./state.js";
 import { planFlow } from "../flows/plan.js";
+import { sanitizePlan } from "./plan-sanitize.js";
 import { repairFlow } from "../flows/repair.js";
 import { verifyFlow } from "../flows/verify.js";
 import { modelIdentity } from "../genkit.js";
@@ -115,7 +116,14 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
   emit({ type: "mission.start", missionId, goal, executor: executor.name });
 
   // ── PLAN ─────────────────────────────────────────────────────────────────────────────────
-  const plan = await planFlow({ goal, startUrl });
+  const rawPlan = await planFlow({ goal, startUrl });
+  // A schema checks the plan's SHAPE. This checks that it is a plan: no repetition, no step whose
+  // proof criterion merely restates the action it is meant to prove, nothing beyond the budget.
+  // Everything removed is reported rather than swallowed — a plan silently shortened is a plan
+  // nobody can audit.
+  const sanitized = sanitizePlan(rawPlan.steps, { maxSteps });
+  if (sanitized.dropped.length > 0) emit({ type: "plan.sanitized", dropped: sanitized.dropped });
+  const plan = { ...rawPlan, steps: sanitized.steps };
   state = {
     ...state,
     status: "running",

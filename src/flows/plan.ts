@@ -20,7 +20,7 @@ export const PlanSchema = z.object({
     /** Written BEFORE the step runs, so success cannot be redefined afterwards to match whatever
      *  happened — the single most common way an agent grades its own homework. */
     provenBy: z.string().describe("What must be OBSERVED on the page for this step to count as proven."),
-  })).min(1).max(12),
+  })).max(12),
 });
 export type Plan = z.infer<typeof PlanSchema>;
 
@@ -44,7 +44,10 @@ Rules:
 - Prefer fewer steps. Do not pad the plan.`,
       output: { schema: PlanSchema },
     });
-    if (!output) throw new Error("planner returned no structured plan");
+    // A model that returns nothing is expected, not exceptional. Throwing here loses the mission
+    // id and any partial state with it — an honest empty plan lets the mission report `blocked`
+    // through the ordinary path, which is the outcome a caller can actually act on.
+    if (!output) return { understanding: "the planner returned no structured plan", steps: [] };
     return output;
   },
 );

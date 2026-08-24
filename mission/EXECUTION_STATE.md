@@ -15,8 +15,8 @@ A phase reaches VERIFIED_COMPLETE only with evidence recorded below it.
 | 01 | Project foundation (audit) | VERIFIED_COMPLETE |
 | 02 | Verify & lock the Google stack | PARTIAL (deploy blocked, UA-004) |
 | 03 | Core domain model & mission state machine | VERIFIED_COMPLETE |
-| 04 | Gemini + Genkit mission orchestrator | IN_PROGRESS |
-| 05 | Persistent state & checkpointing | NOT_STARTED |
+| 04 | Gemini + Genkit mission orchestrator | VERIFIED_COMPLETE |
+| 05 | Persistent state & checkpointing | IN_PROGRESS |
 | 06 | Executor abstraction | NOT_STARTED |
 | 07 | New reference executor | NOT_STARTED |
 | 08 | Optional Laspoh executor adapter | NOT_STARTED |
@@ -264,3 +264,47 @@ None — internal to the new code. No pre-existing dependency touched.
 ### Next phase
 Phase 04 — audit the Genkit/Gemini orchestrator against its specification, with adversarial tests
 for malformed output, hallucinated actions and impossible plans.
+
+---
+
+## PHASE 04 — Gemini + Genkit Mission Orchestrator
+
+**Status:** VERIFIED_COMPLETE
+**Specification:** `mission/PHASE_04_ORCHESTRATOR.md`
+
+### Gaps found and closed
+
+| # | Gap | Closure |
+|---|---|---|
+| H1 | Nothing validated the plan beyond its schema | `sanitizePlan()` — pure, exported, 11 tests |
+| H2 | `planFlow` threw when the model returned nothing | Returns an honest empty plan; the mission reports `blocked` through the ordinary path instead of losing its id to an exception |
+| H4 | A `provenBy` that restated the action was accepted | Rejected by `isSelfCertifyingCriterion` |
+
+### The one that matters
+`provenBy` is written before a step runs precisely so success cannot be redefined afterwards. A
+criterion like *"the button was clicked"* hands that redefinition straight back: the verifier is
+then asked to confirm the **action**, not the outcome — and it answers CORRECTLY, about the wrong
+question. That is self-certification laundered through an independent component, and it defeats
+the project's central claim while every component behaves as designed.
+
+Such steps are now dropped before execution, with the reason recorded. Criteria that mention the
+action *and* name something observable survive, because over-strictness would be its own failure —
+most real criteria mention the action in passing.
+
+### A defect in my own first implementation
+The action-restating pattern used a list of nouns (`button|link|control|field|…`) and missed
+*"the form was submitted"* for want of one word. That is how keyword lists fail: silently, on the
+case you did not think of. Replaced with "up to two leading words before the verb".
+
+### Tests
+`65 passed` (was 54; +11). Hostile plans are constructed by hand rather than harvested from a live
+model — a live model produces bad plans unpredictably, and a suite needs them on demand.
+
+### Outstanding risks
+1. `sanitizePlan` drops steps; the receipt does not yet surface `dropped` to the reader. Recorded —
+   Phase 11 owns the receipt.
+2. Plan quality itself is still model-dependent; sanitisation bounds the damage, it does not
+   improve the plan.
+
+### Next phase
+Phase 05 — durable mission state, so a Cloud Run restart does not lose a mission.
