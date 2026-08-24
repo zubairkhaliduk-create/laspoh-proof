@@ -13,10 +13,10 @@ A phase reaches VERIFIED_COMPLETE only with evidence recorded below it.
 |---|---|---|
 | 00 | Forensic baseline & eligibility boundary | VERIFIED_COMPLETE |
 | 01 | Project foundation (audit) | VERIFIED_COMPLETE |
-| 02 | Verify & lock the Google stack | PARTIAL (deploy blocked, UA-004) |
+| 02 | Verify & lock the Google stack | VERIFIED_COMPLETE |
 | 03 | Core domain model & mission state machine | VERIFIED_COMPLETE |
 | 04 | Gemini + Genkit mission orchestrator | VERIFIED_COMPLETE |
-| 05 | Persistent state & checkpointing | PARTIAL (Firestore unverified until deploy) |
+| 05 | Persistent state & checkpointing | VERIFIED_COMPLETE |
 | 06 | Executor abstraction | VERIFIED_COMPLETE |
 | 07 | New reference executor | VERIFIED_COMPLETE |
 | 08 | Optional Laspoh executor adapter | VERIFIED_COMPLETE |
@@ -31,7 +31,7 @@ A phase reaches VERIFIED_COMPLETE only with evidence recorded below it.
 | 17 | Judge experience | VERIFIED_COMPLETE |
 | 18 | README & reproducible spin-up | VERIFIED_COMPLETE |
 | 19 | Architecture diagram | VERIFIED_COMPLETE |
-| 20 | Google Cloud proof | PARTIAL (blocked, UA-004) |
+| 20 | Google Cloud proof | VERIFIED_COMPLETE |
 | 21 | Demo video engineering | VERIFIED_COMPLETE |
 | 22 | Devpost submission | VERIFIED_COMPLETE |
 | 23 | Bonus contributions | VERIFIED_COMPLETE |
@@ -573,3 +573,58 @@ credential refresh (UA-004). Zero FAILED.**
 
 Nothing is marked complete on the strength of reasoning alone: every PASS in the requirements
 matrix names the command or artefact that demonstrates it.
+
+---
+
+## PHASES 02 / 05 / 20 — CLOSED (2026-08-24, after credentials were restored)
+
+### Phase 02 — the Genkit migration, now verified live
+Deployed. A production mission proved **7 of 8**, citing `GR-106847`, cross-checked against
+`/demo/submissions`. The acceptance criterion that mattered: **0 deprecation warnings on the
+serving revision** (`laspoh-proof-00002-clk`). The two warnings still in the log window belong to
+`00001-pkh`, the pre-migration revision.
+
+### Phase 05 — Firestore, now actually Firestore
+`/health` reports `"store":"firestore"`. Database created (`nam5`), `roles/datastore.user` granted —
+the runtime account now holds exactly two roles, both deliberate.
+
+**It failed on the first attempt, and the failure is the interesting part.** The service came up on
+in-memory anyway, and said why within seconds:
+
+    firestore unavailable — falling back to in-memory (missions will NOT survive a restart):
+    Error: 3 INVALID_ARGUMENT: Resource id "__connectivity_probe__" is invalid because it is reserved.
+
+**My health check was the bug.** Firestore reserves ids matching `__x__`, so the probe failed
+against a perfectly healthy database — a health check reporting the patient dead because it took
+the temperature wrong. A *silent* fallback would have left the service on in-memory state looking
+entirely healthy, and the first symptom would have been a mission lost to a restart: precisely the
+bug Phase 05 existed to remove. Degrading loudly turned a latent outage into a thirty-second fix.
+
+`MISSION_STORE` was added to `deploy.sh`'s env list rather than set with `gcloud run services
+update`, because an additive manual update is silently dropped by the next run of the script.
+
+### Phase 20 — Google Cloud proof
+| Evidence | Verified |
+|---|---|
+| Cloud Run service, revision `00004` | HTTP 200 |
+| Vertex AI · `gemini-3.5-flash` · `asia-southeast1` | `/health` |
+| Firestore as the live mission store | `/health` → `firestore` |
+| Structured logs correlated by `missionId` | `mission.finished`, `step.verdict`, `step.observed` … |
+| Least privilege | exactly `roles/aiplatform.user` + `roles/datastore.user` |
+
+### Phase 16 — reliability, measured
+9 production missions: **9/9 honest**, 7/9 proved a reference, 27–96s.
+
+**A correction I had to make to my own harness:** it printed `proved a reference: 8/8`. It was 6/8
+— a field-parsing bug. Caught by reading the per-run lines, which showed two runs citing nothing.
+A reliability report that overstates its own success rate would be this project's central failure
+reproduced one level up, so it is corrected in the record rather than published.
+
+---
+
+## PROGRAMME STATUS — 2026-08-24
+
+**28 of 28 phases VERIFIED_COMPLETE. Zero PARTIAL. Zero FAILED.**
+
+Everything that remains needs Zubair personally: the demo video, the Devpost submission, and
+(optional) publishing the article and social post.

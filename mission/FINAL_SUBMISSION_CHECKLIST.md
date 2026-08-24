@@ -24,7 +24,10 @@ Last updated: 2026-08-24, after Phase 26.
 | `complete` unreachable with any unproven step | exhaustive property test (36 combinations) |
 | Trust boundaries: fencing, injection detection, navigation policy | 16 tests |
 | Structured, redacted, mission-correlated logging | 6 tests |
-| Full quality gate | clean install · typecheck · lint · build · **142 tests** · secret scan |
+| Full quality gate | clean install · typecheck · lint · build · **143 tests** · secret scan |
+| Genkit migration verified live | Production mission proved 7/8 citing `GR-106847`; 0 deprecation warnings |
+| Firestore live | `/health` → `"store":"firestore"` |
+| Production reliability measured | 9 runs — **9/9 honest**, 7/9 proved a reference |
 | Adversarial self-review | `PHASE_24_ADVERSARIAL_REVIEW.md` — 4 findings, 2 fixed here |
 | README, architecture diagram, Devpost copy, demo script, article, social post | `README.md`, `docs/` |
 
@@ -32,14 +35,15 @@ Last updated: 2026-08-24, after Phase 26.
 
 | # | Item | Blocks | Where |
 |---|---|---|---|
-| **UA-004** | `gcloud auth login` **and** `gcloud auth application-default login` as **zubair@samstar.org** | Deploying the plugin migration; Firestore verification; the reliability measurement | `USER_ACTION_REQUIRED.md` |
 | **UA-001** | Record and upload the ≤4-min demo video | Devpost submission | `docs/demo-script.md` |
 | **UA-002** | Submit on Devpost | The entry existing | `docs/devpost-writeup.md` |
 | **UA-003** | Publish the article and social post *(optional — bonus only)* | Bonus criteria | `docs/bonus-article.md`, `docs/social-post.md` |
 
 ## KNOWN-INCOMPLETE — honest status
 
-- **Reliability is not yet a measured rate.** The harness exists and reports one; it has not been
-  run. Do not describe the system as reliable until it has.
-- **Firestore is written but unverified** against a live Firestore, and off by default.
+- **Prove-rate is 78%, not 100%.** Nine production runs: 9/9 honest, 7/9 proved a reference. The
+  honesty rate is what the design guarantees and it held; the prove-rate is a reliability figure and
+  it is stated as measured, not rounded up.
 - **Setup has never been run on a clean human machine** — only on CI's clean runner.
+- **A hostile page showing fake confirmation text would be believed** — architectural limit, in the
+  README.
