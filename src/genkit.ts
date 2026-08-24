@@ -10,8 +10,11 @@
  * produced a result is never in doubt.
  */
 import { genkit } from "genkit";
-import vertexAI from "@genkit-ai/vertexai";
-import { googleAI } from "@genkit-ai/googleai";
+// The UNIFIED plugin. @genkit-ai/vertexai and @genkit-ai/googleai are superseded by this one
+// package, which exposes both routes. Not a preference — the old plugin prints a removal notice
+// on every cold start ("will be REMOVED in a future release; migrate to @genkit-ai/google-genai"),
+// and a dependency with a deadline is a reliability problem waiting for the worst possible week.
+import { googleAI, vertexAI } from "@genkit-ai/google-genai";
 
 export const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-3.5-flash";
 // A REAL region, not "global": the Genkit Vertex plugin rejects the global endpoint outright.

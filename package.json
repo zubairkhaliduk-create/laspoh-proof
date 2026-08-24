@@ -18,8 +18,7 @@
   },
   "dependencies": {
     "@genkit-ai/express": "^1.41.0",
-    "@genkit-ai/googleai": "^1.28.0",
-    "@genkit-ai/vertexai": "^1.41.0",
+    "@genkit-ai/google-genai": "^1.41.0",
     "express": "^5.2.1",
     "genkit": "^1.41.0",
     "pg": "^8.23.0",

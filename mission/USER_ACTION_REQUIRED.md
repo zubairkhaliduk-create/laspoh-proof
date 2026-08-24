@@ -7,7 +7,32 @@ steps, and what unblocks afterwards.
 
 ---
 
-## Status: 3 open
+## Status: 4 open
+
+---
+
+### UA-004 — Re-authenticate the Google account that owns the hackathon project ⚠️ BLOCKING
+**Why it requires you:** `gcloud auth login` opens a browser and cannot run non-interactively.
+The hackathon project `laspoh-proof-260823` sits under **zubair@samstar.org**, and both that
+account's token and Application Default Credentials have expired. The other account on this
+machine (`zubair@blissio.ai`) is a different org and is refused by the project — verified, not
+assumed.
+
+**What this blocks right now:** deploying the Genkit plugin migration, probing model availability
+in the hackathon project, and running a live mission against the deployed service. The service
+itself is still up and serving (HTTP 200) on the previous revision, so nothing is down.
+
+**Steps:**
+
+    gcloud auth login                        # sign in as zubair@samstar.org
+    gcloud auth application-default login    # same account — ADC is a SEPARATE credential store
+    gcloud config set account zubair@samstar.org
+
+Both commands are needed. `auth login` covers the CLI; `application-default login` covers what the
+libraries use. Refreshing one and not the other is what happened last time.
+
+**Unblocks:** Phase 02 deployment evidence, Phase 20 (Google Cloud proof), and every live-mission
+run the later phases depend on.
 
 ---
 
