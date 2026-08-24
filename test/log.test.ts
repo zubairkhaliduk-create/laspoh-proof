@@ -17,9 +17,9 @@ describe("redaction happens on the way out", () => {
 
   it("catches credential-shaped values even under an innocent key", () => {
     // The dangerous case: a key nobody thought to protect, carrying something that matters.
-    const r = redact({ note: "use AIzaSyA1234567890abcdefghijklmnopqrstu to continue" }) as Record<string, unknown>;
+    const r = redact({ note: "use AIzaSyDUMMY_FIXTURE_NOT_A_REAL_KEY_00000 to continue" }) as Record<string, unknown>;
     expect(r.note).toContain("[redacted-credential]");
-    expect(r.note).not.toContain("AIzaSyA1234567890");
+    expect(r.note, "the fixture key survived redaction").not.toContain("AIzaSyDUMMY_FIXTURE");
   });
 
   it("truncates page text — a log line is a signal, not a copy of the web", () => {
