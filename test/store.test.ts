@@ -106,3 +106,16 @@ describe("the event cap reports what it drops", () => {
     expect(r.eventsDropped).toBeUndefined();
   });
 });
+
+describe("the Firestore connectivity probe", () => {
+  it("does not use a reserved document id", async () => {
+    // Firestore reserves ids matching __x__. A probe using one fails with INVALID_ARGUMENT against
+    // a perfectly healthy database — a health check reporting the patient dead because it took the
+    // temperature wrong. This happened on the first deploy.
+    const src = await import("node:fs").then((fs) =>
+      fs.readFileSync(new URL("../src/store/firestore.ts", import.meta.url), "utf8"));
+    const probe = src.match(/await store\.get\("([^"]+)"\)/)?.[1] ?? "";
+    expect(probe, "the probe id is empty").not.toBe("");
+    expect(probe, `"${probe}" matches Firestore's reserved __x__ pattern`).not.toMatch(/^__.*__$/);
+  });
+});

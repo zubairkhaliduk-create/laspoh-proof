@@ -21,7 +21,12 @@ RUNTIME_SA="${RUNTIME_SA:-laspoh-proof-runtime@${PROJECT}.iam.gserviceaccount.co
 #                        Cloud Run's default throttles CPU to near zero outside a request, so the
 #                        mission would crawl or stall after the response was sent — with nothing in
 #                        the logs to say why.
-#   --max-instances 1    Mission state is in memory, so a caller must keep reaching the instance
+#   NOTE: mission state is now in FIRESTORE (MISSION_STORE=firestore), so --max-instances 1 is no
+#   longer load-bearing for correctness — it is kept as a cost bound while this is a demo service.
+#   The env list below is the single source of truth: setting a variable with `gcloud run services
+#   update` instead would be silently dropped by the next run of this script.
+#
+#   --max-instances 1    (historically) Mission state is in memory, so a caller must keep reaching the instance
 #                        that holds it. Note the limit is per REVISION, not global: during a
 #                        rollout the old revision keeps serving, and a mission started on it will
 #                        404 the moment traffic shifts — observed, and not a crash. Do not deploy
@@ -39,7 +44,7 @@ gcloud run deploy "$SERVICE" \
   --timeout 900 \
   --min-instances 0 --max-instances 1 \
   --no-cpu-throttling \
-  --set-env-vars "GEMINI_MODEL=${MODEL},VERTEX_PROJECT=${PROJECT},VERTEX_LOCATION=${VERTEX_LOCATION:-asia-southeast1}"
+  --set-env-vars "GEMINI_MODEL=${MODEL},VERTEX_PROJECT=${PROJECT},VERTEX_LOCATION=${VERTEX_LOCATION:-asia-southeast1},MISSION_STORE=${MISSION_STORE:-firestore}"
 
 URL="$(gcloud run services describe "$SERVICE" --project "$PROJECT" --region "$REGION" --format='value(status.url)')"
 echo "✓ Live: $URL"

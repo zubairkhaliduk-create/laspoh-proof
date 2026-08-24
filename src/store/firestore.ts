@@ -74,7 +74,12 @@ export async function selectStore(): Promise<MissionStore> {
     const store = new FirestoreStore(process.env.VERTEX_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || undefined);
     // Prove it before trusting it. A store that cannot answer a read is not a store, and finding
     // that out on the first mission is finding out too late.
-    await store.get("__connectivity_probe__");
+    //
+    // The id must NOT be of the form __x__: Firestore reserves those, and the probe then fails with
+    // INVALID_ARGUMENT on a perfectly healthy database — a health check that reports the patient
+    // dead because it took the temperature wrong. (It did exactly that on first deploy; the loud
+    // fallback is the only reason it took seconds rather than a mission to find.)
+    await store.get("connectivity-probe");
     console.log("[laspoh-proof] mission store: firestore");
     return store;
   } catch (e) {
