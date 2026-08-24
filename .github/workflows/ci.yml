@@ -1,0 +1,43 @@
+# The gate every push must pass. Deliberately the same commands a human runs locally —
+# a CI that tests something other than what you can reproduce is not evidence.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.8.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      # The browser is part of the runtime, not a dev extra: the reference executor
+      # drives a real Chromium and the executor tests run against it.
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      # No model credentials in CI, and that is deliberate. These suites prove the
+      # guarantees that must hold WITHOUT a model — the citation rule, success
+      # accounting, the blind-submit gate, and the executor against a real page.
+      - name: Test
+        run: pnpm test

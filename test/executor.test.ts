@@ -72,7 +72,7 @@ describe("what the executor can see", () => {
   it("refuses to call an incomplete submission a success", async () => {
     // Role is still unset, so the server rejects. The click fires; the mission does not advance.
     const obs = await exec.execute({ kind: "click", target: "Submit application" });
-    expect(obs.identifiers.some((i) => /^GR-/.test(i))).toBe(false);
+    expect(obs.identifiers.some((i) => i.startsWith("GR-"))).toBe(false);
     expect(obs.pageText).toMatch(/Rejected/i);
   });
 
