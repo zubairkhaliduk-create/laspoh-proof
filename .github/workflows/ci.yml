@@ -33,8 +33,11 @@ jobs:
 
       # The browser is part of the runtime, not a dev extra: the reference executor
       # drives a real Chromium and the executor tests run against it.
+      # playwright-core, not playwright: this project depends on the core package (the executor
+      # drives a browser but needs none of the test-runner surface), and `playwright` is simply
+      # not installed. CI caught that on the first run, which is what CI is for.
       - name: Install Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright-core install --with-deps chromium
 
       # No model credentials in CI, and that is deliberate. These suites prove the
       # guarantees that must hold WITHOUT a model — the citation rule, success
