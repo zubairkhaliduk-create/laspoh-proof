@@ -7,7 +7,7 @@
  * action are what models do when a prompt asks for a plan.
  */
 import { describe, expect, it } from "vitest";
-import { ensureNavigatesFirst, isSelfCertifyingCriterion, sanitizePlan, type PlanStep } from "../src/core/plan-sanitize.js";
+import { isSelfCertifyingCriterion, sanitizePlan, type PlanStep } from "../src/core/plan-sanitize.js";
 import type { Action } from "../src/executors/types.js";
 
 const step = (intent: string, action: Action, provenBy: string): PlanStep => ({ intent, action, provenBy });
