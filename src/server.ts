@@ -16,6 +16,7 @@ import { modelIdentity } from "./genkit.js";
 import { mountDemoTarget } from "./demo/target.js";
 import { selectStore } from "./store/firestore.js";
 import type { MissionRecord, MissionStore } from "./store/types.js";
+import { missionLogger } from "./obs/log.js";
 
 // A mission runs AFTER its response has been sent, so any rejection it leaks has no request left to
 // fail — under Node's default it takes the whole process down instead. The service then restarts
@@ -75,6 +76,8 @@ app.post("/missions", async (req, res) => {
   const rec: MissionRecord = { id, status: "running", goal, events: [], receipt: null, error: null, createdAt: now, updatedAt: now, ...(idempotencyKey ? { idempotencyKey } : {}) };
   await store.create(rec);
 
+  const log = missionLogger(id);
+  log("INFO", "mission.accepted", { goal, executor: req.body?.executor ?? "reference" });
   const executor = pickExecutor(req.body?.executor);
   // Fire and forget: the mission outlives the request, which is the point.
   void (async () => {
@@ -85,12 +88,20 @@ app.post("/missions", async (req, res) => {
         executor,
         maxSteps: Number(req.body?.maxSteps ?? 24),
         // Persisting an event must never be able to kill the mission producing it.
-        onEvent: (e) => { void store.appendEvent(id, { at: new Date().toISOString(), ...e } as never).catch(() => {}); },
+        onEvent: (e) => {
+          void store.appendEvent(id, { at: new Date().toISOString(), ...e } as never).catch(() => {});
+          // Same event, two destinations: the durable record the receipt is built from, and a
+          // structured log line Cloud Logging can filter by missionId. Redaction is applied by the
+          // logger, not by this call site.
+          const sev = String(e.type).includes("fail") || String(e.type).includes("refused") ? "WARNING" : "INFO";
+          log(sev as "INFO" | "WARNING", String(e.type), e as Record<string, unknown>);
+        },
       });
       await store.update(id, { receipt, status: receipt.outcome });
+      log("INFO", "mission.finished", { outcome: receipt.outcome, proven: receipt.proven, total: receipt.total, durationMs: receipt.durationMs });
     } catch (e) {
       await store.update(id, { status: "error", error: String(e).slice(0, 500) }).catch(() => {});
-      console.error(`[laspoh-proof] mission ${id} failed:`, (e as Error)?.stack ?? String(e));
+      log("ERROR", "mission.threw", { error: String(e).slice(0, 400) });
     } finally {
       await executor.close?.().catch(() => {});
     }
