@@ -24,8 +24,8 @@ A phase reaches VERIFIED_COMPLETE only with evidence recorded below it.
 | 10 | Independent verifier | VERIFIED_COMPLETE |
 | 11 | Receipts & truthful completion | VERIFIED_COMPLETE |
 | 12 | Failure recovery & loop defense | VERIFIED_COMPLETE |
-| 13 | Security & trust boundaries | IN_PROGRESS |
-| 14 | Observability & audit trail | NOT_STARTED |
+| 13 | Security & trust boundaries | VERIFIED_COMPLETE |
+| 14 | Observability & audit trail | IN_PROGRESS |
 | 15 | Killer Taskmaster workflow | NOT_STARTED |
 | 16 | End-to-end test harness | NOT_STARTED |
 | 17 | Judge experience | NOT_STARTED |
@@ -499,3 +499,43 @@ progress is measured in **proven work alone**, so page churn cannot reset the st
 ### Next phase
 Phase 13 — security and trust boundaries. Prompt injection from page content is the largest
 untouched risk in the system: the agent reads attacker-controlled text on every single step.
+
+---
+
+## PHASE 13 — Security & Trust Boundaries
+
+**Status:** VERIFIED_COMPLETE
+**Specification:** `mission/PHASE_13_SECURITY.md`
+
+### The insight that shaped this phase
+Against most agents, prompt injection aims at exfiltration. Against **this** system the
+highest-value attack is cheaper and narrower: **persuade the verifier the work is done.** Nothing
+needs to be stolen. A page that can make the verifier say "proven" defeats the isolation, the
+disbelief default and the pre-committed criterion at once — so the verifier's prompt is where
+fencing was applied first.
+
+### Controls
+- **Fencing**, structural and always on, with a **per-call nonce** — a fixed marker like
+  `---PAGE---` is one a page can simply print, and the fence would end where the attacker chose.
+- **Detection**, advisory and never editing. A page addressing the agent is carried into the
+  verifier's context as evidence of *untrustworthiness*. Silently stripping it would corrupt the
+  evidence and destroy the only signal that anyone tried.
+- **Navigation boundary**, refused in code, defaulting to the origin of `startUrl` so the safe case
+  needs nobody to remember it. Refusals are recorded as `blocked` + `policy_refused` — the step was
+  never attempted, and "failed" would claim otherwise.
+
+### What it does NOT defend against, stated plainly
+A hostile page printing convincing fake confirmation text. The verifier will ground that citation
+because the quote is genuinely on the page — grounding proves a quote is real, not that the page is
+honest. The answer is architectural, not a better prompt: the independent ground-truth check the
+demo already uses (`/demo/submissions`, which the agent cannot write to). Where no such source
+exists, the receipt reflects what the page showed. That is a property of browser automation, not of
+this design.
+
+### Tests
+`136 passed` (+16). The **false-positive** tests matter as much as the attacks: a detector that
+fires on "please follow the instructions below" would mark ordinary application forms untrustworthy
+and make the signal worthless.
+
+### Next phase
+Phase 14 — observability, so a judge watching logs during the demo sees the architecture working.

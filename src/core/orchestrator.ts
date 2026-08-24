@@ -21,6 +21,7 @@ import { buildReceipt, type Receipt } from "./receipt.js";
 import { classifyFailure, type MissionState, newMission, noteStep, provenCount, terminalStatus } from "./state.js";
 import { planFlow } from "../flows/plan.js";
 import { sanitizePlan } from "./plan-sanitize.js";
+import { isNavigationAllowed } from "../security/untrusted.js";
 import { repairFlow } from "../flows/repair.js";
 import { verifyFlow } from "../flows/verify.js";
 import { modelIdentity } from "../genkit.js";
@@ -28,6 +29,10 @@ import { modelIdentity } from "../genkit.js";
 export interface RunOptions {
   goal: string;
   startUrl?: string;
+  /** Origins the mission may navigate to. Defaults to the origin of `startUrl` — a mission given a
+   *  starting point has a natural boundary, and a page should not be able to walk the agent (and
+   *  whatever it has read) somewhere else. Pass [] to disable the restriction deliberately. */
+  allowedOrigins?: string[];
   executor: Executor;
   /** Hard ceiling on dispatched actions. A budget the agent cannot argue with. */
   maxSteps?: number;
@@ -38,6 +43,12 @@ export interface RunResult {
   state: MissionState;
   receipt: Receipt;
   evidence: Evidence[];
+}
+
+/** The origin of a URL, or "" if it cannot be parsed. Never throws — a bad startUrl should not
+ *  take the mission down before it begins. */
+function safeOrigin(url: string): string {
+  try { return new URL(url).origin; } catch { return ""; }
 }
 
 /** Which control a step is aimed at, whatever verb it uses. */
@@ -105,6 +116,9 @@ const MAX_REPAIR_ROUNDS = 2;
 
 export async function runMission(opts: RunOptions): Promise<RunResult> {
   const { goal, startUrl, executor, maxSteps = 24 } = opts;
+  // The boundary is derived from the mission, not configured separately: the common case should be
+  // safe without anyone remembering to make it so.
+  const allowedOrigins = opts.allowedOrigins ?? (startUrl ? [safeOrigin(startUrl)].filter(Boolean) : []);
   const emit = opts.onEvent ?? (() => {});
   const missionId = `m_${randomUUID().slice(0, 8)}`;
 
@@ -220,6 +234,27 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
       emit({ type: "step.already_satisfied", id: step.id, intent: step.intent, verdict: v.verdict, cited: v.citedEvidence });
       state = noteStep(state, provenBefore);
       continue;
+    }
+
+    // ── NAVIGATION BOUNDARY ────────────────────────────────────────────────────────────────
+    // A model-generated URL is untrusted by construction — it may have been suggested by the page
+    // the model just read. This is refused in code, and recorded as BLOCKED rather than failed:
+    // the step was never attempted, and a receipt that says "failed" would claim otherwise.
+    if (step.action.kind === "navigate") {
+      const verdict = isNavigationAllowed(step.action.url, allowedOrigins);
+      if (!verdict.allowed) {
+        state = {
+          ...state,
+          steps: state.steps.map((s) =>
+            s.id === step.id
+              ? { ...s, status: "blocked" as const, reason: `navigation refused: ${verdict.why}`, failure: classifyFailure("policy_refused", verdict.why) }
+              : s,
+          ),
+        };
+        emit({ type: "policy.refused", id: step.id, url: step.action.url, why: verdict.why });
+        state = noteStep(state, provenBefore);
+        continue;
+      }
     }
 
     emit({ type: "step.start", id: step.id, intent: step.intent, action: step.action });

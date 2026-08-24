@@ -19,6 +19,7 @@
 import { z } from "zod";
 import { ai } from "../genkit.js";
 import { ActionSchema } from "../executors/types.js";
+import { fenceUntrusted } from "../security/untrusted.js";
 
 export const RepairSchema = z.object({
   steps: z.array(
@@ -52,7 +53,7 @@ THE MISSION THIS FORM IS PART OF:
 ${goal}
 
 WHAT THE PAGE CURRENTLY SHOWS:
-${pageText.slice(0, 4000)}
+${fenceUntrusted("PAGE_TEXT", pageText.slice(0, 4000))}
 
 Produce exactly one step per outstanding control, in the order listed.
 
