@@ -4,9 +4,9 @@
 
 Gemini 3.5 Flash · Genkit · Cloud Run · Firestore
 
-**Live:** https://laspoh-proof-cffubwieta-uc.a.run.app
-([`/health`](https://laspoh-proof-cffubwieta-uc.a.run.app/health) ·
-[`/demo`](https://laspoh-proof-cffubwieta-uc.a.run.app/demo))
+**Live:** https://laspoh-proof-wqx6gkuc7a-uc.a.run.app
+([`/health`](https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/health) ·
+[`/demo`](https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/demo))
 
 ---
 

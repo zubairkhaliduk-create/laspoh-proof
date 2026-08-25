@@ -8,10 +8,10 @@ segment whose length you do not fully control, which is why it is bounded below.
 ## Before you record
 
     # 1. Service answering, on the hackathon project
-    curl -s https://laspoh-proof-cffubwieta-uc.a.run.app/health | jq
+    curl -s https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/health | jq
 
     # 2. Ground truth visible and non-empty later
-    curl -s https://laspoh-proof-cffubwieta-uc.a.run.app/demo/submissions
+    curl -s https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/demo/submissions
 
     # 3. Tests green, on camera-ready terminal
     pnpm test

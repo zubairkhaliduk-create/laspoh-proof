@@ -214,10 +214,10 @@ what the seam was for, and this migration is the first real test of it.
 
 ### NOT verified — stated plainly
 The migration has **not** been exercised against a live model. That needs the deployed service,
-and deployment is blocked: the hackathon project `laspoh-proof-260823` belongs to
+and deployment is blocked: the hackathon project `laspoh-proof-251233` belongs to
 **zubair@samstar.org**, whose token and ADC have both expired. The other account on this machine
 (`zubair@blissio.ai`) is **refused** by the project — checked, not assumed:
-`ERROR: does not have permission to access projects instance [laspoh-proof-260823]`.
+`ERROR: does not have permission to access projects instance [laspoh-proof-251233]`.
 
 The deployed service remains up on the previous revision (HTTP 200), so nothing is down.
 

@@ -69,8 +69,8 @@ have. It is reported `failed` with `not_found`, never dropped — which is exact
 
 ## 2026-08-23 — Migration smoke mission (first run on the hackathon GCP project)
 
-Service: `https://laspoh-proof-cffubwieta-uc.a.run.app`
-Project: `laspoh-proof-260823` · billing `01247A-B258F0-B4B3E1` ("laspoh")
+Service: `https://laspoh-proof-wqx6gkuc7a-uc.a.run.app`
+Project: `laspoh-proof-251233` · billing `01247A-B258F0-B4B3E1` ("laspoh")
 Model: `gemini-3.5-flash` via Vertex AI, `asia-southeast1`
 Runtime identity: `laspoh-proof-runtime`, holding exactly `roles/aiplatform.user`
 
@@ -87,7 +87,7 @@ fails the check.
 
 ## 2026-08-23 — Region probe (evidence for AD-004)
 
-Direct `:generateContent` POSTs for `gemini-3.5-flash` in project `laspoh-proof-260823`:
+Direct `:generateContent` POSTs for `gemini-3.5-flash` in project `laspoh-proof-251233`:
 
     us-central1     → 404 (not served here)
     us-east4        → 404 (not served here)
@@ -105,7 +105,7 @@ availability, not a project quirk.
     cpu                  2
     memory               4Gi
     cpu-throttling       false
-    serviceAccount       laspoh-proof-runtime@laspoh-proof-260823.iam.gserviceaccount.com
+    serviceAccount       laspoh-proof-runtime@laspoh-proof-251233.iam.gserviceaccount.com
     runtime SA roles     roles/aiplatform.user        (exactly one)
 
 `--no-cpu-throttling` is load-bearing: missions continue after the 202 response, and Cloud

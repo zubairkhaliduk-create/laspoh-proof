@@ -6,7 +6,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-PROJECT="${PROJECT:-laspoh-proof-260823}"
+PROJECT="${PROJECT:-laspoh-proof-251233}"
 REGION="${REGION:-us-central1}"
 SERVICE="${SERVICE:-laspoh-proof}"
 MODEL="${GEMINI_MODEL:-gemini-3.5-flash}"

@@ -86,6 +86,28 @@ BUILD_SA="${PNUM}-compute@developer.gserviceaccount.com"
 gcloud projects add-iam-policy-binding "$PROJECT" \
   --member="serviceAccount:${BUILD_SA}" --role="roles/cloudbuild.builds.builder" \
   --condition=None --quiet >/dev/null 2>&1 || die "could not grant build permissions to ${BUILD_SA}"
+
+# GRANTING IS NOT THE SAME AS THE GRANT BEING IN EFFECT.
+#
+# On a fresh project this script granted the role, reported success, and the very next step failed
+# with PERMISSION_DENIED on that exact service account. The binding was present when checked
+# afterwards — it simply had not propagated. "Grant, then immediately use" is a race, and on a new
+# project it loses often enough to look like a permissions bug rather than a timing one.
+#
+# Read the policy back until the binding is visible, then wait a little longer, because visible in
+# the policy is not the same as honoured by every backend. Bounded, and it never fails the run: a
+# grant that is merely slow should not kill a deploy that would otherwise have worked.
+printf '  waiting for the grant to take effect'
+for _ in $(seq 1 12); do
+  if gcloud projects get-iam-policy "$PROJECT" --flatten='bindings[].members' \
+       --filter="bindings.members:${BUILD_SA}" --format='value(bindings.role)' 2>/dev/null \
+       | grep -q cloudbuild; then
+    sleep 10
+    break
+  fi
+  printf '.'; sleep 5
+done
+echo
 ok "${BUILD_SA} can build"
 
 # ── 4. Which region actually serves the model ───────────────────────────────────────────────────
