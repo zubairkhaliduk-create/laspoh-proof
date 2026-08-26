@@ -7,13 +7,35 @@ steps, and what unblocks afterwards.
 
 ---
 
-## Status: 2 open (+1 optional)
+## Status: 2 open (+2 optional)
 
 ---
 
 ### ~~UA-004 — Re-authenticate the Google account~~ ✅ RESOLVED 2026-08-24
 Done. It unblocked the Genkit migration deploy (live mission proved 7/8), Firestore provisioning
 (`/health` reports `firestore`), and the reliability measurement (9 production runs, 9/9 honest).
+
+---
+
+### UA-005 — Delete the stale duplicate hackathon service *(optional, saves money)*
+**Why it requires you:** `laspoh-proof-260823` is reachable only from **zubair@samstar.org**, and
+that login's session was expired when this was written. Neither of the other two identities can see
+the project.
+
+**What it is:** the previous deployment of this same service, at
+`https://laspoh-proof-cffubwieta-uc.a.run.app`. It still answers 200 and still bills — to billing
+account `01247A-B258F0-B4B3E1`, a *third* account, separate from both blissio and the credit one.
+The submission points at `laspoh-proof-251233`, so this one serves no purpose.
+
+**Steps:**
+
+    gcloud auth login   # zubair@samstar.org
+    gcloud run services delete laspoh-proof --project=laspoh-proof-260823 --region=us-central1
+    gcloud firestore databases delete "(default)" --project=laspoh-proof-260823   # if prompted
+    # or simply: gcloud projects delete laspoh-proof-260823
+
+**Unblocks:** nothing — purely stops a duplicate costing money and removes a second live URL that
+could be confused for the submission.
 
 ---
 
