@@ -116,3 +116,41 @@ describe("the receipt cannot be edited without detection", () => {
     expect(a.integrity).not.toBe(b.integrity);
   });
 });
+
+// ONE MISSION, ONE ID. The server mints the public id at POST time; the orchestrator used to mint
+// a second one, so every receipt named a missionId that matched no mission URL, no event stream
+// and no Cloud Logging filter — discovered by curling a live deployment and comparing. The receipt
+// exists so a judge can correlate it against the logs; an uncorrelatable id defeats the artifact.
+//
+// The flows are mocked at the module seam: this pins ID PLUMBING, and must not need a model.
+vi.mock("../src/flows/plan.js", () => ({
+  planFlow: async () => ({ steps: [{ intent: "do a thing", action: { kind: "navigate", url: "http://localhost:1/x" }, provenBy: "the thing is visibly done" }] }),
+}));
+vi.mock("../src/flows/verify.js", () => ({
+  verifyFlow: async () => ({ verdict: "unproven", citedEvidence: [], reasoning: "mocked" }),
+}));
+vi.mock("../src/flows/repair.js", () => ({
+  repairFlow: async () => ({ values: [] }),
+}));
+
+import { vi } from "vitest";
+import { runMission } from "../src/core/orchestrator.js";
+import type { Executor } from "../src/executors/types.js";
+
+describe("the receipt carries the caller's mission id", () => {
+  const inert = {
+    name: "inert",
+    preExisting: false,
+    execute: async () => ({ ok: false, failure: "transport", detail: "inert test executor", url: "", title: "", excerpt: "", identifiers: [], formState: [], outstandingRequired: [] }),
+  } as unknown as Executor;
+
+  it("threads the id from RunOptions through state to the receipt", async () => {
+    const { receipt } = await runMission({ goal: "test goal", executor: inert, maxSteps: 1, missionId: "m_fixedid1" });
+    expect(receipt.missionId).toBe("m_fixedid1");
+  });
+
+  it("still mints its own when no id is given — library use stays valid", async () => {
+    const { receipt } = await runMission({ goal: "test goal", executor: inert, maxSteps: 1 });
+    expect(receipt.missionId).toMatch(/^m_[0-9a-f]{8}$/);
+  });
+});

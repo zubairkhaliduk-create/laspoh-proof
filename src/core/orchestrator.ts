@@ -37,6 +37,11 @@ export interface RunOptions {
   /** Hard ceiling on dispatched actions. A budget the agent cannot argue with. */
   maxSteps?: number;
   onEvent?: (e: { type: string; [k: string]: unknown }) => void;
+  /** The mission's public id — the one the API returned from POST /missions. Without it the
+   *  orchestrator mints its own, and every receipt then names a missionId that matches no mission
+   *  URL, no event stream, and no Cloud Logging filter. For a system whose pitch is that a judge
+   *  can correlate the receipt against the logs, an uncorrelatable receipt id is not cosmetic. */
+  missionId?: string;
 }
 
 export interface RunResult {
@@ -120,7 +125,8 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
   // safe without anyone remembering to make it so.
   const allowedOrigins = opts.allowedOrigins ?? (startUrl ? [safeOrigin(startUrl)].filter(Boolean) : []);
   const emit = opts.onEvent ?? (() => {});
-  const missionId = `m_${randomUUID().slice(0, 8)}`;
+  // The caller's id wins — one mission, one id, from POST response to receipt to log filter.
+  const missionId = opts.missionId ?? `m_${randomUUID().slice(0, 8)}`;
 
   let state = newMission(missionId, goal, executor.name);
   const evidence: Evidence[] = [];

@@ -144,6 +144,7 @@ app.post("/missions", async (req, res) => {
         goal,
         startUrl: req.body?.startUrl,
         executor,
+        missionId: id,
         maxSteps: Number(req.body?.maxSteps ?? 24),
         // Persisting an event must never be able to kill the mission producing it.
         onEvent: (e) => {
