@@ -83,7 +83,15 @@ reference the server never issued would be provably wrong.</p>
 <pre>curl -X POST ${"$"}{req_origin}/missions -H 'content-type: application/json' \\
   -d '{"goal":"Apply for the research grant as Ada Lovelace (ada@example.com), an independent researcher. Obtain the confirmation reference.","startUrl":"${"$"}{req_origin}/demo"}'</pre>
 <p><a href="https://github.com/zubairkhaliduk-create/laspoh-proof">Source on GitHub</a></p>`
-    .replaceAll("${req_origin}", `${_req.protocol}://${_req.get("host") ?? "localhost:8080"}`));
+    // Cloud Run terminates TLS and forwards plain HTTP, so req.protocol reports "http" for a page
+    // served over https — and the copy-paste command below is the one thing a judge actually runs.
+    // Trust the forwarded scheme, and fall back to the host's own shape rather than to a guess.
+    .replaceAll("${req_origin}", (() => {
+      const host = _req.get("host") ?? "localhost:8080";
+      const fwd = (_req.get("x-forwarded-proto") ?? "").split(",")[0]?.trim();
+      const scheme = fwd || (/^localhost|^127\.0\.0\.1|^\[::1\]/.test(host) ? "http" : "https");
+      return `${scheme}://${host}`;
+    })()));
 });
 
 app.get("/health", (_req, res) => {
