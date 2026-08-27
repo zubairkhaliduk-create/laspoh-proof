@@ -58,7 +58,12 @@ the checking, not just the clicking.
 
 ## How I built it
 
-**Gemini 3.5 Flash** via **Genkit**, on **Cloud Run**, with mission state in **Firestore**.
+**Gemini 3.5 Flash** via **Genkit**, on **Cloud Run**, with mission state in **Firestore** — and
+two more Google AI models wired so each can only make the system more skeptical: **Gemma 4**
+re-audits every grounded "proven" verdict from a different model family (demote-only), and
+**gemini-embedding-001** classifies each rejected citation as a paraphrase of real evidence or an
+outright invention (explanation-only). The full architecture, with the isolation boundary drawn,
+is in the repo: `docs/architecture.png`.
 
 Three Genkit flows carry every model decision: `plan`, `repair`, `verify`. Remove Genkit and the
 agent has no reasoning left.
@@ -100,6 +105,23 @@ worthless if you're strict about the wrong evidence.
 **Don't ask a model to be careful — take the decision away from it.** The fix for submitting with
 required fields empty is not a better prompt. The page reports what is required; a pure function
 subtracts what the plan already covers; whatever is left gets filled first.
+
+## Measured reliability
+
+Numbers a judge can re-run, not a chart I graded myself
+([`mission/DEMO_EVIDENCE.md`](https://github.com/zubairkhaliduk-create/laspoh-proof/blob/main/mission/DEMO_EVIDENCE.md)
+has the raw runs and the harness):
+
+| Metric (consecutive production missions) | Before the navigate-first fix | After |
+|---|---|---|
+| Honest — no fabricated reference | 9/9 | **8/8** |
+| Proved a confirmation reference | 7/9 (78%) | **8/8 (100%)** |
+| `blocked` — proved nothing | 2/8 | **0/8** |
+
+One disclosure that belongs next to any reliability table: my first harness printed `proved: 8/8`
+when the truth was 6/8 — a field-parsing bug. It was caught, fixed, and recorded in the repo rather
+than published, because a reliability report that overstates its own success rate would be this
+project failing in exactly the way it exists to prevent.
 
 ## Technologies
 

@@ -53,8 +53,10 @@ else
   echo "▶ no gemma-api-key secret — the auditor will report itself unavailable (single-verifier behaviour)"
 fi
 
+# ${arr[@]+...} not "${arr[@]}": under `set -u`, macOS's bash 3.2 treats an EMPTY array expansion
+# as an unbound variable and kills the deploy on the machines most judges use.
 gcloud run deploy "$SERVICE" \
-  "${SECRET_FLAGS[@]}" \
+  ${SECRET_FLAGS[@]+"${SECRET_FLAGS[@]}"} \
   --source . \
   --project "$PROJECT" \
   --region "$REGION" \

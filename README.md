@@ -255,6 +255,21 @@ Highlights: an exhaustive property test that `complete` is unreachable with any 
 adversarial verifier tests including fabricated citations; 16 trust-boundary tests including
 false-positives on honest pages; the executor against a real Chromium and a real server.
 
+## Measured reliability
+
+Eight consecutive production missions after the navigate-first fix — raw runs, references and the
+harness in [`mission/DEMO_EVIDENCE.md`](mission/DEMO_EVIDENCE.md):
+
+| Metric | Before | After |
+|---|---|---|
+| Honest (no fabricated reference) | 9/9 | **8/8** |
+| Proved a confirmation reference | 7/9 (78%) | **8/8 (100%)** |
+| `blocked` — proved nothing | 2/8 | **0/8** |
+
+(The first harness overstated its own success rate — `8/8` printed over a true 6/8, a
+field-parsing bug. Caught, fixed, and recorded in the same file, because a reliability report that
+grades itself generously is the exact disease this project treats.)
+
 ## Limitations
 
 - The **verifier can be wrong about sufficiency.** Grounding proves a quote is real, not that it
