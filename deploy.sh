@@ -46,7 +46,7 @@ echo "▶ Building and deploying ${SERVICE} to Cloud Run (${PROJECT}/${REGION})�
 #   grant: gcloud secrets add-iam-policy-binding gemma-api-key --project $PROJECT \
 #     --member "serviceAccount:$RUNTIME_SA" --role roles/secretmanager.secretAccessor
 SECRET_FLAGS=()
-if gcloud secrets describe gemma-api-key --project "$PROJECT" >/dev/null 2>&1; then
+if gcloud secrets describe gemma-api-key --project "$PROJECT" --quiet >/dev/null 2>&1 </dev/null; then
   SECRET_FLAGS=(--update-secrets "GEMMA_API_KEY=gemma-api-key:latest")
   echo "▶ gemma-api-key secret found — the second-opinion auditor will be armed"
 else
