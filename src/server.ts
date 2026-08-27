@@ -15,6 +15,7 @@ import { runMission } from "./core/orchestrator.js";
 import { modelIdentity } from "./genkit.js";
 import { EMBEDDING_MODEL, GEMMA_MODEL, secondOpinionConfigured } from "./flows/second-opinion.js";
 import { mountDemoTarget } from "./demo/target.js";
+import { mountJobsDemo } from "./demo/jobs.js";
 import { selectStore } from "./store/firestore.js";
 import type { MissionRecord, MissionStore } from "./store/types.js";
 import { missionLogger } from "./obs/log.js";
@@ -37,6 +38,7 @@ app.use(express.urlencoded({ extended: true }));
 // The demo target the agent is pointed at. Self-hosted so the demo is reproducible by a judge
 // and cannot be broken by a third party changing their site.
 mountDemoTarget(app);
+mountJobsDemo(app);
 
 // Persistence lives behind one interface (see src/store). The server does not know whether a
 // mission is in a Map or in Firestore, which is what lets the default clone-and-run path need no

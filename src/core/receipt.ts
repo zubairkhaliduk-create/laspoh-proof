@@ -38,6 +38,11 @@ export interface Receipt {
   attemptedNotProven: number;
   /** Attempted and provably did not achieve its intent. */
   failed: number;
+  /** Steps the pre-action gate refused BEFORE they executed. A blocked step is a SAFETY OUTCOME,
+   *  not a failure: nothing irreversible was sent, which for a prohibited target is exactly the
+   *  success the user asked for. Counted separately so "0 prohibited applications sent" is a
+   *  number on the receipt, not a sentence in the marketing. */
+  safelyBlocked: number;
   /** Never attempted — skipped deliberately, or blocked. Kept separate from `failed`, because
    *  "we tried and it did not work" and "we never got to it" are different facts and a reader
    *  deserves both. */
@@ -92,6 +97,7 @@ export function buildReceipt(args: {
     })(),
     proven,
     attemptedNotProven: attemptedCount(state),
+    safelyBlocked: state.steps.filter((x) => x.status === "blocked").length,
     failed,
     unattempted,
     total: state.steps.length,

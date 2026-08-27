@@ -22,6 +22,7 @@ import { classifyFailure, type MissionState, newMission, noteStep, provenCount, 
 import { planFlow } from "../flows/plan.js";
 import { sanitizePlan } from "./plan-sanitize.js";
 import { isNavigationAllowed } from "../security/untrusted.js";
+import { decideFromVerdict, goalStatesConstraints, isIrreversibleStep, preactionCriterion } from "./preaction.js";
 import { repairFlow } from "../flows/repair.js";
 import { verifyFlow } from "../flows/verify.js";
 import { modelIdentity } from "../genkit.js";
@@ -261,6 +262,52 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
         state = noteStep(state, provenBefore);
         continue;
       }
+    }
+
+    // ── THE PRE-ACTION PROOF GATE ──────────────────────────────────────────────────────────
+    // Post-hoc verification cannot recall an irreversible action; "sent is sent". Before a step
+    // that commits something to the world, under a goal that states constraints, the SAME
+    // isolated verifier that grades outcomes must license the action from evidence captured off
+    // the current page: proven → proceed; contradicted → blocked (violation, quoted); unproven →
+    // blocked safely, because for an irreversible step silence is not permission. The license
+    // flows through the same disbelief default, citation grounding and demotion-only audit as
+    // every verdict — there is no second, weaker judge for the decision that matters most.
+    if (isIrreversibleStep(step) && goalStatesConstraints(goal)) {
+      // No observation at all is the EMPTIEST possible evidence — an irreversible step as the
+      // very first action, with constraints standing, cannot be licensed by silence. Found by a
+      // test whose weak navigate step the plan sanitizer dropped: the gate quietly failed to arm
+      // and the click dispatched. The gate must fail CLOSED on nothing-observed, not open.
+      if (!lastObs) {
+        state = {
+          ...state,
+          steps: state.steps.map((s) =>
+            s.id === step.id
+              ? { ...s, status: "blocked" as const, reason: "pre-action gate refused this irreversible step BEFORE it executed: nothing has been observed yet — no evidence, no irreversible action", failure: classifyFailure("policy_refused", "no observation before irreversible step") }
+              : s,
+          ),
+        };
+        emit({ type: "preaction.blocked", id: step.id, intent: step.intent, safely: true, why: "no observation before irreversible step" });
+        state = noteStep(state, provenBefore);
+        continue;
+      }
+      const preEv = recordEvidence(step.id, step.action, lastObs as Observation, { executor: executor.name, preExisting: executor.preExisting });
+      evidence.push(preEv);
+      state = { ...state, evidenceIds: [...state.evidenceIds, preEv.id] };
+      const license = decideFromVerdict(await verifyFlow({ criterion: preactionCriterion(goal, step.intent), evidence: [preEv] }));
+      if (!license.allow) {
+        state = {
+          ...state,
+          steps: state.steps.map((s) =>
+            s.id === step.id
+              ? { ...s, status: "blocked" as const, reason: `pre-action gate refused this irreversible step BEFORE it executed: ${license.reasoning}`, failure: classifyFailure("policy_refused", license.reasoning) }
+              : s,
+          ),
+        };
+        emit({ type: "preaction.blocked", id: step.id, intent: step.intent, safely: license.safely, why: license.reasoning });
+        state = noteStep(state, provenBefore);
+        continue;
+      }
+      emit({ type: "preaction.allowed", id: step.id, intent: step.intent, why: license.reasoning });
     }
 
     emit({ type: "step.start", id: step.id, intent: step.intent, action: step.action });
