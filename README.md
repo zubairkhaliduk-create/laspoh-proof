@@ -131,7 +131,7 @@ Vertex is reached with the service's **own identity** — no API key is deployed
     src/obs/          structured, redacted, mission-correlated logging
     src/demo/         the self-hosted demo target
     mission/          the engineering programme: specs, decisions, evidence, disclosure
-    test/             142 tests
+    test/             150 tests
 
 ## Quick start
 
@@ -203,7 +203,7 @@ ground-truth source — and where none exists the receipt reflects what the page
 
 ## Tests
 
-    pnpm test        # 142
+    pnpm test        # 150
     pnpm typecheck
     pnpm lint
 

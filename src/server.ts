@@ -46,6 +46,46 @@ function pickExecutor(name?: string): Executor {
   return name === "laspoh" ? new LaspohExecutor() : new ReferenceExecutor(process.env.HEADFUL !== "1");
 }
 
+// THE FIRST THING A JUDGE SEES.
+//
+// The submission lists this service's URL as the live project, so "/" is the first request anyone
+// evaluating this will make — and it answered 404, because every route here is an API route. A
+// judge with a working, tested, deployed system in front of them would have concluded it was down.
+//
+// Plain HTML, no build step, no assets: it names what this is and links the two endpoints that
+// prove the claim — the receipt the agent produces, and the ground truth it cannot write to.
+app.get("/", (_req, res) => {
+  res.type("html").send(`<!doctype html>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Laspoh Proof</title>
+<style>
+  :root{color-scheme:light dark}
+  body{max-width:46rem;margin:0 auto;padding:3rem 1.25rem;line-height:1.6;
+       font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+  h1{font-size:1.6rem;margin:0 0 .25rem} p.t{margin:0 0 2rem;opacity:.75}
+  code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.875rem}
+  pre{padding:.9rem 1rem;border-radius:8px;overflow-x:auto;background:rgba(127,127,127,.12)}
+  a{color:inherit} ul{padding-left:1.1rem} li{margin:.4rem 0}
+</style>
+<h1>Laspoh Proof</h1>
+<p class="t">An autonomous agent that proves what it did &mdash; or says plainly that it could not.</p>
+<p>This is an API. Nothing here grades itself: a step counts as <em>proven</em> only when an isolated
+verifier confirms it from evidence <strong>and</strong> the quote it cites is checked to actually
+appear in that evidence.</p>
+<ul>
+  <li><a href="/health">/health</a> &mdash; service, model and executor identity</li>
+  <li><a href="/demo">/demo</a> &mdash; the self-hosted target the agent operates</li>
+  <li><a href="/demo/submissions">/demo/submissions</a> &mdash; ground truth, which the agent cannot write to</li>
+  <li><code>POST /missions</code> &mdash; run one; then <code>GET /missions/:id/receipt</code></li>
+</ul>
+<p>Run a mission and compare its receipt against <code>/demo/submissions</code>. A receipt citing a
+reference the server never issued would be provably wrong.</p>
+<pre>curl -X POST ${"$"}{req_origin}/missions -H 'content-type: application/json' \\
+  -d '{"goal":"Apply for the research grant as Ada Lovelace (ada@example.com), an independent researcher. Obtain the confirmation reference.","startUrl":"${"$"}{req_origin}/demo"}'</pre>
+<p><a href="https://github.com/zubairkhaliduk-create/laspoh-proof">Source on GitHub</a></p>`
+    .replaceAll("${req_origin}", `${_req.protocol}://${_req.get("host") ?? "localhost:8080"}`));
+});
+
 app.get("/health", (_req, res) => {
   res.json({
     ok: true,

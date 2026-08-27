@@ -97,7 +97,7 @@ the demo target is served by the same process.
 Then compare `/missions/:id/receipt` against `/demo/submissions` — ground truth the agent cannot
 write to. A receipt citing a reference the server never issued would be provably wrong.
 
-`pnpm test` runs 142 tests, none of which need a model.
+`pnpm test` runs 150 tests, none of which need a model.
 
 ## Disclosure of pre-existing work
 
