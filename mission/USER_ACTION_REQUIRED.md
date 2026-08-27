@@ -1,85 +1,17 @@
-# User Action Required
+# Owner-only actions (batched) — deadline Mon 31 Aug 2026, 17:00 PT
 
-Only items that genuinely cannot be done from this environment. Each states why, the exact
-steps, and what unblocks afterwards.
-
-**Nothing here blocks the rest of the program** — independent work continues regardless.
-
----
-
-## Status: 2 open (+2 optional)
-
----
-
-### ~~UA-004 — Re-authenticate the Google account~~ ✅ RESOLVED 2026-08-24
-Done. It unblocked the Genkit migration deploy (live mission proved 7/8), Firestore provisioning
-(`/health` reports `firestore`), and the reliability measurement (9 production runs, 9/9 honest).
-
----
-
-### UA-005 — Delete the stale duplicate hackathon service *(optional, saves money)*
-**Why it requires you:** `laspoh-proof-260823` is reachable only from **zubair@samstar.org**, and
-that login's session was expired when this was written. Neither of the other two identities can see
-the project.
-
-**What it is:** the previous deployment of this same service, at
-`https://laspoh-proof-cffubwieta-uc.a.run.app`. It still answers 200 and still bills — to billing
-account `01247A-B258F0-B4B3E1`, a *third* account, separate from both blissio and the credit one.
-The submission points at `laspoh-proof-251233`, so this one serves no purpose.
-
-**Steps:**
-
-    gcloud auth login   # zubair@samstar.org
-    gcloud run services delete laspoh-proof --project=laspoh-proof-260823 --region=us-central1
-    gcloud firestore databases delete "(default)" --project=laspoh-proof-260823   # if prompted
-    # or simply: gcloud projects delete laspoh-proof-260823
-
-**Unblocks:** nothing — purely stops a duplicate costing money and removes a second live URL that
-could be confused for the submission.
-
----
-
-### UA-001 — Record and upload the demo video
-**Why it requires you:** it is a screen recording of your machine, narrated, uploaded to a
-YouTube/Vimeo account only you can sign into. No automation can produce it.
-
-**Blocked until then:** the Devpost submission cannot be completed (video URL is mandatory).
-
-**Steps:** provided as a shot-by-shot script with timings in Phase 21. Rehearsal checklist
-and contingency plan included. Expect two or three takes.
-
-**Unblocks:** Devpost submission, Phase 27 final package.
-
----
-
-### UA-002 — Devpost submission
-**Why it requires you:** Devpost login and the act of submitting are yours. Submitting on
-someone's behalf is not something I should do even if I could.
-
-**Blocked until then:** the entry does not exist.
-
-**Steps:** Phase 22 produces the complete copy — title, tagline, all long-form fields,
-technology list, disclosure — ready to paste.
-
-**Unblocks:** the submission itself.
-
----
-
-### UA-003 — Publish the bonus article and social post (optional)
-**Why it requires you:** posting from your LinkedIn/X account requires your credentials, and
-publishing under your name is your decision.
-
-**Blocked until then:** bonus points only. Core score is unaffected.
-
-**Steps:** Phase 23 drafts both, including the required "created for the purposes of
-entering the hackathon" statement and `#AllThingsAgenticHackathon`.
-
-**Unblocks:** bonus criteria.
-
----
-
-## Resolved
-
-### UA-000 — Google Cloud account with credit *(resolved 2026-08-23)*
-Required your `gcloud auth login` and access to the $300 billing account. Done; the service
-now runs in project `laspoh-proof-260823` on billing account `01247A-B258F0-B4B3E1`.
+1. RECORD THE VIDEO — docs/demo-script.md (being superseded by docs/demo-final-script.md),
+   ≤3:50, one continuous take, YouTube/Vimeo PUBLIC. Worth 30%. Nothing else matters as much.
+2. DEVPOST DRAFT NOW, submit early — paste docs/devpost-writeup.md, upload
+   submission/gallery-*.png, category Taskmaster, add video URL when ready.
+3. BONUS +0.4 — publish docs/bonus-article.md on dev.to (public), post docs/social-post.md
+   (LinkedIn and/or the ≤280-char X variant, hashtag #AllThingsAgenticHackathon), then put both
+   URLs into the Devpost form.
+4. GEMMA ARMING (+0.2 candidate) — console only: ai.studio/projects → laspoh-proof-251233 →
+   enable Gemini-API billing (currently 429 "prepayment credits depleted"). Then say "gemma
+   billing done" and the agent stores the already-minted scoped key as the gemma-api-key secret,
+   grants accessor, redeploys; /health flips armed:true automatically.
+5. STALE DUPLICATE — delete project laspoh-proof-260823 (only zubair@samstar.org can). Until
+   then: it is a different URL never referenced by any submission asset; canonical URL is
+   laspoh-proof-wqx6gkuc7a-uc.a.run.app.
+6. OPTIONAL (credits) — hackathon GCP credits request closed 28 Aug 12:00 PT; skip if passed.
