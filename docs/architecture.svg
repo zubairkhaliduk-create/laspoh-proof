@@ -1,0 +1,182 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1680 1150" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#374151"/>
+    </marker>
+    <marker id="arrRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#b91c1c"/>
+    </marker>
+  </defs>
+  <rect width="1680" height="1150" fill="#ffffff"/>
+  <text x="60" y="52" font-size="26" font-weight="bold" fill="#111827">Laspoh Proof — no model grades its own work</text>
+
+  <!-- GOOGLE CLOUD boundary -->
+  <rect x="340" y="80" width="1300" height="670" rx="14" fill="#f0f6ff" stroke="#93b4e6" stroke-dasharray="8 5" stroke-width="2"/>
+  <text x="360" y="110" font-size="15" font-weight="bold" fill="#1d4ed8">GOOGLE CLOUD</text>
+
+  <!-- Cloud Run container boundary -->
+  <rect x="370" y="130" width="760" height="600" rx="10" fill="#ffffff" stroke="#64748b" stroke-width="1.5"/>
+  <text x="390" y="156" font-size="13" font-weight="bold" fill="#475569">CLOUD RUN · Node 22 + Express · least-privilege service account · no API key deployed</text>
+
+  <!-- Client -->
+  <rect x="60" y="180" width="210" height="86" rx="8" fill="#ffffff" stroke="#374151" stroke-width="1.5"/>
+  <text x="165" y="212" font-size="15" font-weight="bold" fill="#111827" text-anchor="middle">CLIENT / JUDGE</text>
+  <text x="165" y="234" font-size="12" fill="#4b5563" text-anchor="middle">curl or browser</text>
+
+  <!-- server -->
+  <rect x="400" y="176" width="310" height="66" rx="8" fill="#ffffff" stroke="#374151" stroke-width="1.5"/>
+  <text x="555" y="202" font-size="14" font-weight="bold" fill="#111827" text-anchor="middle">POST /missions → 202 + id</text>
+  <text x="555" y="222" font-size="12" fill="#4b5563" text-anchor="middle">src/server.ts — thin HTTP layer</text>
+
+  <!-- orchestrator -->
+  <rect x="400" y="292" width="310" height="86" rx="8" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+  <text x="555" y="322" font-size="15" font-weight="bold" fill="#312e81" text-anchor="middle">MISSION ORCHESTRATOR</text>
+  <text x="555" y="344" font-size="12" fill="#4338ca" text-anchor="middle">sole writer of mission state</text>
+  <text x="555" y="362" font-size="12" fill="#4338ca" text-anchor="middle">recovery = pure code, out of the model's hands</text>
+
+  <!-- planner / repair -->
+  <rect x="400" y="428" width="180" height="88" rx="8" fill="#ffffff" stroke="#374151" stroke-width="1.5"/>
+  <text x="490" y="454" font-size="14" font-weight="bold" fill="#111827" text-anchor="middle">PLANNER</text>
+  <text x="490" y="474" font-size="11.5" fill="#4b5563" text-anchor="middle">Genkit flow · Gemini</text>
+  <text x="490" y="492" font-size="11.5" fill="#4b5563" text-anchor="middle">writes each proof criterion</text>
+  <text x="490" y="508" font-size="11.5" fill="#4b5563" text-anchor="middle">BEFORE the step runs</text>
+
+  <rect x="606" y="428" width="150" height="88" rx="8" fill="#ffffff" stroke="#374151" stroke-width="1.5"/>
+  <text x="681" y="454" font-size="14" font-weight="bold" fill="#111827" text-anchor="middle">REPAIR</text>
+  <text x="681" y="474" font-size="11.5" fill="#4b5563" text-anchor="middle">Genkit flow · Gemini</text>
+  <text x="681" y="492" font-size="11.5" fill="#4b5563" text-anchor="middle">values only, never</text>
+  <text x="681" y="508" font-size="11.5" fill="#4b5563" text-anchor="middle">"what next" · 2 rounds</text>
+
+  <!-- executor -->
+  <rect x="400" y="560" width="356" height="60" rx="8" fill="#ffffff" stroke="#374151" stroke-width="1.5"/>
+  <text x="578" y="585" font-size="13" font-weight="bold" fill="#111827" text-anchor="middle">EXECUTOR INTERFACE — seven verbs, nothing more</text>
+  <text x="578" y="605" font-size="11.5" fill="#4b5563" text-anchor="middle">may not plan, decide, or judge success</text>
+
+  <rect x="400" y="648" width="168" height="64" rx="8" fill="#ffffff" stroke="#374151" stroke-width="1.5"/>
+  <text x="484" y="672" font-size="12.5" font-weight="bold" fill="#111827" text-anchor="middle">REFERENCE</text>
+  <text x="484" y="690" font-size="11" fill="#4b5563" text-anchor="middle">Playwright · new work</text>
+
+  <rect x="588" y="648" width="168" height="64" rx="8" fill="#ffffff" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="672" y="672" font-size="12.5" font-weight="bold" fill="#6b7280" text-anchor="middle">LASPOH ADAPTER</text>
+  <text x="672" y="690" font-size="11" fill="#6b7280" text-anchor="middle">disclosed pre-existing · OFF</text>
+
+  <!-- evidence -->
+  <rect x="880" y="292" width="220" height="86" rx="8" fill="#ffffff" stroke="#374151" stroke-width="1.5"/>
+  <text x="990" y="320" font-size="14" font-weight="bold" fill="#111827" text-anchor="middle">EVIDENCE + RECEIPT</text>
+  <text x="990" y="340" font-size="11.5" fill="#4b5563" text-anchor="middle">excerpt + sha256 · integrity</text>
+  <text x="990" y="358" font-size="11.5" fill="#4b5563" text-anchor="middle">hash over the chain</text>
+
+  <!-- Vertex -->
+  <rect x="880" y="440" width="220" height="90" rx="8" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
+  <text x="990" y="468" font-size="14" font-weight="bold" fill="#065f46" text-anchor="middle">VERTEX AI</text>
+  <text x="990" y="488" font-size="11.5" fill="#047857" text-anchor="middle">gemini-3.5-flash</text>
+  <text x="990" y="506" font-size="11.5" fill="#047857" text-anchor="middle">service identity, no key</text>
+
+  <!-- Firestore -->
+  <rect x="880" y="640" width="220" height="80" rx="8" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
+  <text x="990" y="668" font-size="14" font-weight="bold" fill="#065f46" text-anchor="middle">FIRESTORE</text>
+  <text x="990" y="688" font-size="11.5" fill="#047857" text-anchor="middle">append-only events —</text>
+  <text x="990" y="704" font-size="11.5" fill="#047857" text-anchor="middle">update() cannot touch history</text>
+
+  <!-- VERIFIER isolation boundary -->
+  <rect x="1180" y="130" width="430" height="600" rx="10" fill="#fff7ed" stroke="#c2410c" stroke-width="2"/>
+  <text x="1200" y="158" font-size="13" font-weight="bold" fill="#c2410c">ISOLATION BOUNDARY — sees only criterion + evidence;</text>
+  <text x="1200" y="176" font-size="13" font-weight="bold" fill="#c2410c">never planner reasoning or executor opinion</text>
+
+  <rect x="1210" y="196" width="370" height="88" rx="8" fill="#ffffff" stroke="#c2410c" stroke-width="1.5"/>
+  <text x="1395" y="224" font-size="14" font-weight="bold" fill="#7c2d12" text-anchor="middle">INDEPENDENT VERIFIER — Gemini</text>
+  <text x="1395" y="244" font-size="11.5" fill="#9a3412" text-anchor="middle">default to disbelief · must quote the evidence</text>
+  <text x="1395" y="262" font-size="11.5" fill="#9a3412" text-anchor="middle">evidence fenced with a per-call random nonce</text>
+
+  <rect x="1210" y="318" width="370" height="80" rx="8" fill="#ffffff" stroke="#7c2d12" stroke-width="1.5"/>
+  <text x="1395" y="344" font-size="13.5" font-weight="bold" fill="#7c2d12" text-anchor="middle">CITATION GROUNDING — code, not a model</text>
+  <text x="1395" y="364" font-size="11.5" fill="#9a3412" text-anchor="middle">every quoted citation must appear verbatim in the</text>
+  <text x="1395" y="381" font-size="11.5" fill="#9a3412" text-anchor="middle">evidence, or the whole verdict is downgraded</text>
+
+  <rect x="1210" y="432" width="370" height="88" rx="8" fill="#ffffff" stroke="#7c2d12" stroke-width="1.5"/>
+  <text x="1395" y="458" font-size="13.5" font-weight="bold" fill="#7c2d12" text-anchor="middle">SECOND-OPINION AUDITOR — Gemma 4</text>
+  <text x="1395" y="478" font-size="11.5" fill="#9a3412" text-anchor="middle">a different model family re-audits the grounded quotes;</text>
+  <text x="1395" y="495" font-size="11.5" fill="#9a3412" text-anchor="middle">can only DEMOTE a verdict, never promote one</text>
+
+  <rect x="1210" y="554" width="370" height="88" rx="8" fill="#ffffff" stroke="#7c2d12" stroke-width="1.5"/>
+  <text x="1395" y="580" font-size="13.5" font-weight="bold" fill="#7c2d12" text-anchor="middle">FABRICATION FORENSICS — gemini-embedding-001</text>
+  <text x="1395" y="600" font-size="11.5" fill="#9a3412" text-anchor="middle">classifies a rejected quote: paraphrase of real evidence</text>
+  <text x="1395" y="617" font-size="11.5" fill="#9a3412" text-anchor="middle">or invention; explanation only, never the verdict</text>
+
+  <text x="1395" y="688" font-size="12.5" font-weight="bold" fill="#c2410c" text-anchor="middle">the ONLY path by which a step becomes "proven"</text>
+  <text x="1395" y="708" font-size="12" fill="#c2410c" text-anchor="middle">three Google AI models, none grading its own work</text>
+
+  <!-- THE WORLD boundary -->
+  <rect x="340" y="800" width="770" height="300" rx="14" fill="#f8fafc" stroke="#94a3b8" stroke-dasharray="8 5" stroke-width="2"/>
+  <text x="360" y="830" font-size="15" font-weight="bold" fill="#475569">THE WORLD — page content is UNTRUSTED</text>
+
+  <rect x="400" y="860" width="300" height="80" rx="8" fill="#ffffff" stroke="#374151" stroke-width="1.5"/>
+  <text x="550" y="888" font-size="14" font-weight="bold" fill="#111827" text-anchor="middle">DEMO TARGET — /demo</text>
+  <text x="550" y="908" font-size="11.5" fill="#4b5563" text-anchor="middle">self-hosted grant portal;</text>
+  <text x="550" y="925" font-size="11.5" fill="#4b5563" text-anchor="middle">rejects incomplete submissions</text>
+
+  <rect x="760" y="972" width="320" height="100" rx="8" fill="#fef2f2" stroke="#b91c1c" stroke-width="2.5"/>
+  <text x="920" y="1000" font-size="14" font-weight="bold" fill="#7f1d1d" text-anchor="middle">GROUND TRUTH — /demo/submissions</text>
+  <text x="920" y="1022" font-size="12" font-weight="bold" fill="#b91c1c" text-anchor="middle">the agent has NO write path to this</text>
+  <text x="920" y="1042" font-size="11.5" fill="#991b1b" text-anchor="middle">a receipt citing a reference the server never</text>
+  <text x="920" y="1058" font-size="11.5" fill="#991b1b" text-anchor="middle">issued is provably forged</text>
+
+  <!-- EDGES -->
+  <!-- client -> server -->
+  <path d="M 270 210 L 396 208" fill="none" stroke="#374151" stroke-width="1.6" marker-end="url(#arr)"/>
+  <!-- client -> ground truth (dashed compare) -->
+  <path d="M 165 266 L 165 1022 L 754 1022" fill="none" stroke="#b91c1c" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#arrRed)"/>
+  <text x="182" y="790" font-size="12" font-weight="bold" fill="#b91c1c">judge compares the receipt</text>
+  <text x="182" y="808" font-size="12" font-weight="bold" fill="#b91c1c">against ground truth</text>
+  <!-- server -> orchestrator -->
+  <path d="M 555 242 L 555 288" fill="none" stroke="#374151" stroke-width="1.6" marker-end="url(#arr)"/>
+  <text x="565" y="272" font-size="11" fill="#6b7280">mission runs in the background</text>
+  <!-- orchestrator <-> planner -->
+  <path d="M 490 378 L 490 424" fill="none" stroke="#374151" stroke-width="1.6" marker-end="url(#arr)"/>
+  <text x="380" y="404" font-size="11" fill="#6b7280">goal → plan,</text>
+  <text x="380" y="418" font-size="11" fill="#6b7280">sanitized in code</text>
+  <!-- orchestrator <-> repair -->
+  <path d="M 681 428 L 681 382 L 710 382" fill="none" stroke="#374151" stroke-width="1.6" marker-end="url(#arr)"/>
+  <!-- orchestrator -> executor -->
+  <path d="M 440 378 L 440 556" fill="none" stroke="#374151" stroke-width="1.6" marker-end="url(#arr)"/>
+  <text x="330" y="545" font-size="11" fill="#6b7280">one action</text>
+  <!-- executor -> impls -->
+  <path d="M 484 620 L 484 644" fill="none" stroke="#374151" stroke-width="1.4" marker-end="url(#arr)"/>
+  <path d="M 672 620 L 672 644" fill="none" stroke="#9ca3af" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+  <!-- executor -> demo target -->
+  <path d="M 550 712 L 550 856" fill="none" stroke="#374151" stroke-width="1.6" marker-end="url(#arr)"/>
+  <text x="562" y="768" font-size="11" fill="#6b7280">browser actions · navigation allow-list:</text>
+  <text x="562" y="784" font-size="11" fill="#6b7280">origin-scoped; javascript:/data:/file: refused</text>
+  <!-- demo -> ground truth (only write path) -->
+  <path d="M 700 920 L 860 968" fill="none" stroke="#374151" stroke-width="1.6" marker-end="url(#arr)"/>
+  <text x="640" y="952" font-size="11" font-weight="bold" fill="#374151">the ONLY write path: a genuine success</text>
+  <!-- observation back: demo->executor covered; executor -> orchestrator observation -->
+  <path d="M 716 592 L 760 592 L 760 360 L 714 360" fill="none" stroke="#374151" stroke-width="1.6" marker-end="url(#arr)"/>
+  <text x="770" y="586" font-size="11" fill="#6b7280">observation — what the page</text>
+  <text x="770" y="600" font-size="11" fill="#6b7280">showed, never a conclusion</text>
+  <!-- orchestrator -> evidence -->
+  <path d="M 710 322 L 876 322" fill="none" stroke="#374151" stroke-width="1.6" marker-end="url(#arr)"/>
+  <!-- evidence -> verifier (fenced) -->
+  <path d="M 1100 322 L 1150 322 L 1150 240 L 1206 240" fill="none" stroke="#c2410c" stroke-width="1.8" marker-end="url(#arr)"/>
+  <text x="1108" y="216" font-size="11" font-weight="bold" fill="#c2410c">fenced evidence</text>
+  <text x="1108" y="231" font-size="11" font-weight="bold" fill="#c2410c">(per-call nonce)</text>
+  <!-- verifier chain -->
+  <path d="M 1395 284 L 1395 314" fill="none" stroke="#7c2d12" stroke-width="1.6" marker-end="url(#arr)"/>
+  <path d="M 1395 398 L 1395 428" fill="none" stroke="#7c2d12" stroke-width="1.6" marker-end="url(#arr)"/>
+  <path d="M 1395 520 L 1395 550" fill="none" stroke="#7c2d12" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+  <text x="1408" y="540" font-size="10.5" fill="#9a3412">on rejection only</text>
+  <!-- verdict back to orchestrator -->
+  <path d="M 1206 476 L 1130 476 L 1130 745 L 320 745 L 320 335 L 396 335" fill="none" stroke="#b45309" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="336" y="738" font-size="11.5" font-weight="bold" fill="#b45309">verdict + grounded citations — the only edge that can set "proven"</text>
+  <!-- flows -> vertex -->
+  <path d="M 756 472 L 876 478" fill="none" stroke="#059669" stroke-width="1.5" marker-end="url(#arr)"/>
+  <path d="M 1206 232 L 1010 232 L 1010 436" fill="none" stroke="#059669" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="1018" y="424" font-size="10.5" fill="#047857">model calls</text>
+  <!-- gemma -> gemini api (outside vertex) -->
+  <text x="1395" y="537" font-size="10.5" fill="#047857" text-anchor="middle">Gemma is reached over the Gemini API — a route separate from the verifier's</text>
+  <!-- orchestrator -> firestore -->
+  <path d="M 555 378 L 555 400 L 830 400 L 830 672 L 876 672" fill="none" stroke="#059669" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="808" y="626" font-size="10.5" fill="#047857" text-anchor="end">append-only events + receipt</text>
+  <!-- absent edges note -->
+  <text x="60" y="1120" font-size="12.5" font-weight="bold" fill="#374151">Deliberately absent: no edge from the executor or planner to "proven" · no edge from any agent component to ground truth.</text>
+</svg>

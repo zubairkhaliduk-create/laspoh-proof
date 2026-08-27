@@ -24,10 +24,13 @@ segment whose length you do not fully control, which is why it is bounded below.
 4. Browser: Cloud Logging, pre-filtered to `missionId`
 5. Editor: `src/flows/verify.ts` open at `groundCitations`
 
-**Contingency:** if the live run stalls past 2:20, say *"this is taking longer than usual — here is
-a run from earlier, unedited"* and cut to a pre-recorded terminal capture. Prepare that capture
-first. Do **not** hide a failure: if it fails honestly, that is a stronger demo than a success, and
-the receipt showing a truthful partial is the entire point.
+**Contingency:** prepare the fallback as ONE continuous screen recording of a complete run — no
+cuts inside it, on-screen timestamps, ≤75 seconds. If the live run stalls past 2:20, say *"this is
+taking longer than usual — here is a run from earlier, unedited"*, play the fallback in full, then
+switch to Cloud Logging live and filter to THAT run's missionId, so the pre-recorded run is
+anchored to the deployed Cloud Run service on camera. Do **not** hide a failure: if it fails
+honestly, that is a stronger demo than a success, and the receipt showing a truthful partial is the
+entire point.
 
 ---
 
@@ -51,7 +54,22 @@ the receipt showing a truthful partial is the entire point.
 
 ## 0:45–2:35 — the live run (unedited; this is the 30%)
 
-Terminal and browser side by side. `POST /missions`. Narrate as it happens:
+Open with the Google Cloud anchor (~8s) — on camera, run:
+
+    curl -s https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/health | jq
+
+and point at `"route":"vertex-ai"`, `"model":"gemini-3.5-flash"`, `"project":"laspoh-proof-251233"`
+— and at `verificationModels`, which names all three Google AI models in the verification chain.
+
+> "This is the deployed service — Cloud Run URL, brain on Vertex AI. Same URL for everything
+> you're about to watch."
+
+(This puts a Google Cloud anchor inside the first minute, so the mandate is met even if the tail
+slips past 4:00.)
+
+Terminal and browser side by side. `POST /missions` — **type the full
+`https://laspoh-proof-wqx6gkuc7a-uc.a.run.app` URL literally** (no alias, no env var) and point at
+the `.run.app` hostname. Narrate as it happens:
 
 **The plan appears.** Point at `provenBy` on one step.
 
@@ -75,13 +93,29 @@ Terminal and browser side by side. `POST /missions`. Narrate as it happens:
 > of eight. It got the job done and it still won't call itself eight out of eight. The step it
 > couldn't do is on the receipt, in its own words, with the reason."
 
-## 2:35–3:20 — the architecture
+## 2:35–3:05 — Google Cloud proof
+
+Cloud Run console: service, revision, region. **The console header must visibly show project
+`laspoh-proof-251233`** — the same project as the URL in the terminal, or the correlation a judge
+checks is broken. Then Cloud Logging filtered to the mission id, and **scroll to one entry showing
+the Vertex/gemini-3.5-flash call for this missionId** — not only the agent's own log lines.
+
+> "That's the run you just watched — structured, correlated by mission id, secrets redacted on the
+> way out."
+
+Then `/demo/submissions`:
+
+> "And this is ground truth: the reference on the receipt, on a server the agent cannot write to."
+
+## 3:05–3:40 — the architecture
 
 Show the real system.
 
 > "Gemini 3.5 through Genkit, on Cloud Run, with mission state in Firestore. Three flows: plan,
 > repair, verify. The planner proposes. The executor acts. Neither can mark anything proven — only
-> the verifier can, and it never sees their reasoning."
+> the verifier can, and it never sees their reasoning. And the verifier doesn't judge alone: its
+> quotes are grounded in code, then a second model family — Gemma — audits them, and it can only
+> demote. Three Google AI models; none grades its own work."
 
 Then open `groundCitations` in the editor:
 
@@ -95,18 +129,7 @@ Mention the seam:
 
 > "Two executors behind one interface. Swap it and the agent is unchanged."
 
-## 3:20–3:45 — Google Cloud proof
-
-Cloud Run console: service, revision, region. Then Cloud Logging filtered to the mission id.
-
-> "That's the run you just watched — structured, correlated by mission id, secrets redacted on the
-> way out."
-
-Then `/demo/submissions`:
-
-> "And this is ground truth: the reference on the receipt, on a server the agent cannot write to."
-
-## 3:45–4:00 — close
+## 3:40–3:50 — close
 
 > "Most agents tell you what they tried. Laspoh Proof tells you what it can prove."
 
@@ -119,5 +142,9 @@ Then `/demo/submissions`:
 - [ ] Google Cloud visible on screen
 - [ ] The honest failure shown, not removed
 - [ ] Ground truth shown alongside the receipt
-- [ ] ≤ 4:00, public, English
+- [ ] ≤ 3:50 in every rehearsal; uploaded to YouTube or Vimeo; visibility Public (not
+      Unlisted/Private); English
+- [ ] Cloud Run console shot shows project `laspoh-proof-251233` in the header
+- [ ] Full `.run.app` hostname legible during the POST and the `/health` curl
+- [ ] One Vertex/Gemini log entry shown in Cloud Logging, correlated to the mission id
 - [ ] Nothing on screen contradicts the code

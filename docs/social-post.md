@@ -32,10 +32,20 @@ correctly, about the wrong question.
 → Evidence has to be able to contain the answer. Fills kept returning "unproven" because an input's
 value never appears in a page's visible text.
 
-Built on Gemini 3.5 + Genkit + Cloud Run for the Google All Things Agentic Hackathon.
+Built on Gemini 3.5 + Gemma 4 + gemini-embedding-001, with Genkit on Cloud Run, for the Google All
+Things Agentic Hackathon — three Google AI models, none grading its own work.
 
 Most agents tell you what they tried. This one tells you what it can prove.
 
+Full write-up: <ARTICLE_URL — fill in after publishing>
 github.com/zubairkhaliduk-create/laspoh-proof
 
 #AllThingsAgenticHackathon
+
+---
+
+## X variant (≤280 chars)
+
+Ask an agent to do 10 things and it'll say it did 10. Mine has to prove it: a separate verifier
+that must quote evidence — and a second model family (Gemma) that audits the verifier. Output isn't
+"done", it's "Proven 7 of 8". <ARTICLE_URL> #AllThingsAgenticHackathon

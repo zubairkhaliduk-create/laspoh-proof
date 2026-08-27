@@ -1,6 +1,6 @@
 # Why your agent says it finished when it didn't
 
-*Written for the Google All Things Agentic Hackathon.*
+*I created this article for the purposes of entering the All Things Agentic Hackathon.*
 
 Ask an agent to do ten things and it will tell you it did ten things.
 
@@ -81,3 +81,5 @@ programme, the adversarial self-review, and a disclosure of pre-existing work.*
 
 *Disclosure: Laspoh, a pre-existing browser-automation platform of mine (June 2026), is a disclosed,
 optional, off-by-default execution dependency and is not presented as hackathon work.*
+
+*Published as my content-publication entry for the All Things Agentic Hackathon.*

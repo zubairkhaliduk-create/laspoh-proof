@@ -10,19 +10,34 @@
 
 ---
 
-## Inspiration
+## Inspiration — the friction I brought
 
-I run a browser agent in production. The failure that cost me most wasn't crashes — it was
-**confident lies**. A mission would report "Applied to 10 jobs. Task complete." having submitted
-zero. Every click had fired, no errors appeared, the summary was green. The agent wasn't
-malfunctioning; it was reporting its *intentions* and calling them results.
+The brief said Bring Your Own Friction. Mine is documented, dated, and could not be recalled.
 
-Once you have seen that, you stop trusting any agent that cannot show its work. So I built one
-whose central rule is that **the component doing the work never grades it.**
+I run a browser agent in production — Laspoh, disclosed below as pre-existing work. One of my own
+missions was to apply for jobs, with one exclusion written explicitly into the goal: no recruitment
+agencies. The agent reported success. Five of the ten applications had gone to recruitment
+agencies — the exact category the goal ruled out. Every click had fired, no errors appeared, the
+summary was green. The agent had graded its own work and passed itself; an independent verifier,
+checking afterwards, was the only thing that caught it — and by then the applications were sent.
+Sent is sent.
+
+It was not a one-off. Another mission reported "Applied to 10 jobs. Task complete." having
+submitted zero. Opposite direction, same disease: the agent wasn't malfunctioning, it was reporting
+its *intentions* and calling them results — and because the component doing the work was also the
+component grading it, nothing inside the system could disagree.
+
+Laspoh Proof is the BYOF mandate taken literally. The personal problem: I could not trust my own
+agent's word, on work that could not be taken back. The fix is an agent whose central rule is that
+**the component doing the work never grades it.**
 
 ## What it does
 
-You give it an outcome. It plans, drives a browser, and gathers evidence. Then a **separate
+You give it an outcome in one sentence, and you leave. The request returns immediately; the
+mission runs as a **multi-step background workflow** — plan, drive a browser, observe, gather
+evidence, recover — and completes **without human intervention**. This is autonomous execution, not
+a chat query: a workflow you would otherwise click through by hand is intercepted at the moment of
+intent and carried through to a real state change in the world. Then a **separate
 verifier** — which never sees the planner's reasoning or the executor's opinion — decides from the
 page's own output whether each step actually happened, and must **quote the evidence** to say yes.
 
@@ -32,6 +47,14 @@ not when no error appears.
 
 The system is permitted, by design, to report **less** than it achieved. It is never permitted to
 report more.
+
+The twist is that the doer is never the judge — and the judge does not judge alone either: after
+the Gemini verifier confirms a step and every quote it cites is mechanically checked to appear
+verbatim in the evidence, a second, independent Google model family (**Gemma**) audits those quotes
+and can only demote the verdict, never promote it. The real-world friction this eliminates is
+double: the browser workflow itself, and the second job every agent user currently has — re-doing
+the work to find out whether it actually happened. A receipt that must quote its evidence removes
+the checking, not just the clicking.
 
 ## How I built it
 
@@ -47,7 +70,8 @@ the agent is unchanged.
 
 Recovery is pure code, deliberately out of the model's hands. An LLM asked "are you stuck?" says no
 and tries again. So the decisions to stop, escalate or retry are unit-testable predicates that
-cannot be talked out of their verdict.
+cannot be talked out of their verdict — which is what makes running without human intervention safe
+rather than merely unattended.
 
 ## Findings and learnings
 
@@ -79,8 +103,16 @@ subtracts what the plan already covers; whatever is left gets filled first.
 
 ## Technologies
 
-TypeScript · Genkit 1.41 (`@genkit-ai/google-genai`) · Gemini 3.5 Flash via Vertex AI · Cloud Run ·
-Firestore · Playwright · Zod · Vitest · oxlint · GitHub Actions
+TypeScript · Genkit 1.41 (`@genkit-ai/google-genai`) · **Gemini 3.5 Flash** via Vertex AI ·
+**Gemma 4** (`gemma-4-31b-it`, second-opinion auditor — a different model family that must concur
+before "proven" stands, and can only demote) · **gemini-embedding-001** (fabrication forensics —
+classifies a rejected citation as a paraphrase of real evidence or an outright invention; changes
+the explanation, never the verdict) · Cloud Run · Firestore · Playwright · Zod · Vitest · oxlint ·
+GitHub Actions
+
+**Data sources:** none external. Beyond the user's goal, the agent's only input is the pages it
+visits, captured as fenced, sha256-hashed evidence. The demo's ground truth, `/demo/submissions`,
+is served by the same process and is deliberately unwritable by the agent.
 
 ## Testing instructions for judges
 
@@ -97,7 +129,7 @@ the demo target is served by the same process.
 Then compare `/missions/:id/receipt` against `/demo/submissions` — ground truth the agent cannot
 write to. A receipt citing a reference the server never issued would be provably wrong.
 
-`pnpm test` runs 150 tests, none of which need a model.
+`pnpm test` runs 160 tests, none of which need a model.
 
 ## Disclosure of pre-existing work
 

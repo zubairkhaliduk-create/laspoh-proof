@@ -22,6 +22,7 @@ import { z } from "zod";
 import { ai } from "../genkit.js";
 import type { Evidence } from "../core/evidence.js";
 import { detectInjection, fenceUntrusted } from "../security/untrusted.js";
+import { classifyFabrication, secondOpinion } from "./second-opinion.js";
 
 /**
  * The verdict as the rest of the system consumes it: every field present. Downstream code reads
@@ -211,6 +212,38 @@ Rules you must follow:
     }
     // A "proven" verdict that cites nothing is not proven. Enforced in code so the guarantee does
     // not depend on the model choosing to honour it.
-    return enforceCitation(output, evidence as Evidence[]);
+    const verdict = enforceCitation(output, evidence as Evidence[]);
+
+    // FABRICATION FORENSICS (gemini-embedding-001). When a proven claim was downgraded for citing
+    // text the page never showed, say HOW it was fabricated: a paraphrase of real evidence, or an
+    // invention resembling nothing. Refines the explanation only — the verdict is already down and
+    // stays down; if embeddings are unreachable the plain wording stands.
+    if (verdict.verdict === "unproven" && output.verdict === "proven") {
+      const cited = (output.citedEvidence ?? []).filter((c) => c.trim().length > 0);
+      const { fabricated } = groundCitations(cited, items);
+      if (fabricated.length > 0) {
+        const note = await classifyFabrication(fabricated, items.map((e) => e.excerpt));
+        if (note) verdict.reasoning = `${verdict.reasoning} ${note}`;
+      }
+    }
+
+    // SECOND-OPINION AUDIT (Gemma, a different model family over a different route). Runs only on
+    // a verdict that has already survived citation grounding, and can only DEMOTE: two families
+    // must agree before "proven". Unreachable auditor → the single-verifier verdict stands, which
+    // is exactly the behaviour this system shipped with.
+    if (verdict.verdict === "proven") {
+      const audit = await secondOpinion(criterion, verdict.citedEvidence);
+      if (audit.outcome === "dissent") {
+        return {
+          verdict: "unproven" as const,
+          citedEvidence: [],
+          reasoning: `a second, independent model family (${audit.model}) audited the grounded quotes and disagreed that they establish the criterion: ${audit.why}. original verifier reasoning: ${verdict.reasoning?.trim() || "(none given)"}`,
+        };
+      }
+      if (audit.outcome === "concur") {
+        verdict.reasoning = `${verdict.reasoning} [second opinion: ${audit.model} independently concurs — ${audit.why}]`;
+      }
+    }
+    return verdict;
   },
 );

@@ -13,6 +13,7 @@ import { LaspohExecutor } from "./executors/laspoh.js";
 import type { Executor } from "./executors/types.js";
 import { runMission } from "./core/orchestrator.js";
 import { modelIdentity } from "./genkit.js";
+import { EMBEDDING_MODEL, GEMMA_MODEL, secondOpinionConfigured } from "./flows/second-opinion.js";
 import { mountDemoTarget } from "./demo/target.js";
 import { selectStore } from "./store/firestore.js";
 import type { MissionRecord, MissionStore } from "./store/types.js";
@@ -99,6 +100,15 @@ app.get("/health", (_req, res) => {
     ok: true,
     service: "laspoh-proof",
     model: modelIdentity(),
+    // Every Google AI model in the verification chain, so the receipt's provenance can be checked
+    // against what the service actually runs — including whether the second-opinion auditor is
+    // armed right now, because "we also use Gemma" is exactly the kind of claim this project says
+    // must be checkable, not narrated.
+    verificationModels: {
+      verifier: modelIdentity(),
+      secondOpinion: { model: GEMMA_MODEL, family: "gemma", route: "gemini-api", armed: secondOpinionConfigured(), role: "independent audit of grounded quotes; can only demote a verdict, never promote" },
+      fabricationForensics: { model: EMBEDDING_MODEL, family: "gemini-embedding", role: "classifies rejected citations as paraphrase vs invention; explanation only, never the verdict" },
+    },
     executors: [
       { name: "reference", preExisting: false },
       { name: "laspoh", preExisting: true, note: "disclosed pre-existing browser runtime (June 2026), reached over a bridge" },

@@ -62,6 +62,10 @@ with evidence for what happened and an honest account of what did not.
 
 ## Architecture
 
+![Laspoh Proof architecture — three Google AI models, none grading its own work](docs/architecture.png)
+
+The same system, in text (full narrative in [`docs/architecture.md`](docs/architecture.md)):
+
 ```
                      ┌──────────────────────────────────────────────┐
    USER GOAL  ──────▶│  POST /missions            (returns 202)      │
@@ -118,6 +122,8 @@ Detail in [`docs/architecture.md`](docs/architecture.md).
 | **Gemini 3.5+** | `gemini-3.5-flash` via Vertex AI | Every plan, repair and verdict is a model decision |
 | **Google agent framework** | **Genkit** — three flows (`plan`, `repair`, `verify`) with zod-typed structured output | The flows *are* the agent's reasoning |
 | **Google Cloud infrastructure** | **Cloud Run** (the service) · **Firestore** (durable mission state) | The demo runs there; missions survive a restart |
+| **Gemma 4** (additional model) | `gemma-4-31b-it` over the Gemini API — the **second-opinion auditor** | A different model family re-audits every "proven" verdict's grounded quotes, and can only demote — two families must agree before "proven" stands |
+| **gemini-embedding-001** (additional model) | Vertex AI — **fabrication forensics** | Classifies a rejected citation as a paraphrase of real evidence or an outright invention; refines the receipt's explanation, never the verdict |
 
 Vertex is reached with the service's **own identity** — no API key is deployed.
 
@@ -131,25 +137,35 @@ Vertex is reached with the service's **own identity** — no API key is deployed
     src/obs/          structured, redacted, mission-correlated logging
     src/demo/         the self-hosted demo target
     mission/          the engineering programme: specs, decisions, evidence, disclosure
-    test/             150 tests
+    test/             160 tests
 
 ## Quick start
 
+Prerequisites: **Node 22+** and **pnpm 11**. With Node installed, `corepack enable` activates the
+exact pnpm version pinned in `package.json` — nothing else to install. You also need one of the two
+model routes below: a free Gemini API key from https://aistudio.google.com/apikey, or the `gcloud`
+CLI logged into a Google Cloud project with Vertex AI.
+
+    corepack enable                                # pnpm 11, pinned via packageManager
     pnpm install
-    pnpm exec playwright-core install chromium
+    pnpm exec playwright-core install chromium     # the browser the executor drives
+    # Linux: pnpm exec playwright-core install --with-deps chromium   (adds system libraries)
 
     # Route A — Gemini API key. Simplest; no cloud credentials needed.
-    export GEMINI_API_KEY="your-key"
+    export GEMINI_API_KEY="your-key"               # https://aistudio.google.com/apikey
 
     # Route B — Vertex AI (what the deployed service uses; no key involved)
     #   gcloud auth application-default login
     #   export VERTEX_PROJECT="your-project"
+    #   export VERTEX_LOCATION="us-central1"       # availability is per-region AND per-project;
+    #                                              # if unset, defaults to asia-southeast1
 
     pnpm dev            # http://localhost:8080
 
-The route in use is logged at boot and reported by `/health`, so which model answered is never in
-doubt. **No cloud setup is required to run a mission** — the default store is in-memory and the
-demo target is served by this same process.
+Variables are read from the shell — nothing auto-loads a `.env` file; `.env.example` documents
+every knob. The route in use is logged at boot and reported by `/health`, so which model answered
+is never in doubt. **No cloud setup is required to run a mission** — the default store is in-memory
+and the demo target is served by this same process.
 
 ### Run a mission
 
@@ -161,6 +177,7 @@ demo target is served by this same process.
       }'
     # → { "id": "m_1a2b3c4d", "status": "running", "poll": "/missions/m_1a2b3c4d" }
 
+    # substitute the id the POST returned:
     curl http://localhost:8080/missions/m_1a2b3c4d            # live state + event stream
     curl http://localhost:8080/missions/m_1a2b3c4d/receipt    # the proof
     curl http://localhost:8080/demo/submissions               # ground truth the agent cannot write to
@@ -168,13 +185,40 @@ demo target is served by this same process.
 Send an `Idempotency-Key` header and a retry returns the same mission instead of starting a second
 one — the difference between "the browser retried" and "the agent applied for the same job twice".
 
-### Deploy
+### Deploy to Google Cloud
 
-    ./deploy.sh                       # PROJECT / REGION / SERVICE overridable
-    ./migrate.sh TARGET_PROJECT_ID    # move it to another project, self-verifying
+Prerequisites: the `gcloud` CLI, logged in as an account that can administer the target project,
+and billing enabled on that project.
 
-`migrate.sh` probes which region actually serves the model rather than assuming — availability is
-per-region *and* per-project, and it differs.
+**To a fresh project — the reproducible path:**
+
+    ./migrate.sh YOUR_PROJECT_ID [BILLING_ACCOUNT_ID]
+
+Despite the name, this is the from-scratch provisioner, and it is idempotent: it enables the
+required APIs, creates the least-privilege runtime service account, **probes which region actually
+serves the model in *your* project** rather than assuming — availability is per-region *and*
+per-project, and it differs — then deploys and proves the result: `/health`, plus a full end-to-end
+smoke mission whose receipt is checked against the demo's own ground truth.
+
+**Redeploy to a project migrate.sh has already provisioned:**
+
+    PROJECT=YOUR_PROJECT_ID ./deploy.sh    # REGION / SERVICE / VERTEX_LOCATION / MISSION_STORE overridable
+
+`deploy.sh` assumes the runtime service account and APIs already exist — run `migrate.sh` once
+first. With no `PROJECT` it targets this repo's own demo project, which will refuse your
+credentials.
+
+**Durable mission state (optional).** The deploy sets `MISSION_STORE=firestore`, but without a
+Firestore database the service logs the failure at boot and falls back to in-memory, and missions
+then do not survive a restart. To make state durable:
+
+    gcloud services enable firestore.googleapis.com --project YOUR_PROJECT_ID
+    gcloud firestore databases create --location=us-central1 --project YOUR_PROJECT_ID
+    gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+      --member "serviceAccount:laspoh-proof-runtime@YOUR_PROJECT_ID.iam.gserviceaccount.com" \
+      --role roles/datastore.user
+
+Then redeploy; `/health` reports `"store": "firestore"` once it took.
 
 ## Why the demo target has a trap
 
@@ -203,7 +247,7 @@ ground-truth source — and where none exists the receipt reflects what the page
 
 ## Tests
 
-    pnpm test        # 150
+    pnpm test        # 160
     pnpm typecheck
     pnpm lint
 
