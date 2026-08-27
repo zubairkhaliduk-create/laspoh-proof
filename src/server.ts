@@ -77,7 +77,9 @@ verifier confirms it from evidence <strong>and</strong> the quote it cites is ch
 appear in that evidence.</p>
 <ul>
   <li><a href="/health">/health</a> &mdash; service, model and executor identity</li>
-  <li><a href="/demo">/demo</a> &mdash; the self-hosted target the agent operates</li>
+  <li><a href="/demo/jobs">/demo/jobs</a> &mdash; the jobs board: direct employers, a forbidden recruiter, and one page that lies about success</li>
+  <li><a href="/demo/jobs/submissions">/demo/jobs/submissions</a> &mdash; jobs ground truth &mdash; 0 recruiter applications is a checkable number</li>
+  <li><a href="/demo">/demo</a> &mdash; the grant-application target</li>
   <li><a href="/demo/submissions">/demo/submissions</a> &mdash; ground truth, which the agent cannot write to</li>
   <li><code>POST /missions</code> &mdash; run one; then <code>GET /missions/:id/receipt</code></li>
 </ul>

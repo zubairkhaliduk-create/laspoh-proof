@@ -8,7 +8,7 @@
     </marker>
   </defs>
   <rect width="1680" height="1150" fill="#ffffff"/>
-  <text x="60" y="52" font-size="26" font-weight="bold" fill="#111827">Laspoh Proof — no model grades its own work</text>
+  <text x="60" y="52" font-size="26" font-weight="bold" fill="#111827">Laspoh Proof — no proof, no done · no evidence, no irreversible action</text>
 
   <!-- GOOGLE CLOUD boundary -->
   <rect x="340" y="80" width="1300" height="670" rx="14" fill="#f0f6ff" stroke="#93b4e6" stroke-dasharray="8 5" stroke-width="2"/>
@@ -46,6 +46,12 @@
   <text x="681" y="474" font-size="11.5" fill="#4b5563" text-anchor="middle">Genkit flow · Gemini</text>
   <text x="681" y="492" font-size="11.5" fill="#4b5563" text-anchor="middle">values only, never</text>
   <text x="681" y="508" font-size="11.5" fill="#4b5563" text-anchor="middle">"what next" · 2 rounds</text>
+
+  <!-- pre-action gate -->
+  <rect x="400" y="524" width="356" height="30" rx="6" fill="#fef2f2" stroke="#b91c1c" stroke-width="1.8"/>
+  <text x="578" y="544" font-size="12" font-weight="bold" fill="#7f1d1d" text-anchor="middle">PRE-ACTION PROOF GATE — irreversible steps need a proven license</text>
+  <text x="770" y="544" font-size="10.5" fill="#b91c1c">→ licensed by the same verifier chain;</text>
+  <text x="770" y="558" font-size="10.5" fill="#b91c1c">unproven = BLOCKED. Sent is sent.</text>
 
   <!-- executor -->
   <rect x="400" y="560" width="356" height="60" rx="8" fill="#ffffff" stroke="#374151" stroke-width="1.5"/>
@@ -178,5 +184,5 @@
   <path d="M 555 378 L 555 400 L 830 400 L 830 672 L 876 672" fill="none" stroke="#059669" stroke-width="1.5" marker-end="url(#arr)"/>
   <text x="808" y="626" font-size="10.5" fill="#047857" text-anchor="end">append-only events + receipt</text>
   <!-- absent edges note -->
-  <text x="60" y="1120" font-size="12.5" font-weight="bold" fill="#374151">Deliberately absent: no edge from the executor or planner to "proven" · no edge from any agent component to ground truth.</text>
+  <text x="60" y="1120" font-size="12.5" font-weight="bold" fill="#374151">Deliberately absent: no edge from the executor or planner to "proven" · no edge from any agent component to ground truth · no path around the pre-action gate for an irreversible step.</text>
 </svg>

@@ -10,6 +10,12 @@ Gemini 3.5 Flash · Genkit · Cloud Run · Firestore
 
 ---
 
+**No evidence, no irreversible action.** Since v2 the same verifier also has to *license* any
+irreversible step before it executes: under a constrained goal, proven compliance proceeds, a
+visible violation is blocked with the quote, and silence blocks safely — because a wrong
+application cannot be recalled by a verdict. The [jobs demo](/demo/jobs) reproduces the exact
+incident this project came from, recruiter trap included.
+
 ## The problem
 
 Ask an agent to do ten things and it will tell you it did ten things.
@@ -137,7 +143,7 @@ Vertex is reached with the service's **own identity** — no API key is deployed
     src/obs/          structured, redacted, mission-correlated logging
     src/demo/         the self-hosted demo target
     mission/          the engineering programme: specs, decisions, evidence, disclosure
-    test/             160 tests
+    test/             180 tests
 
 ## Quick start
 
@@ -247,7 +253,7 @@ ground-truth source — and where none exists the receipt reflects what the page
 
 ## Tests
 
-    pnpm test        # 160
+    pnpm test        # 180
     pnpm typecheck
     pnpm lint
 
