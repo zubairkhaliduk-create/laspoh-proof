@@ -1,4 +1,4 @@
-# Demo video — FINAL script (jobs demo, one continuous take)
+# Demo video — FINAL script (blind challenge, one continuous take)
 
 **Target 3:35. Hard stop 3:50.** One continuous screen recording, no cuts. If the run drags past
 its window, keep rolling — an honest slow run beats a stitched fast one, and only the first 4:00
@@ -7,16 +7,19 @@ on-screen ("1.25× continuous live run"); never remove sections.
 
 ## Before recording (run these, in this order)
 
-    # 1. Fresh ground truth + warm service
-    curl -s https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/health | jq .verificationModels
-    curl -s https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/demo/jobs/submissions
+    bash scripts/demo-health.sh      # everything 200, model/project/store correct
+    bash scripts/demo-prewarm.sh     # Cloud Run scales to zero — a cold start costs 20s on camera
+    bash scripts/demo-smoke.sh       # one full mission, NOT recorded
 
-    # 2. One smoke mission end-to-end (not recorded)
-    # 3. Close notifications, personal tabs, bookmarks bar. Terminal ≥16pt. Browser zoom 125%.
+Close notifications, personal tabs and the bookmarks bar. Terminal ≥16pt. Browser zoom 125%.
 
-**Tabs, left to right:** 1 Terminal · 2 /demo/jobs (the board) · 3 Cloud Run console (service
-page, project `laspoh-proof-251233` visible in the header) · 4 Cloud Logging pre-filtered to
-`missionId` · 5 docs/architecture.png.
+**Tabs, left to right:** 1 **/challenge** (you start here) · 2 Terminal · 3 Cloud Run console
+(project `laspoh-proof-251233` visible in the header) · 4 Cloud Logging pre-filtered to
+`missionId` · 5 `docs/authority.png`.
+
+You do **not** know which scenario will be drawn. That is the point, and it is also the risk: any
+of the eight is a good demo, including the ones where the agent refuses. Do not re-roll to get a
+scenario you prefer — if you would not show it, the claim is not honest.
 
 ## 0:00–0:15 — the blind setup (on /challenge, nothing else on screen)
 
@@ -64,24 +67,24 @@ Then the comparison block:
 > And this is the receipt against the server's own record — which the agent has no write path to.
 > Zero prohibited applications. Zero references it couldn't back.
 
-## 2:35–2:55 — the receipt
+## 2:35–2:55 — verify it from a terminal, not from my page
 
-    curl -s https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/missions/<id>/receipt | jq '{proven, safelyBlocked, total, lines: [.lines[] | {intent, status}]}'
+Switch to the terminal. Don't ask them to trust the browser:
 
-> Two proven — each with a reference. One safely blocked. One unproven — that's the page that
-> claimed success. Now the part no agent can narrate its way around:
+    node scripts/verify-challenge.mjs <challenge-id>
 
-    curl -s https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/demo/jobs/submissions
+> Same check, recomputed locally. Commitment valid. Zero false proven. Zero prohibited sent.
 
-> Ground truth. The two references on the receipt are the two the server actually issued. The
-> deceptive one has no record — the receipt refused it. And zero recruiter applications exist.
+## 2:55–3:15 — Google Cloud, and why the receipt is the deliverable
 
-## 2:55–3:15 — why this matters
-
-Cloud Run console — point at project `laspoh-proof-251233`, the service, the revision. Cloud
-Logging filtered to THIS missionId — scroll to one Vertex/gemini call entry.
+Cloud Run console — project `laspoh-proof-251233`, the service, the revision. Cloud Logging
+filtered to THIS mission id — one Vertex/Gemini call entry.
 
 > That's the run you just watched, on Cloud Run, correlated by mission id.
+>
+> And every step verdict grades a criterion the *planner* wrote — so the last line asks the
+> question the planner can't be trusted with: was the user's goal achieved? Judged from evidence,
+> with no sight of the plan.
 
 ## 3:15–3:30 — architecture and the Google stack
 
@@ -110,6 +113,8 @@ An honest failed receipt is still the demo — never hide one.
 - [ ] Full `.run.app` hostname legible at POST and /health
 - [ ] Console header shows `laspoh-proof-251233` (NOT the stale -260823 project)
 - [ ] One Vertex/Gemini log entry shown, correlated to the mission id
-- [ ] Ground truth shown AFTER the receipt, including the zero-recruiter check
+- [ ] The commitment hash is legible BEFORE the run and recomputed AFTER it
+- [ ] verify-challenge.mjs run in a terminal, not just the page
+- [ ] Whatever scenario is drawn is the one shown — no re-rolling
 - [ ] Uploaded to YouTube/Vimeo, visibility **Public**, English
 - [ ] Nothing on screen contradicts the code
