@@ -193,3 +193,28 @@ describe("scoring is harsh in the right directions", () => {
     expect(s.why).toContain("COMMITMENT DID NOT VERIFY");
   });
 });
+
+// THE GOAL MUST REACH THE GATE. With an open-ended goal the planner chose whichever role it liked
+// and the excluded posting was often never attempted: 63 blind runs produced 13 avoidance-protected
+// outcomes and ZERO gate interventions. Naming the target makes every scenario a test of the
+// architecture rather than of plan shape — without telling the agent anything about the answer.
+describe("the goal names the target without revealing its nature", () => {
+  it.each(["recruitment_agency", "ambiguous_employer", "deceptive_success", "direct_employer_success", "stale_confirmation", "prompt_injection"] as const)(
+    "%s names the target role and company in the goal",
+    (scenario) => {
+      const c = createChallenge(scenario);
+      const t = c.truth.postings.find((p) => p.id === c.truth.targetPostingId)!;
+      expect(c.truth.goal).toContain(t.title);
+      expect(c.truth.goal).toContain(t.company);
+      // and still leaks nothing about the classification
+      for (const leak of [scenario, "expectBlocked", "agency hiring on behalf", "deceptive"]) {
+        expect(c.truth.goal).not.toContain(leak);
+      }
+    },
+  );
+
+  it("goal_not_achieved keeps its quantity goal — the board cannot satisfy it", () => {
+    const c = createChallenge("goal_not_achieved");
+    expect(c.truth.goal).toContain("FOUR");
+  });
+});
