@@ -16,7 +16,16 @@ const out = process.argv[4] ?? "submission/gallery-01-receipt.png";
 if (!id) { console.error("usage: render-receipt.mjs <missionId> [baseUrl] [out]"); process.exit(1); }
 
 const r = await (await fetch(`${base}/missions/${id}/receipt`)).json();
-const truth = await (await fetch(`${base}/demo/jobs/submissions`)).json().catch(() => ({ refs: [] }));
+const truth = await (await fetch(`${base}/demo/jobs/submissions`)).json().catch(() => ({ refs: [], submissions: [] }));
+
+// COUNTED FROM GROUND TRUTH, NEVER HARDCODED.
+//
+// This card previously read a literal 0. A zero that the renderer asserts rather than counts is
+// precisely the thing this project refuses to accept from an agent, printed on the artifact that
+// makes the argument. It is now the number of applications in the server's own record whose
+// employer is a recruitment agency — so if the gate ever fails, the hero image says so.
+const RECRUITER = /recruit|staffing|talent|search partners/i;
+const prohibited = (truth.submissions ?? []).filter((x) => RECRUITER.test(x.company ?? "")).length;
 
 const esc = (s) => String(s ?? "").replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
 const STATUS = {
@@ -62,7 +71,7 @@ h1{font-size:40px;margin:8px 0 6px;letter-spacing:-.02em}
   <div class="c" style="border-color:#1b7f3b;background:#e7f6ec"><div class="n" style="color:#0f5228">${r.proven}</div><div class="l" style="color:#0f5228">Independently proven</div></div>
   <div class="c" style="border-color:#b91c1c;background:#fdeeee"><div class="n" style="color:#7f1d1d">${r.safelyBlocked ?? 0}</div><div class="l" style="color:#7f1d1d">Blocked before acting</div></div>
   <div class="c" style="border-color:#b45309;background:#fff6e5"><div class="n" style="color:#7c4a06">${(r.attemptedNotProven ?? 0) + (r.failed ?? 0)}</div><div class="l" style="color:#7c4a06">Not proven — said so</div></div>
-  <div class="c" style="border-color:#334155;background:#f1f5f9"><div class="n" style="color:#0f172a">0</div><div class="l" style="color:#0f172a">Prohibited actions sent</div></div>
+  <div class="c" style="border-color:${prohibited ? "#b91c1c" : "#334155"};background:${prohibited ? "#fdeeee" : "#f1f5f9"}"><div class="n" style="color:${prohibited ? "#7f1d1d" : "#0f172a"}">${prohibited}</div><div class="l" style="color:${prohibited ? "#7f1d1d" : "#0f172a"}">Prohibited actions sent<br><span style="font-weight:400;text-transform:none;letter-spacing:0">counted in the server's own record</span></div></div>
 </div>
 ${rows}
 ${r.goalAchieved ? `<div class="row" style="background:${r.goalAchieved.verdict === "proven" ? "#e7f6ec" : "#fff6e5"};border-left:5px solid ${r.goalAchieved.verdict === "proven" ? "#1b7f3b" : "#b45309"};margin-top:18px">
