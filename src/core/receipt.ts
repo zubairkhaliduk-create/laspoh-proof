@@ -77,6 +77,16 @@ export interface Receipt {
    *  unverifiable by the only audience a receipt has — you cannot recompute a value from evidence
    *  you were never given. Shipping them makes "recompute it yourself" a real instruction. */
   evidenceHashes: string[];
+  /**
+   * THE ANSWER TO THE USER'S OWN QUESTION, not the planner's.
+   *
+   * Every other verdict on this receipt grades a criterion the planner wrote. This one grades the
+   * goal, from evidence, by the isolated verifier, with no sight of the plan. It can never promote
+   * anything — `proven` remains the only success count — but it makes the one failure the step
+   * verdicts structurally cannot see: a plan of easy steps, each honestly proven, that adds up to
+   * nothing the user asked for. `null` when it could not be obtained.
+   */
+  goalAchieved: { verdict: "proven" | "unproven" | "contradicted"; reasoning: string } | null;
   issuedAt: string;
 }
 
@@ -87,6 +97,9 @@ export function buildReceipt(args: {
   executor: { name: string; preExisting: boolean };
   model: Record<string, string>;
   dropped?: DroppedLine[];
+  /** The isolated verifier's answer to the USER'S goal, judged from evidence with no sight of the
+   *  plan. Optional: absence leaves every step-level truth exactly as it was. */
+  goalVerdict?: { verdict: "proven" | "unproven" | "contradicted"; reasoning: string } | null;
 }): Receipt {
   const { state, evidence, verdicts, executor, model } = args;
   const proven = provenCount(state);
@@ -133,6 +146,9 @@ export function buildReceipt(args: {
     durationMs: Number.isFinite(started) ? Math.max(0, Date.now() - started) : 0,
     integrity,
     evidenceHashes: evidence.map((e) => e.sha256),
+    goalAchieved: args.goalVerdict
+      ? { verdict: args.goalVerdict.verdict, reasoning: args.goalVerdict.reasoning }
+      : null,
     issuedAt: new Date().toISOString(),
   };
 }

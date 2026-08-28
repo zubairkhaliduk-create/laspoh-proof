@@ -30,6 +30,23 @@ verified against running code afterwards.
 - **Accepted and stated, not fixed:** the API is unauthenticated and unrated for judging; the
   jobs ledger is in-process memory.
 
+## Judge 6 — competitor-aware judge
+**Caveat, added after checking the field:** this persona was briefed with a competitor list that
+could not be verified — the Devpost gallery for this hackathon is not published, and searching for
+most of those names returns nothing (see `COMPETITION_GAP_ANALYSIS.md`). Its findings about OUR
+copy stand on their own; any statement it makes about what rival submissions say is role-play from
+a briefing, not observation. It was still the most useful review of the six, because it read our
+hero image against its own caption:
+- **"`gallery-01-receipt.png` contradicts its own caption."** The receipt was from a run that
+  hallucinated two roles, never reached the recruiter and never reached the deceptive employer —
+  so "both are caught" was false and "0 prohibited sent" was true only because the agent never got
+  near one. → **FIXED:** asset deleted; `finalize.sh` now refuses to render a hero unless the run
+  genuinely discriminates (≥1 proven AND ≥1 blocked).
+- **"Stop saying the component doing the work grades its own homework"** — that is the category
+  name, not the entry. → applied to `VIDEO_FINAL.md` and the README opening.
+- **"0 prohibited applications sent across 16 missions is true and nearly vacuous"** on a build
+  where the gate over-blocked. → the claim now carries that caveat wherever it appears.
+
 ## Judge 5 — skeptical eligibility reviewer
 **Stage One: PASS.** *"I went looking for grounds to disqualify and did not find them."*
 - Verified 51 commits, all in-window, author dates == committer dates, no rewritten history.

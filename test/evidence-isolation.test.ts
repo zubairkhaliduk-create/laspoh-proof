@@ -44,7 +44,9 @@ describe("the outcome verifier never sees the pre-action page", () => {
       if (criterion.includes("PRE-ACTION GATE")) {
         return { verdict: "proven", citedEvidence: ["Orbital Systems Ltd is the hiring company"], reasoning: "direct employer" } as never;
       }
-      corpora.push(evidence.map((e) => e.excerpt));
+      // The goal-level verdict deliberately sees ALL evidence — it is answering the user's
+      // question, not a step's. Only step corpora are collected here.
+      if (!criterion.includes("THE USER'S GOAL, VERBATIM")) corpora.push(evidence.map((e) => e.excerpt));
       return { verdict: "proven", citedEvidence: ["Application reference: JA-424242"], reasoning: "" } as never;
     });
 

@@ -24,7 +24,7 @@ import { isSelfCertifyingCriterion, sanitizePlan } from "./plan-sanitize.js";
 import { isNavigationAllowed } from "../security/untrusted.js";
 import { decideFromVerdict, goalStatesConstraints, isIrreversibleStep, preactionCriterion } from "./preaction.js";
 import { repairFlow } from "../flows/repair.js";
-import { verifyFlow } from "../flows/verify.js";
+import { type Verdict, verifyFlow } from "../flows/verify.js";
 import { modelIdentity } from "../genkit.js";
 
 export interface RunOptions {
@@ -414,9 +414,43 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
     state = noteStep(state, provenBefore);
   }
 
+  // ── THE GOAL-LEVEL VERDICT ───────────────────────────────────────────────────────────────
+  // Every step verdict answers "was this step's criterion met?" — and every one of those criteria
+  // was written by the planner. An adversarial review put the hole precisely: nothing anywhere
+  // compared those criteria to what the USER asked for, so a plan of easy steps with easy criteria
+  // produced a clean `complete` receipt and a valid integrity hash. The system proved the steps
+  // the planner chose to write down were achieved by the criteria the planner chose to grade them
+  // by, and never once asked whether the plan was the goal.
+  //
+  // So the last question is the user's own. The same isolated verifier is given the goal VERBATIM
+  // and the banked evidence — no plan, no criteria, no step verdicts — and asked whether the
+  // evidence establishes the goal itself. Its answer cannot promote anything: `provenCount` is
+  // still the only success number. What it does is make plan-level gaming VISIBLE, on the receipt,
+  // in the one place a reader looks. A mission can now say "7 of 7 steps proven" and "the goal
+  // itself is NOT established" in the same breath, which is the honest description of exactly the
+  // failure this review found.
+  let goalVerdict: Verdict | null = null;
+  if (evidence.length > 0) {
+    try {
+      goalVerdict = await verifyFlow({
+        criterion:
+          `THE USER'S GOAL, VERBATIM: "${goal}"\n\n` +
+          `Ignore any plan, any step and any prior verdict — you are not given them. Decide from the evidence alone whether THE GOAL ITSELF has been achieved, in full. ` +
+          `Partial progress toward it is "unproven", not "proven". If the goal states a quantity, that many must be evidenced. If it states an exclusion, the evidence must not show it was broken.`,
+        evidence,
+      });
+      emit({ type: "goal.verdict", verdict: goalVerdict.verdict, reasoning: goalVerdict.reasoning });
+    } catch {
+      // A goal check that cannot run leaves the step-level truth exactly as it was. It adds
+      // honesty; its absence must not subtract any.
+      goalVerdict = null;
+    }
+  }
+
   // ── REPORT ───────────────────────────────────────────────────────────────────────────────
   state = { ...state, status: terminalStatus(state) };
   const receipt = buildReceipt({
+    goalVerdict,
     state,
     evidence,
     verdicts,

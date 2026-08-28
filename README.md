@@ -44,6 +44,13 @@ action before it executes:
 | **SAFELY BLOCKED** | refused *before* acting — a prohibited target, or evidence that could not clear it |
 | **UNPROVEN** | it may well have happened; the evidence does not show it, and we say so |
 
+And one more, asked last and separately: **was the goal itself achieved?** Every step verdict
+grades a criterion the *planner* wrote, so a plan of easy steps can be honestly proven and still
+add up to nothing you asked for. The isolated verifier is therefore given your goal verbatim and
+the evidence — no plan, no criteria, no prior verdicts — and answers that question on its own.
+It can never promote anything. It exists so a receipt can say **"7 of 7 steps proven, and the goal
+is not established"**, which is the honest description of a plan that graded itself generously.
+
 ![Who is allowed to say done](docs/authority.png)
 
 **Measured, not asserted:** across 16 controlled end-to-end missions on the deployed stack —

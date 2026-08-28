@@ -1,10 +1,28 @@
 # Competition gap analysis — private
 
-## The lane is crowded
-Public entrants this cycle include several verification/reliability projects (AgentProof,
-Proofline, EvidenceBound Recovery Mesh, Backstop, ProofStitch) plus sophisticated multi-agent
-systems (DemandLoop, ShiftZero). "We verify agents" is therefore NOT differentiation. Never name
-or disparage any of them in public assets.
+## What we actually know about the field — and what we do not
+
+**Checked 2026-08-28: the Devpost project gallery for this hackathon is NOT published.** The page
+reads "The hackathon managers haven't published this gallery yet." The submission deadline has not
+passed. **Zero competing submissions are publicly visible**, so no competitive ranking is possible
+and none is claimed here.
+
+**A correction to this file's own earlier contents.** It previously named AgentProof, Proofline,
+Backstop, ProofStitch, DemandLoop and ShiftZero as public entrants "this cycle". That was taken on
+trust from a briefing and never verified. Searching for them returns nothing for this hackathon:
+only **EvidenceBound** resolves to real Devpost projects (Recovery Mesh, Verified Memory, DataHub
+Gate), and those appear under *other* hackathons with different sponsors — I could not confirm any
+entry in this one. The rest are unverifiable and are treated here as unconfirmed.
+
+Writing an unverified competitor list into the repo of a project whose entire thesis is "never
+claim more than the evidence shows" is the exact failure this system exists to prevent, committed
+one level up in the strategy documents. Recorded rather than quietly deleted.
+
+## What survives the correction
+The strategic point does not depend on the names: **10,914 participants registered**, and
+"an agent that verifies itself" is an obvious idea in a field this large. Assume the lane is
+contested whether or not we can see who is in it. Never name or disparage any competitor in a
+public asset — and now there is a second reason: we cannot see them.
 
 ## Why a judge should score Laspoh Proof 5 on Innovation anyway
 

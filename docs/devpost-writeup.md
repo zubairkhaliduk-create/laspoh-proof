@@ -48,6 +48,12 @@ not when no error appears.
 The system is permitted, by design, to report **less** than it achieved. It is never permitted to
 report more.
 
+And the last question on every receipt is the one the planner cannot be trusted to ask itself:
+**was the goal achieved?** Step verdicts grade criteria the planner wrote, so the isolated verifier
+is also handed the goal verbatim, with no sight of the plan, and answers separately. A receipt can
+therefore read "7 of 7 steps proven — goal not established", which is exactly what a plan that
+graded itself generously looks like from outside.
+
 The twist is that the doer is never the judge — and for an irreversible action, the proof comes
 FIRST. Post-hoc verification cannot recall a sent application, so before any step that commits
 something to the world under a constrained goal, the same isolated verifier must license it from

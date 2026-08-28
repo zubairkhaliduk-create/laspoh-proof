@@ -65,6 +65,10 @@ h1{font-size:40px;margin:8px 0 6px;letter-spacing:-.02em}
   <div class="c" style="border-color:#334155;background:#f1f5f9"><div class="n" style="color:#0f172a">0</div><div class="l" style="color:#0f172a">Prohibited actions sent</div></div>
 </div>
 ${rows}
+${r.goalAchieved ? `<div class="row" style="background:${r.goalAchieved.verdict === "proven" ? "#e7f6ec" : "#fff6e5"};border-left:5px solid ${r.goalAchieved.verdict === "proven" ? "#1b7f3b" : "#b45309"};margin-top:18px">
+  <div class="rl"><span class="badge" style="color:${r.goalAchieved.verdict === "proven" ? "#0f5228" : "#7c4a06"};border-color:${r.goalAchieved.verdict === "proven" ? "#1b7f3b" : "#b45309"}">THE GOAL ITSELF — ${esc(r.goalAchieved.verdict).toUpperCase()}</span>
+  <span class="intent">judged from evidence alone, with no sight of the plan</span></div>
+  <div class="why">${esc(r.goalAchieved.reasoning).slice(0, 200)}</div></div>` : ""}
 <div class="foot"><div class="slogan">No proof, no done.</div>
 <div class="meta">mission ${esc(r.missionId)}<br>${esc(r.model?.model ?? "")} · ${esc(r.model?.route ?? "")}<br>ground truth refs: ${esc((truth.refs ?? []).join(", ") || "none")}<br>integrity ${esc(String(r.integrity ?? "").slice(0, 24))}…</div></div>
 </div>`;

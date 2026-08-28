@@ -7,7 +7,7 @@
  * GET /missions/:id returns the live state; GET /missions/:id/receipt returns the proof.
  */
 import express from "express";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { ReferenceExecutor } from "./executors/reference.js";
 import { LaspohExecutor } from "./executors/laspoh.js";
 import type { Executor } from "./executors/types.js";
@@ -44,6 +44,18 @@ mountJobsDemo(app);
 // mission is in a Map or in Firestore, which is what lets the default clone-and-run path need no
 // cloud at all while the deployed service survives a restart.
 const store: MissionStore = await selectStore();
+
+// ADMISSION CONTROL. Every mission launches its own Chromium, and this service runs on one
+// instance with Cloud Run's default concurrency of 80. An adversarial review pointed out that a
+// few dozen simultaneous POSTs OOM the container and take every in-flight mission with them —
+// and, because nothing resumes, each one becomes a permanently "running" zombie. The API stays
+// open for judging; it simply stops accepting work it cannot do, and says so with a 429 rather
+// than degrading into timeouts the receipt would honestly-but-misleadingly blame on the page.
+const MAX_CONCURRENT_MISSIONS = Number(process.env.MAX_CONCURRENT_MISSIONS ?? 3);
+let inFlight = 0;
+/** Ids of missions currently running in this process, so an eviction can mark them rather than
+ *  leaving them pinned at "running" forever with no receipt and no explanation. */
+const activeMissions = new Set<string>();
 
 function pickExecutor(name?: string): Executor {
   return name === "laspoh" ? new LaspohExecutor() : new ReferenceExecutor(process.env.HEADFUL !== "1");
@@ -141,7 +153,25 @@ app.post("/missions", async (req, res) => {
     return res.status(400).json({ error: "startUrl must be an http(s) URL" });
   }
 
-  const id = `m_${randomUUID().slice(0, 8)}`;
+  if (inFlight >= MAX_CONCURRENT_MISSIONS) {
+    return res.status(429).json({
+      error: "too many missions in flight",
+      detail: `This demo instance runs at most ${MAX_CONCURRENT_MISSIONS} missions at once — each one drives a real browser. Try again shortly.`,
+      inFlight,
+    });
+  }
+
+  // The id is DERIVED from the idempotency key when one is given, so a concurrent duplicate
+  // collides on the document rather than racing past a read-then-write lookup and creating a
+  // second mission — which, for a system whose entire subject is not doing irreversible things
+  // twice, was the wrong shape of bug to leave in.
+  const id = idempotencyKey
+    ? `m_${createHash("sha256").update(idempotencyKey).digest("hex").slice(0, 8)}`
+    : `m_${randomUUID().slice(0, 8)}`;
+  if (idempotencyKey) {
+    const existing = await store.get(id);
+    if (existing) return res.status(200).json({ id: existing.id, status: existing.status, poll: `/missions/${existing.id}`, deduplicated: true });
+  }
   const now = new Date().toISOString();
   const rec: MissionRecord = { id, status: "running", goal, events: [], receipt: null, error: null, createdAt: now, updatedAt: now, ...(idempotencyKey ? { idempotencyKey } : {}) };
   await store.create(rec);
@@ -150,6 +180,8 @@ app.post("/missions", async (req, res) => {
   log("INFO", "mission.accepted", { goal, executor: req.body?.executor ?? "reference" });
   const executor = pickExecutor(req.body?.executor);
   // Fire and forget: the mission outlives the request, which is the point.
+  inFlight += 1;
+  activeMissions.add(id);
   void (async () => {
     try {
       const { receipt } = await runMission({
@@ -176,6 +208,8 @@ app.post("/missions", async (req, res) => {
       await store.update(id, { status: "error", error: String(e).slice(0, 500) }).catch(() => {});
       log("ERROR", "mission.threw", { error: String(e).slice(0, 400) });
     } finally {
+      inFlight -= 1;
+      activeMissions.delete(id);
       await executor.close?.().catch(() => {});
     }
   })();
@@ -195,6 +229,25 @@ app.get("/missions/:id/receipt", async (req, res) => {
   if (!rec.receipt) return res.status(409).json({ error: "mission has not produced a receipt yet", status: rec.status });
   res.json(rec.receipt);
 });
+
+// CLOUD RUN SENDS SIGTERM BEFORE IT EVICTS AN INSTANCE, AND WE WERE IGNORING IT.
+//
+// Nothing resumes an interrupted mission — that is a stated limitation, not a secret. But leaving
+// the record pinned at "running" forever, with no receipt and no reason, means a client polling it
+// waits for something that will never arrive, and a retry deduplicates onto the zombie. The least
+// this can do is say what happened, in the record, before the process dies. An interrupted mission
+// is reported as interrupted; it is never reported as finished.
+let shuttingDown = false;
+async function markInterrupted(signal: string): Promise<void> {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  const ids = [...activeMissions];
+  await Promise.allSettled(ids.map((id) =>
+    store.update(id, { status: "interrupted", error: `the instance received ${signal} while this mission was running; it was not resumed` })));
+  process.exit(0);
+}
+process.on("SIGTERM", () => void markInterrupted("SIGTERM"));
+process.on("SIGINT", () => void markInterrupted("SIGINT"));
 
 const port = Number(process.env.PORT ?? 8080);
 app.listen(port, () => console.log(`[laspoh-proof] listening on ${port} · model ${JSON.stringify(modelIdentity())}`));
