@@ -73,11 +73,35 @@ const normaliseForMatch = (t: string): string =>
   t.toLowerCase().replace(/[\s\u00a0]+/g, " ").replace(/^["'`\u201c\u201d\s.,:;-]+|["'`\u201c\u201d\s.,:;-]+$/g, "").trim();
 
 /** Everything the verifier was actually shown, as one searchable body. */
+/**
+ * THE EVIDENCE LINES A VERIFIER IS SHOWN — one rendering, used for BOTH the prompt and the
+ * grounding corpus.
+ *
+ * These were two separate assemblies, and they disagreed. The prompt showed
+ * `form controls now hold: Full name = Ada Lovelace | ...`; the corpus joined the same fields
+ * differently and without that prefix. So a verifier that quoted the line it had actually been
+ * shown was told its quote "does not appear in the evidence", and the verdict was downgraded.
+ *
+ * That is not a hypothetical. In a 31-run blind production evaluation it downgraded honest
+ * verdicts and — through the pre-action gate, which requires a PROVEN licence — it refused four
+ * of five legitimate applications on the control scenario. The system was blocking work it should
+ * have done, for a string-formatting reason, while reporting a principled-sounding refusal.
+ *
+ * Grounding now means exactly what it always claimed: the quote must appear in what the verifier
+ * was shown. Deliberately excludes the fence's instruction paragraphs — those are our scaffolding,
+ * not evidence, and nothing should be provable by quoting them.
+ */
+export function evidenceLines(e: Evidence, index: number): string {
+  return [
+    `--- EVIDENCE ${index + 1} (${e.id}, at ${e.url}) ---`,
+    `identifiers: ${e.identifiers.join(", ") || "(none)"}`,
+    `form controls now hold: ${e.formState.length ? e.formState.join(" | ") : "(no form controls seen)"}`,
+  ].join("\n");
+}
+
 export function evidenceCorpus(evidence: readonly Evidence[]): string {
   return normaliseForMatch(
-    evidence
-      .map((e) => [e.excerpt, e.formState.join(" | "), e.identifiers.join(" "), e.url].join(" "))
-      .join(" "),
+    evidence.map((e, i) => [evidenceLines(e, i), e.excerpt].join("\n")).join("\n\n"),
   );
 }
 
@@ -149,13 +173,10 @@ export const verifyFlow = ai.defineFlow(
     // The verifier is the highest-value target in this system: a page that can make it say "proven"
     // defeats everything else at once. So the page's own text is FENCED — labelled as data, inside
     // a per-call delimiter the page cannot guess and therefore cannot close early.
+    // Same lines the corpus grounds against, plus the fenced page text — so a quote taken from
+    // what the verifier was shown always grounds, and only our own instruction scaffolding does not.
     const bundle = items
-      .map((e, i) => [
-        `--- EVIDENCE ${i + 1} (${e.id}, at ${e.url}) ---`,
-        `identifiers: ${e.identifiers.join(", ") || "(none)"}`,
-        `form controls now hold: ${e.formState.length ? e.formState.join(" | ") : "(no form controls seen)"}`,
-        fenceUntrusted("PAGE_TEXT", e.excerpt),
-      ].join("\n"))
+      .map((e, i) => [evidenceLines(e, i), fenceUntrusted("PAGE_TEXT", e.excerpt)].join("\n"))
       .join("\n\n") || "(no evidence was captured)";
 
     // A page trying to give the agent orders is itself a fact about that page, and one the verifier

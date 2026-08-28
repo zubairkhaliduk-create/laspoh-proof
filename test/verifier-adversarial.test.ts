@@ -123,3 +123,38 @@ describe("the corpus the check searches", () => {
     expect(groundCitations(["anything at all"], []).fabricated).toHaveLength(1);
   });
 });
+
+// FOUND BY A 31-RUN BLIND PRODUCTION EVALUATION. The prompt and the grounding corpus were two
+// separate assemblies of the same evidence, and they disagreed: the verifier was shown
+// "form controls now hold: Full name = Ada Lovelace", quoted it accurately, and was told the quote
+// did not appear in the evidence. Through the pre-action gate — which needs a PROVEN licence —
+// that refused four of five legitimate applications on the control scenario. The system blocked
+// work it should have done, for a string-formatting reason, behind a principled-sounding refusal.
+describe("a quote taken from what the verifier was SHOWN always grounds", () => {
+  const ev = {
+    id: "e1", stepId: "s1", url: "http://x/role", title: "t",
+    excerpt: "Site Reliability Engineer — Orbital Systems Ltd",
+    identifiers: ["JA-123456"], formState: ["Full name = Ada Lovelace", "Email address = ada@example.com"],
+    sha256: "0".repeat(64), at: new Date(0).toISOString(),
+    producedBy: { executor: "reference", preExisting: false },
+  } as never;
+
+  it("grounds the form-state line exactly as rendered, prefix included", () => {
+    const { fabricated } = groundCitations(["form controls now hold: Full name = Ada Lovelace | Email address = ada@example.com"], [ev]);
+    expect(fabricated).toHaveLength(0);
+  });
+
+  it("grounds the identifiers line and the page text too", () => {
+    const { fabricated } = groundCitations(["identifiers: JA-123456", "Orbital Systems Ltd"], [ev]);
+    expect(fabricated).toHaveLength(0);
+  });
+
+  it("still rejects an invented quote — this widened the corpus, it did not weaken the rule", () => {
+    const { fabricated } = groundCitations(["form controls now hold: Full name = Charles Babbage"], [ev]);
+    expect(fabricated).toHaveLength(1);
+  });
+
+  it("still rejects a reference the evidence never carried", () => {
+    expect(groundCitations(["JA-999999"], [ev]).fabricated).toHaveLength(1);
+  });
+});

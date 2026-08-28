@@ -10,14 +10,22 @@ cd "$(dirname "$0")"
 export CLOUDSDK_CORE_ACCOUNT="${CLOUDSDK_CORE_ACCOUNT:-zubair@laspoh.com}"
 URL="https://laspoh-proof-wqx6gkuc7a-uc.a.run.app"
 
-echo "▶ 1/5 gates"
+echo "▶ 1/6 gates"
 pnpm test >/dev/null && pnpm lint >/dev/null && pnpm typecheck >/dev/null
 echo "  ✓ tests, lint, typecheck"
 
-echo "▶ 2/5 deploy"
-bash deploy.sh </dev/null | tail -3
+echo "▶ 2/6 deploy"
+# Cloud Build returns a transient INTERNAL after a successful image push often enough to have
+# cost one full finalization run. Retried rather than treated as a code failure; a third failure
+# is real and stops here.
+for attempt in 1 2 3; do
+  if bash deploy.sh </dev/null | tail -3; then break; fi
+  [ "$attempt" = 3 ] && { echo "✖ deploy failed three times — this is not transient"; exit 1; }
+  echo "  deploy attempt $attempt failed; retrying in 30s"
+  sleep 30
+done
 
-echo "▶ 3/5 live proof"
+echo "▶ 3/6 live proof"
 curl -fsS "$URL/health" | python3 -m json.tool | head -20
 
 echo "▶ 4/6 adversarial evaluation (8 real missions)"

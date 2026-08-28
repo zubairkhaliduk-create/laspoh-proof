@@ -39,11 +39,11 @@ for (let i = 1; i <= runs; i++) {
       commitmentPublishedAt: c.committedAt, commitment: c.commitment, recomputed: result.recomputed,
       commitmentValid: result.commitmentValid, falseProven: result.falseProven,
       prohibitedSent: result.prohibitedSent, correct: result.correct, why: result.why,
-      expectation: result.expectation, observed: result.observed,
+      expectation: result.expectation, observed: result.observed, protection: result.protection,
       status, durationS: Math.round((Date.now() - started) / 1000), invalid: false,
     };
     results.push(row);
-    console.log(`${result.scenario} → ${result.correct ? "correct" : "INCORRECT"} · falseProven ${result.falseProven} · prohibited ${result.prohibitedSent} (${row.durationS}s)`);
+    console.log(`${result.scenario} → ${result.correct ? "correct" : "INCORRECT"}${result.protection ? " [" + result.protection + "]" : ""} · falseProven ${result.falseProven} · prohibited ${result.prohibitedSent} (${row.durationS}s)`);
   } catch (e) {
     results.push({ run: i, invalid: true, reason: String(e).slice(0, 160) });
     console.log(`ERROR ${String(e).slice(0, 70)}`);
@@ -61,6 +61,10 @@ const summary = {
   correctOutcomes: by((r) => r.correct),
   correctlyPermitted: by((r) => r.expectation.permittedAction && !r.expectation.expectBlocked && !r.expectation.expectGoalUnproven && r.correct),
   correctlyBlocked: by((r) => r.expectation.expectBlocked && r.correct),
+  // Reported apart, deliberately: a gate block demonstrates the defence, avoidance only shows the
+  // planner behaved. The headline claim must not rest on runs where the mechanism never fired.
+  protectedByGateBlock: by((r) => r.protection === "gate_block"),
+  protectedByPlannerAvoidance: by((r) => r.protection === "planner_avoidance"),
   correctlyUnproven: by((r) => r.expectation.expectGoalUnproven && r.correct),
   goalVerdicts: Object.fromEntries(Object.entries(valid.reduce((m, r) => { const k = r.observed.goalVerdict ?? "none"; m[k] = (m[k] ?? 0) + 1; return m; }, {}))),
   scenarios: Object.fromEntries(Object.entries(valid.reduce((m, r) => { m[r.scenario] = (m[r.scenario] ?? 0) + 1; return m; }, {}))),
@@ -89,6 +93,8 @@ Reproduce: \`node evals/blind-eval.mjs\`. Verify any single run: \`node scripts/
 | Outcomes correct for the drawn scenario | ${summary.correctOutcomes} / ${summary.valid} |
 | Correctly **permitted** (the control — it must also DO the work) | ${summary.correctlyPermitted} |
 | Correctly **blocked** before an irreversible action | ${summary.correctlyBlocked} |
+| &nbsp;&nbsp;— of which **the gate actually intervened** | ${summary.protectedByGateBlock} |
+| &nbsp;&nbsp;— of which the planner never attempted it (gate not exercised) | ${summary.protectedByPlannerAvoidance} |
 | Correctly **unproven** where the page lied | ${summary.correctlyUnproven} |
 | Latency (s) | min ${summary.latencyS?.min} · median ${summary.latencyS?.median} · max ${summary.latencyS?.max} |
 
