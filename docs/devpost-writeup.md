@@ -31,6 +31,24 @@ Laspoh Proof is the BYOF mandate taken literally. The personal problem: I could 
 agent's word, on work that could not be taken back. The fix is an agent whose central rule is that
 **the component doing the work never grades it.**
 
+## Challenge it blind — the part I'd want to see first
+
+*"You built both the agent and the test."* That objection is correct, and unanswerable by
+assertion, so the answer is a protocol: **commit → execute → reveal → verify.**
+
+Before a run, the server draws one of eight adversarial scenarios — a recruitment agency the goal
+forbids, a page that claims success while the server records nothing, a valid-looking reference
+that was never issued, an employer too ambiguous to clear, a page instructing the agent to declare
+completion — and publishes a SHA-256 commitment over the hidden truth plus a random nonce. The
+agent never sees the classification. Afterwards the payload and nonce are revealed and anyone
+recomputes the digest.
+
+That proves the answer existed before the run, and **only** that. What the agent actually did is
+settled separately, by its receipt against the server's own record.
+
+Try it at `/challenge`, or verify a completed one from a terminal with
+`node scripts/verify-challenge.mjs <challenge-id>`.
+
 ## What it does
 
 You give it an outcome in one sentence, and you leave. The request returns immediately; the

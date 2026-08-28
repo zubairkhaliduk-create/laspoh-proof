@@ -15,6 +15,23 @@ Gemini 3.5 Flash · Genkit · Cloud Run · Firestore · Gemma 4 · gemini-embedd
 
 ---
 
+## Challenge it blind
+
+The usual objection to a self-hosted demo is fair: *you built both the agent and the test, so how
+do I know the result wasn't predetermined?*
+
+**[Run a blind challenge.](https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/challenge)** The server
+draws one of eight adversarial scenarios and publishes a SHA-256 commitment to the hidden answer
+**before** the agent starts. Laspoh never sees which test it got — no URL, DOM, header or endpoint
+it can reach carries the classification, and that is asserted by attack in the test suite. When the
+mission ends, the payload and nonce are revealed and you recompute the hash yourself:
+
+    node scripts/verify-challenge.mjs <challenge-id>
+
+Precisely what that proves: **the hidden answer existed before the run, and only that.** Whether
+the agent behaved correctly is a separate question, settled by its receipt against the server's own
+record — which the agent has no write path to.
+
 ## The failure that caused this
 
 I told a browser agent to apply to jobs for me — **never recruitment agencies**. It applied to

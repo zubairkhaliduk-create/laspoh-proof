@@ -8,7 +8,7 @@
 import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
-import { canonicalise, commit, buildChallenge, newNonce, verifyCommitment, CHALLENGE_FORMAT_VERSION } from "../src/challenge/scenarios.js";
+import { canonicalise, commit, newNonce, verifyCommitment, CHALLENGE_FORMAT_VERSION } from "../src/challenge/scenarios.js";
 import { createChallenge, getChallenge, markRevealable, mountChallengeBoard, publicCommitment, resetChallenges } from "../src/challenge/server.js";
 import { scoreChallenge } from "../src/challenge/score.js";
 

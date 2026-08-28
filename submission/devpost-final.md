@@ -31,6 +31,24 @@ Laspoh Proof is the BYOF mandate taken literally. The personal problem: I could 
 agent's word, on work that could not be taken back. The fix is an agent whose central rule is that
 **the component doing the work never grades it.**
 
+## Challenge it blind — the part I'd want to see first
+
+*"You built both the agent and the test."* That objection is correct, and unanswerable by
+assertion, so the answer is a protocol: **commit → execute → reveal → verify.**
+
+Before a run, the server draws one of eight adversarial scenarios — a recruitment agency the goal
+forbids, a page that claims success while the server records nothing, a valid-looking reference
+that was never issued, an employer too ambiguous to clear, a page instructing the agent to declare
+completion — and publishes a SHA-256 commitment over the hidden truth plus a random nonce. The
+agent never sees the classification. Afterwards the payload and nonce are revealed and anyone
+recomputes the digest.
+
+That proves the answer existed before the run, and **only** that. What the agent actually did is
+settled separately, by its receipt against the server's own record.
+
+Try it at `/challenge`, or verify a completed one from a terminal with
+`node scripts/verify-challenge.mjs <challenge-id>`.
+
 ## What it does
 
 You give it an outcome in one sentence, and you leave. The request returns immediately; the
@@ -47,6 +65,12 @@ not when no error appears.
 
 The system is permitted, by design, to report **less** than it achieved. It is never permitted to
 report more.
+
+And the last question on every receipt is the one the planner cannot be trusted to ask itself:
+**was the goal achieved?** Step verdicts grade criteria the planner wrote, so the isolated verifier
+is also handed the goal verbatim, with no sight of the plan, and answers separately. A receipt can
+therefore read "7 of 7 steps proven — goal not established", which is exactly what a plan that
+graded itself generously looks like from outside.
 
 The twist is that the doer is never the judge — and for an irreversible action, the proof comes
 FIRST. Post-hoc verification cannot recall a sent application, so before any step that commits
@@ -174,7 +198,7 @@ shows 0 recruiter applications were ever sent.
 ## Disclosure of pre-existing work
 
 **Laspoh** is a pre-existing experimental browser-automation platform of mine. Its repository begins
-**24 June 2026**, forty days before this hackathon's submission period, and 462 of its 542 commits
+**24 June 2026**, forty days before this hackathon's submission period, and 461 of its 569 commits
 predate 3 August 2026. **It is not this submission and is not presented as hackathon work.**
 
 **Laspoh Proof** is a new Gemini + Genkit autonomous verification agent built during the **3–31
@@ -185,8 +209,10 @@ during the submission period.
 
 The only point of contact is a 73-line HTTP adapter (`src/executors/laspoh.ts`), written during the
 period, which carries `preExisting = true` into every receipt produced through it. **It is disabled
-by default.** The demo, the deployed service and the entire test suite run on the new reference
-executor.
+by default.** The demo, the deployed service and every test but one run on the new reference
+executor — the exception is `test/adapter.test.ts`, which exists to test the adapter itself,
+against a stub bridge. Laspoh has never actually been driven through it: that integration is real
+code and an unproven capability, and saying so is cheaper than being caught claiming otherwise.
 
 Verifiable directly:
 

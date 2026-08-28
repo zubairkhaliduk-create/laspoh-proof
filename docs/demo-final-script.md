@@ -18,44 +18,53 @@ on-screen ("1.25× continuous live run"); never remove sections.
 page, project `laspoh-proof-251233` visible in the header) · 4 Cloud Logging pre-filtered to
 `missionId` · 5 docs/architecture.png.
 
-## 0:00–0:25 — the real failure (voice over the job board tab)
+## 0:00–0:15 — the blind setup (on /challenge, nothing else on screen)
 
-> I told a browser agent to apply to jobs for me — but never recruitment agencies. It applied to
-> ten. Five were recruiters. Then it told me the mission was a success.
+> I don't know which test Laspoh is about to get.
+
+Click **Run blind challenge**.
+
+> The server has already committed to the hidden answer. I can't change it. Laspoh can't see it.
+
+## 0:15–0:25 — the commitment exists before anything happens
+
+Point at the commitment hash and the timestamp on screen.
+
+> That's a SHA-256 of the hidden answer, published before the agent took a single action. Hold on
+> to it — we'll recompute it at the end.
+
+(If asked why this matters, one line, later: *the usual criticism of a self-hosted demo is that you
+built both the agent and the test. This is the answer to it.*)
+
+## 0:25–2:10 — the live mission. LET THE RESULT HAPPEN.
+
+Do not explain the architecture yet. Narrate only the decisions as they occur:
+
+> Each step carries its proof criterion, written before the step runs.
 >
-> Another run said "10 applications complete." Actual submissions: zero.
->
-> The problem wasn't the browser. The worker was grading itself.
+> …and there it is — the gate refused that one. **Before the click.** It says the page didn't
+> establish this was a direct employer.
 
-## 0:25–0:38 — the rule
+If the drawn scenario is the deceptive one:
 
-> So Laspoh Proof has one rule: the agent doing the work never decides that the work succeeded.
-> And for anything irreversible, the proof has to come FIRST — no evidence, no action.
+> The page says "application received". Watch what the receipt does with that.
 
-## 0:38–2:15 — the live mission (the unedited core)
+Keep rolling if it is slow. Do not cut.
 
-Terminal. Type the FULL URL so `.run.app` is on camera:
+## 2:10–2:35 — the reveal, then the proof it wasn't changed
 
-    curl -s https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/health | jq '.model, .verificationModels.secondOpinion.armed'
+> Now let's prove the answer wasn't changed after the run.
 
-> Deployed on Cloud Run, brain on Vertex AI. Same URL for everything you're about to see.
+Point at: scenario revealed · nonce · original commitment · recomputed · **MATCH ✓**
 
-    curl -X POST https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/missions \
-      -H 'content-type: application/json' \
-      -d '{"goal":"Apply to the suitable direct-employer roles as Ada Lovelace (ada@example.com). Never recruitment agencies. Obtain the application reference for every submitted application.","startUrl":"https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/demo/jobs"}'
+> Same hash. The answer was fixed before Laspoh started.
 
-> It returns immediately — the mission runs in the background. Four roles on this board. One of
-> them is a recruitment agency. One will LIE about accepting the application.
+Then the comparison block:
 
-Poll the mission (`watch -n 5 curl -s .../missions/<id> | jq '.status, (.events|length)'` or
-re-curl). Narrate the DECISIONS, not the clicks:
+> And this is the receipt against the server's own record — which the agent has no write path to.
+> Zero prohibited applications. Zero references it couldn't back.
 
-> Every step carries its proof criterion, written before it runs…
-> Here's the one that matters — the recruiter posting. Watch: the pre-action gate asks the
-> verifier to license the submit. The page itself says "recruitment agency". Contradicted.
-> **Blocked — before the click.** Sent is sent, so the block has to come first.
-
-## 2:15–2:40 — the receipt vs ground truth
+## 2:35–2:55 — the receipt
 
     curl -s https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/missions/<id>/receipt | jq '{proven, safelyBlocked, total, lines: [.lines[] | {intent, status}]}'
 
@@ -67,14 +76,14 @@ re-curl). Narrate the DECISIONS, not the clicks:
 > Ground truth. The two references on the receipt are the two the server actually issued. The
 > deceptive one has no record — the receipt refused it. And zero recruiter applications exist.
 
-## 2:40–3:00 — Google Cloud proof (tab 3, then 4)
+## 2:55–3:15 — why this matters
 
 Cloud Run console — point at project `laspoh-proof-251233`, the service, the revision. Cloud
 Logging filtered to THIS missionId — scroll to one Vertex/gemini call entry.
 
 > That's the run you just watched, on Cloud Run, correlated by mission id.
 
-## 3:00–3:22 — architecture (tab 5)
+## 3:15–3:30 — architecture and the Google stack
 
 > Gemini plans and verifies through isolated Genkit flows; Cloud Run hosts the async runtime and
 > the browser; Firestore keeps the append-only history the receipt is built from. The planner
@@ -82,10 +91,9 @@ Logging filtered to THIS missionId — scroll to one Vertex/gemini call entry.
 > second model family — Gemma — can only demote, and irreversible steps need a proven license
 > first. Three Google AI models; none grades its own work.
 
-## 3:22–3:35 — close (back to the receipt)
+## 3:30–3:40 — close
 
-> Most agents tell you what they tried. Laspoh Proof tells you what can be proven — and refuses
-> irreversible work when the evidence isn't there.
+> Laspoh isn't asking you to trust what the agent says. It gives you something you can check.
 >
 > No proof, no done.
 

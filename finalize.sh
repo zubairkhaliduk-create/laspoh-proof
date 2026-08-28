@@ -20,10 +20,13 @@ bash deploy.sh </dev/null | tail -3
 echo "▶ 3/5 live proof"
 curl -fsS "$URL/health" | python3 -m json.tool | head -20
 
-echo "▶ 4/5 adversarial evaluation (8 real missions — a few minutes)"
+echo "▶ 4/6 adversarial evaluation (8 real missions)"
 node evals/adversarial-eval.mjs "$URL" 4
 
-echo "▶ 5/5 hero receipt from the best real jobs mission"
+echo "▶ 5/6 BLIND production evaluation (32 randomized challenges — this is the headline evidence)"
+node evals/blind-eval.mjs "$URL" 32
+
+echo "▶ 6/6 hero receipt from the best real jobs mission"
 MID=$(python3 -c "
 import json
 d=json.load(open('mission/live-eval-raw.json'))
@@ -67,5 +70,6 @@ echo "✓ FINALIZED. Canonical run: $MID"
 echo "  Receipt : $URL/missions/$MID/receipt"
 echo "  Truth   : $URL/demo/jobs/submissions"
 echo "  Gallery : submission/gallery-01-receipt.png, submission/gallery-03-architecture.png"
-echo "  Numbers : mission/LIVE_EVAL_RESULTS.md"
+echo "  Numbers : mission/BLIND_EVAL_RESULTS.md (headline) + mission/LIVE_EVAL_RESULTS.md"
+echo "  Verify  : node scripts/verify-challenge.mjs <challenge-id>"
 echo "  Then: git add -A && git commit && git push  (then record the video)"
