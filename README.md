@@ -5,7 +5,7 @@
 # No proof, no done.
 
 [**Live demo**](https://laspoh-proof-wqx6gkuc7a-uc.a.run.app) ·
-[Watch the 4-min video](#) ·
+[Demo video](docs/demo-final-script.md) ·
 [Architecture](docs/authority.png) ·
 [Example receipt](#the-receipt) ·
 [Reproduce it](#quick-start) ·
@@ -210,8 +210,10 @@ CLI logged into a Google Cloud project with Vertex AI.
     # Route B — Vertex AI (what the deployed service uses; no key involved)
     #   gcloud auth application-default login
     #   export VERTEX_PROJECT="your-project"
-    #   export VERTEX_LOCATION="us-central1"       # availability is per-region AND per-project;
-    #                                              # if unset, defaults to asia-southeast1
+    #   export VERTEX_LOCATION="asia-southeast1"   # the region that serves this model for THIS
+    #                                              # project — us-central1 returns 404 for it.
+    #                                              # Availability is per-region AND per-project:
+    #                                              # migrate.sh probes yours rather than assuming.
 
     pnpm dev            # http://localhost:8080
 
@@ -323,18 +325,10 @@ harness in [`mission/DEMO_EVIDENCE.md`](mission/DEMO_EVIDENCE.md):
 field-parsing bug. Caught, fixed, and recorded in the same file, because a reliability report that
 grades itself generously is the exact disease this project treats.)
 
-## Limitations
-
-- The **verifier can be wrong about sufficiency.** Grounding proves a quote is real, not that it
-  establishes the criterion. Isolation and a pre-committed criterion mitigate this; nothing
-  eliminates it.
-- **Firestore is opt-in and unverified in production** at the time of writing (`MISSION_STORE=firestore`).
-- One workflow is reliable, not twenty.
-
 ## Hackathon disclosure
 
 **Laspoh** is a pre-existing experimental browser-automation platform. Its repository begins
-**24 June 2026** — forty days before this hackathon's submission period — and 462 of its 542
+**24 June 2026** — forty days before this hackathon's submission period — and 461 of its 569
 commits predate 3 August 2026. **It is not this submission and is not presented as hackathon work.**
 
 **Laspoh Proof** is a new Gemini + Genkit agent built during the **3–31 August 2026** submission
@@ -344,8 +338,12 @@ recovery, security boundaries and receipts were all developed during the period.
 
 The only point of contact is [`src/executors/laspoh.ts`](src/executors/laspoh.ts) — a 73-line HTTP
 adapter written during the period, carrying `preExisting = true` into every receipt produced
-through it. **It is off by default.** The demo, the deployed service and the entire test suite run
-on the new reference executor.
+through it. **It is off by default.** The demo, the deployed service and every test but
+one run on the new reference executor — the exception is `test/adapter.test.ts`, which exists
+precisely to test the adapter, against a stub bridge. Said exactly, because a boundary claim you
+cannot check is the kind of claim this project exists to refuse: **Laspoh has never actually been
+driven through this adapter.** The integration is real code and an unproven capability, and it is
+described here as both.
 
 Verify any of this yourself:
 
@@ -354,6 +352,14 @@ Verify any of this yourself:
     grep -rn "andiwal/laspoh\|@laspoh/" src test               # no matches
 
 Full provenance ledger: [`mission/PREEXISTING_DISCLOSURE.md`](mission/PREEXISTING_DISCLOSURE.md).
+
+## Limitations
+
+- The **verifier can be wrong about sufficiency.** Grounding proves a quote is real, not that it
+  establishes the criterion. Isolation and a pre-committed criterion mitigate this; nothing
+  eliminates it.
+- **Firestore** is opt-in via `MISSION_STORE=firestore`; the deployed service runs on it and `/health` reports `"store": "firestore"`.
+- One workflow is reliable, not twenty.
 
 ## Learnings
 

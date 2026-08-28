@@ -73,6 +73,10 @@ export interface Receipt {
    * "cannot be edited without detection" was exactly that overstatement.
    */
   integrity: string;
+  /** The evidence hashes the digest above is computed over, in order. Without these the digest was
+   *  unverifiable by the only audience a receipt has — you cannot recompute a value from evidence
+   *  you were never given. Shipping them makes "recompute it yourself" a real instruction. */
+  evidenceHashes: string[];
   issuedAt: string;
 }
 
@@ -128,6 +132,7 @@ export function buildReceipt(args: {
     startedAt: state.startedAt,
     durationMs: Number.isFinite(started) ? Math.max(0, Date.now() - started) : 0,
     integrity,
+    evidenceHashes: evidence.map((e) => e.sha256),
     issuedAt: new Date().toISOString(),
   };
 }

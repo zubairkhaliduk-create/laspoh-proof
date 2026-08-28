@@ -100,4 +100,18 @@ only because Phase 00 wrote the weakness down instead of glossing it.
     cd laspoh-proof && grep -n "LaspohExecutor" src/server.ts
 
     # remove it and the project still runs
-    cd laspoh-proof && rm src/executors/laspoh.ts && npx tsx run-demo.ts   # (see Phase 08)
+    # The demo runs with the adapter file deleted — it imports only ReferenceExecutor:
+    cd laspoh-proof && rm src/executors/laspoh.ts && npx tsx run-demo.ts
+
+    # Be precise about what that does and does not show. Deleting the file also breaks
+    # `pnpm typecheck`, `pnpm build` and one test suite, because src/server.ts imports it and
+    # test/adapter.test.ts exercises it. That is a statement about NEW glue code written during
+    # the submission period — not about the pre-existing work, none of which is in this
+    # repository. Removing the pre-existing work requires deleting nothing, because there is
+    # nothing here to delete: the adapter is 80 lines of fetch and normalisation reaching an
+    # HTTP bridge, and it contains no automation logic.
+    #
+    # The honest removal test, which does pass:
+    cd laspoh-proof && rm src/executors/laspoh.ts test/adapter.test.ts \
+      && sed -i '' '/executors\/laspoh.js/d;/LaspohExecutor/d' src/server.ts \
+      && pnpm typecheck && pnpm test && npx tsx run-demo.ts

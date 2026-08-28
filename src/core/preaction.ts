@@ -48,8 +48,28 @@ const NAVIGATIONAL_INTENT = /\b(open|view|go to|navigate|reach|visit|see|read|in
 
 export function isIrreversibleStep(step: { intent: string; action: { kind: string; target?: string } }): boolean {
   if (step.action.kind !== "click") return false; // navigation, reading and filling commit nothing
-  if (NAVIGATIONAL_INTENT.test(step.intent)) return false;
-  return IRREVERSIBLE.test(`${step.intent} ${step.action.target ?? ""}`);
+  const intent = step.intent;
+  const commit = IRREVERSIBLE.exec(intent);
+  const nav = NAVIGATIONAL_INTENT.exec(intent);
+  // ORDER DECIDES, NOT MERE PRESENCE — and an adversarial review is why.
+  //
+  // The first version rescued any intent CONTAINING a navigational word, which silently disarmed
+  // the gate on "Submit the application and read the reference shown" — and the planner's own
+  // prompt encourages exactly that phrasing, because it asks what will be VISIBLE afterwards.
+  // The project's central safety claim was one ordinary word away from switching itself off.
+  //
+  // A navigational word only rescues the step when it comes BEFORE any commit verb: "open the
+  // role and read the employer note" is reaching a page, while "submit … and read …" commits and
+  // then reads. Strictly safer than the previous rule — it can only ever arm the gate more often.
+  //
+  // Honest about what this is: a lexical test over model-authored prose, which is weaker than
+  // deriving irreversibility from the DOM (as outstandingRequired does). It errs toward blocking,
+  // the failure it can still have is one round-trip of over-caution, and the target is checked
+  // too so a commit control arms the gate whatever the intent calls it.
+  if (nav && (!commit || nav.index < commit.index)) {
+    return IRREVERSIBLE.test(step.action.target ?? "") && !/\b(view|open|read)\b/i.test(step.action.target ?? "");
+  }
+  return IRREVERSIBLE.test(`${intent} ${step.action.target ?? ""}`);
 }
 
 /** Does the goal state constraints — exclusions ("never X", "no X", "not X") or restrictions

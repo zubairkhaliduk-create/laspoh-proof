@@ -151,6 +151,26 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
   // saw the moment planning ends.
   let lastObs: Observation | null = null;
   if (startUrl) {
+    // THE RECONNAISSANCE NAVIGATE IS CHECKED LIKE ANY OTHER — AND IT WAS NOT.
+    //
+    // `startUrl` is anonymous request input, and the mission's allow-list is DERIVED from it, so
+    // the boundary was authorising itself: this dispatch was the one path to the browser that
+    // never consulted isNavigationAllowed. An adversarial review reproduced it — POST a mission
+    // with `file:///etc/passwd` and 9kB of it landed in Evidence.excerpt, which the verifier reads
+    // and citations quote, and which `GET /missions/:id` publishes. On Cloud Run the same trick
+    // points at /proc/self/environ.
+    //
+    // Checked with an EMPTY allow-list, which is exactly right here: there is no mission origin
+    // yet (this call is what establishes it), so the only question is whether the scheme is
+    // navigation at all. javascript:, data: and file: are code and disk wearing navigation's
+    // clothes, and they are refused before a browser is ever pointed at them.
+    const schemeCheck = isNavigationAllowed(startUrl, []);
+    if (!schemeCheck.allowed && /scheme/.test(schemeCheck.why)) {
+      emit({ type: "recon.refused", url: startUrl, why: schemeCheck.why });
+      state = { ...state, status: "blocked" };
+      const receipt = buildReceipt({ state, evidence: [], verdicts: new Map(), executor: { name: executor.name, preExisting: executor.preExisting }, model: modelIdentity() });
+      return { state, receipt, evidence: [] };
+    }
     const recon = await executor.execute({ kind: "navigate", url: startUrl });
     if (recon.ok) {
       lastObs = recon;

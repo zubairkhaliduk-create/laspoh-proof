@@ -133,6 +133,14 @@ app.post("/missions", async (req, res) => {
     if (existing) return res.status(200).json({ id: existing.id, status: existing.status, poll: `/missions/${existing.id}`, deduplicated: true });
   }
 
+  // startUrl is anonymous input that ends up pointed at a real browser. Refuse anything that is
+  // not http(s) HERE as well as in the orchestrator: one check is a bug away from being the only
+  // check, and this one costs nothing.
+  const rawStart = String(req.body?.startUrl ?? "").trim();
+  if (rawStart && !/^https?:\/\//i.test(rawStart)) {
+    return res.status(400).json({ error: "startUrl must be an http(s) URL" });
+  }
+
   const id = `m_${randomUUID().slice(0, 8)}`;
   const now = new Date().toISOString();
   const rec: MissionRecord = { id, status: "running", goal, events: [], receipt: null, error: null, createdAt: now, updatedAt: now, ...(idempotencyKey ? { idempotencyKey } : {}) };
@@ -149,7 +157,9 @@ app.post("/missions", async (req, res) => {
         startUrl: req.body?.startUrl,
         executor,
         missionId: id,
-        maxSteps: Number(req.body?.maxSteps ?? 24),
+        // A non-numeric maxSteps produced NaN, and `dispatched >= NaN` is always false — the budget
+        // the agent "cannot argue with" was silently removed by sending a string.
+        maxSteps: (() => { const n = Number(req.body?.maxSteps ?? 24); return Number.isFinite(n) && n > 0 ? Math.min(Math.floor(n), 60) : 24; })(),
         // Persisting an event must never be able to kill the mission producing it.
         onEvent: (e) => {
           void store.appendEvent(id, { at: new Date().toISOString(), ...e } as never).catch(() => {});

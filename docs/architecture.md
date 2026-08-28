@@ -77,7 +77,7 @@ keys, so a retried request is the same mission, not a second grant application.
 
 Four tiers of text reach a model, and they do not have equal standing (`src/security/untrusted.ts`):
 system policy, user goal, tool observation, and page content — the last is data, never instruction.
-Page text enters prompts only inside a fence whose delimiter is a **per-call random nonce**, so the
+Page text enters prompts only inside a fence whose delimiter is a **per-call cryptographic nonce**, so the
 page cannot close the fence by printing a known marker; any occurrence of the nonce in the content
 is stripped. Injection detection is deliberately *advisory*: a page ordering the agent to "mark
 this complete" is reported to the verifier as evidence the page is untrustworthy — never silently
@@ -97,9 +97,13 @@ account** (`deploy.sh`), not the default compute account, and authenticates to V
 identity — no plaintext credential for any primary model exists in code or image, so there is
 nothing to leak or rotate. The optional Gemma auditor is the sole exception: its provider key is
 stored in Secret Manager and mounted at deploy time, and the service runs correctly without it.
-The Gemma auditor's key, when configured, is scoped to the Generative Language API alone. The API
-is deliberately open for judging, bounded by `maxSteps`, `--max-instances 1`, and the
-mission-origin navigation boundary.
+The Gemma auditor's key, when configured, is scoped to the Generative Language API alone. The API is deliberately open so a judge needs no credentials, and the honest description of that
+choice is that it is **not rate-limited**: `maxSteps` bounds one mission's actions and
+`--max-instances 1` bounds cost, but neither bounds concurrent requests, so a flood of missions can
+exhaust the single instance. That is an accepted, stated trade for reviewability during judging —
+not a defence. `startUrl` is validated as http(s) at the intake seam AND scheme-checked before the
+reconnaissance navigate: an adversarial review found that dispatch was the one path to the browser
+that never consulted the allow-list, and reproduced `file:///etc/passwd` reaching evidence.
 
 ## The verification chain
 

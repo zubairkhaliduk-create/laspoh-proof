@@ -174,7 +174,7 @@ shows 0 recruiter applications were ever sent.
 ## Disclosure of pre-existing work
 
 **Laspoh** is a pre-existing experimental browser-automation platform of mine. Its repository begins
-**24 June 2026**, forty days before this hackathon's submission period, and 462 of its 542 commits
+**24 June 2026**, forty days before this hackathon's submission period, and 461 of its 569 commits
 predate 3 August 2026. **It is not this submission and is not presented as hackathon work.**
 
 **Laspoh Proof** is a new Gemini + Genkit autonomous verification agent built during the **3–31
@@ -185,8 +185,10 @@ during the submission period.
 
 The only point of contact is a 73-line HTTP adapter (`src/executors/laspoh.ts`), written during the
 period, which carries `preExisting = true` into every receipt produced through it. **It is disabled
-by default.** The demo, the deployed service and the entire test suite run on the new reference
-executor.
+by default.** The demo, the deployed service and every test but one run on the new reference
+executor — the exception is `test/adapter.test.ts`, which exists to test the adapter itself,
+against a stub bridge. Laspoh has never actually been driven through it: that integration is real
+code and an unproven capability, and saying so is cheaper than being caught claiming otherwise.
 
 Verifiable directly:
 

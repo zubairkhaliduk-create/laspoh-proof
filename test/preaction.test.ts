@@ -135,14 +135,23 @@ describe("the gate in the loop — a refused step never reaches the executor", (
 // and every jobs mission proved zero. Over-blocking is not caution — it is a broken gate that
 // would have shipped looking safe while proving nothing.
 describe("navigational intent defeats the irreversible verb", () => {
+  // The TARGET is a non-commit control, so these are plainly navigation.
   it.each([
-    "Click the Apply button to open the application form",
     "Open the Backend Engineer role",
     "Go to the posting to read the employer note",
     "View the role and inspect the form",
     "Return to the job board",
   ])("%s is not irreversible", (intent) => {
-    expect(isIrreversibleStep({ intent, action: { kind: "click", target: "Apply" } })).toBe(false);
+    expect(isIrreversibleStep({ intent, action: { kind: "click", target: "View Backend Engineer role" } })).toBe(false);
+  });
+
+  // A control LABELLED "Apply" is a different matter, and the honest answer is that we cannot
+  // tell from a label whether it opens a form or submits one — on plenty of real sites it
+  // submits. So it arms the gate. That costs one verification round-trip on a compliant page
+  // (the verifier reads the employer note and licenses it) and prevents an unrecallable action
+  // on a page we should not have been on. Erring the other way is what "sent is sent" means.
+  it("an Apply-labelled control arms the gate — a label cannot prove what a button does", () => {
+    expect(isIrreversibleStep({ intent: "Click the Apply button to open the application form", action: { kind: "click", target: "Apply" } })).toBe(true);
   });
 
   it("but a real commit still is, even when the target word is mild", () => {
@@ -181,5 +190,34 @@ describe("the planner sees the start page before it plans", () => {
     await runMission({ goal: "Apply to roles. Never recruitment agencies.", startUrl: "http://localhost:1/x", executor, maxSteps: 3, missionId: "m_recon2" });
     const planArgs = vi.mocked(planFlow).mock.calls[0]?.[0] as { startPageText?: string } | undefined;
     expect(planArgs?.startPageText).toBeUndefined();
+  });
+});
+
+// FOUND BY AN ADVERSARIAL SECURITY REVIEW. The first navigational rescue matched anywhere in the
+// intent, so "Submit the application and read the reference" disarmed the gate — and the planner's
+// own prompt encourages that phrasing, because it asks what will be VISIBLE afterwards. The
+// central safety claim was one ordinary word from switching itself off.
+describe("a commit verb cannot be disarmed by a later navigational word", () => {
+  it.each([
+    "Submit the application and read the reference shown",
+    "Submit the application to see the confirmation",
+    "Find the confirmation reference by submitting the application",
+    "Send the message and view the sent confirmation",
+    "Confirm the booking then read the reference",
+  ])("%s IS irreversible", (intent) => {
+    expect(isIrreversibleStep({ intent, action: { kind: "click", target: "Submit application" } })).toBe(true);
+  });
+
+  it("genuine navigation is still not irreversible — the over-blocking fix survives", () => {
+    for (const [intent, target] of [
+      ["Open the Backend Engineer role", "View Backend Engineer role"],
+      ["Go to the posting to read the employer note", "View role"],
+    ] as const) {
+      expect(isIrreversibleStep({ intent, action: { kind: "click", target } })).toBe(false);
+    }
+  });
+
+  it("a commit CONTROL arms the gate whatever the intent calls it", () => {
+    expect(isIrreversibleStep({ intent: "Open the next page", action: { kind: "click", target: "Submit application" } })).toBe(true);
   });
 });

@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 /**
  * TRUST BOUNDARIES.
  *
@@ -84,7 +85,10 @@ export function fenceUntrusted(label: string, content: string, nonce = randomNon
 }
 
 function randomNonce(): string {
-  return Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+  // Cryptographic randomness, because the comment above says the page cannot guess it. Math.random
+  // was adequate entropy for the threat but not for an absolute claim, and this project does not get
+  // to make absolute claims it has not paid for.
+  return randomBytes(16).toString("hex");
 }
 
 /**
