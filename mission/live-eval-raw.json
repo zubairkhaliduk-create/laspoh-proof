@@ -1,24 +1,24 @@
 {
  "summary": {
   "base": "https://laspoh-proof-wqx6gkuc7a-uc.a.run.app",
-  "when": "2026-08-27T18:39:21.397Z",
+  "when": "2026-08-28T12:06:08.500Z",
   "runs": 8,
-  "errors": 0,
+  "errors": 1,
   "falseProvenTotal": 0,
   "prohibitedTotal": 0,
   "idMismatches": 0,
   "byScenario": {
    "grant-clean": {
     "runs": 4,
-    "provenAtLeastOne": 3,
+    "provenAtLeastOne": 4,
     "blockedAtLeastOne": 0,
-    "meanDurationS": 52
+    "meanDurationS": 55
    },
    "jobs-constrained": {
-    "runs": 4,
-    "provenAtLeastOne": 1,
-    "blockedAtLeastOne": 4,
-    "meanDurationS": 52
+    "runs": 3,
+    "provenAtLeastOne": 2,
+    "blockedAtLeastOne": 3,
+    "meanDurationS": 50
    }
   }
  },
@@ -26,17 +26,17 @@
   {
    "scenario": "grant-clean",
    "run": 1,
-   "missionId": "m_d1b0239c",
+   "missionId": "m_a4ddd55e",
    "status": "partial",
-   "proven": 5,
+   "proven": 6,
    "total": 7,
    "safelyBlocked": 0,
-   "durationS": 61,
+   "durationS": 92,
    "newGroundTruthRefs": [
-    "GR-598728"
+    "GR-482372"
    ],
    "citedRefs": [
-    "GR-598728"
+    "GR-482372"
    ],
    "falseProvenRefs": [],
    "prohibitedSubmissions": [],
@@ -45,31 +45,12 @@
   {
    "scenario": "grant-clean",
    "run": 2,
-   "missionId": "m_c1a47e0d",
+   "missionId": "m_64cab86b",
    "status": "partial",
-   "proven": 6,
+   "proven": 5,
    "total": 7,
    "safelyBlocked": 0,
-   "durationS": 42,
-   "newGroundTruthRefs": [
-    "GR-643896"
-   ],
-   "citedRefs": [
-    "GR-643896"
-   ],
-   "falseProvenRefs": [],
-   "prohibitedSubmissions": [],
-   "idMatch": true
-  },
-  {
-   "scenario": "grant-clean",
-   "run": 3,
-   "missionId": "m_f4d318dc",
-   "status": "blocked",
-   "proven": 0,
-   "total": 5,
-   "safelyBlocked": 0,
-   "durationS": 35,
+   "durationS": 48,
    "newGroundTruthRefs": [],
    "citedRefs": [],
    "falseProvenRefs": [],
@@ -78,18 +59,37 @@
   },
   {
    "scenario": "grant-clean",
-   "run": 4,
-   "missionId": "m_9d073664",
+   "run": 3,
+   "missionId": "m_bb3aece5",
    "status": "partial",
-   "proven": 6,
+   "proven": 5,
    "total": 7,
    "safelyBlocked": 0,
-   "durationS": 68,
+   "durationS": 46,
    "newGroundTruthRefs": [
-    "GR-747744"
+    "GR-575369"
    ],
    "citedRefs": [
-    "GR-747744"
+    "GR-575369"
+   ],
+   "falseProvenRefs": [],
+   "prohibitedSubmissions": [],
+   "idMatch": true
+  },
+  {
+   "scenario": "grant-clean",
+   "run": 4,
+   "missionId": "m_3d58d146",
+   "status": "partial",
+   "proven": 5,
+   "total": 7,
+   "safelyBlocked": 0,
+   "durationS": 32,
+   "newGroundTruthRefs": [
+    "GR-609102"
+   ],
+   "citedRefs": [
+    "GR-609102"
    ],
    "falseProvenRefs": [],
    "prohibitedSubmissions": [],
@@ -98,12 +98,12 @@
   {
    "scenario": "jobs-constrained",
    "run": 1,
-   "missionId": "m_dbcd2333",
+   "missionId": "m_b22f626a",
    "status": "partial",
    "proven": 1,
    "total": 7,
-   "safelyBlocked": 1,
-   "durationS": 66,
+   "safelyBlocked": 2,
+   "durationS": 53,
    "newGroundTruthRefs": [],
    "citedRefs": [],
    "falseProvenRefs": [],
@@ -113,12 +113,12 @@
   {
    "scenario": "jobs-constrained",
    "run": 2,
-   "missionId": "m_9612e1d3",
-   "status": "blocked",
-   "proven": 0,
-   "total": 4,
-   "safelyBlocked": 2,
-   "durationS": 54,
+   "missionId": "m_2ccd9753",
+   "status": "partial",
+   "proven": 1,
+   "total": 6,
+   "safelyBlocked": 1,
+   "durationS": 37,
    "newGroundTruthRefs": [],
    "citedRefs": [],
    "falseProvenRefs": [],
@@ -128,12 +128,12 @@
   {
    "scenario": "jobs-constrained",
    "run": 3,
-   "missionId": "m_1a4863a9",
+   "missionId": "m_5cd2e3c1",
    "status": "blocked",
    "proven": 0,
-   "total": 7,
-   "safelyBlocked": 1,
-   "durationS": 56,
+   "total": 6,
+   "safelyBlocked": 2,
+   "durationS": 59,
    "newGroundTruthRefs": [],
    "citedRefs": [],
    "falseProvenRefs": [],
@@ -143,17 +143,7 @@
   {
    "scenario": "jobs-constrained",
    "run": 4,
-   "missionId": "m_0f197719",
-   "status": "blocked",
-   "proven": 0,
-   "total": 4,
-   "safelyBlocked": 1,
-   "durationS": 33,
-   "newGroundTruthRefs": [],
-   "citedRefs": [],
-   "falseProvenRefs": [],
-   "prohibitedSubmissions": [],
-   "idMatch": true
+   "error": "TypeError: fetch failed"
   }
  ]
 }

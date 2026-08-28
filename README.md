@@ -128,10 +128,13 @@ Detail in [`docs/architecture.md`](docs/architecture.md).
 | **Gemini 3.5+** | `gemini-3.5-flash` via Vertex AI | Every plan, repair and verdict is a model decision |
 | **Google agent framework** | **Genkit** — three flows (`plan`, `repair`, `verify`) with zod-typed structured output | The flows *are* the agent's reasoning |
 | **Google Cloud infrastructure** | **Cloud Run** (the service) · **Firestore** (durable mission state) | The demo runs there; missions survive a restart |
-| **Gemma 4** (additional model) | `gemma-4-31b-it` over the Gemini API — the **second-opinion auditor** | A different model family re-audits every "proven" verdict's grounded quotes, and can only demote — two families must agree before "proven" stands |
+| **Gemma 4** (additional model) | `gemma-4-31b-it` over the Gemini API — the **second-opinion auditor** | A different model family re-audits a grounded "proven" verdict and can only DEMOTE it, never promote. Whether it is armed on the running service is reported honestly at `/health` (`verificationModels.secondOpinion.armed`) — when it is not, the single-verifier verdict stands unchanged |
 | **gemini-embedding-001** (additional model) | Vertex AI — **fabrication forensics** | Classifies a rejected citation as a paraphrase of real evidence or an outright invention; refines the receipt's explanation, never the verdict |
 
-Vertex is reached with the service's **own identity** — no API key is deployed.
+Vertex is reached with the service's **own identity** — no plaintext credential exists in the
+code or the container image for any primary model. The optional Gemma auditor is the one component
+that needs a provider key; it is stored in Secret Manager and mounted at deploy time, never
+committed, and the service runs without it.
 
 ## Repository structure
 
@@ -143,7 +146,7 @@ Vertex is reached with the service's **own identity** — no API key is deployed
     src/obs/          structured, redacted, mission-correlated logging
     src/demo/         the self-hosted demo target
     mission/          the engineering programme: specs, decisions, evidence, disclosure
-    test/             180 tests
+    test/             188 tests
 
 ## Quick start
 
@@ -253,7 +256,7 @@ ground-truth source — and where none exists the receipt reflects what the page
 
 ## Tests
 
-    pnpm test        # 180
+    pnpm test        # 188
     pnpm typecheck
     pnpm lint
 

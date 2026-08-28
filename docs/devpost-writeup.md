@@ -56,7 +56,9 @@ quote, and silence blocks safely — no evidence, no irreversible action. The ju
 alone either: after
 the Gemini verifier confirms a step and every quote it cites is mechanically checked to appear
 verbatim in the evidence, a second, independent Google model family (**Gemma**) audits those quotes
-and can only demote the verdict, never promote it. The real-world friction this eliminates is
+and can only demote the verdict, never promote it — and `/health` states plainly whether that
+auditor is armed, because a capability claimed but not running is exactly the kind of thing this
+project exists to catch. The real-world friction this eliminates is
 double: the browser workflow itself, and the second job every agent user currently has — re-doing
 the work to find out whether it actually happened. A receipt that must quote its evidence removes
 the checking, not just the clicking.
@@ -131,8 +133,8 @@ project failing in exactly the way it exists to prevent.
 ## Technologies
 
 TypeScript · Genkit 1.41 (`@genkit-ai/google-genai`) · **Gemini 3.5 Flash** via Vertex AI ·
-**Gemma 4** (`gemma-4-31b-it`, second-opinion auditor — a different model family that must concur
-before "proven" stands, and can only demote) · **gemini-embedding-001** (fabrication forensics —
+**Gemma 4** (`gemma-4-31b-it`, second-opinion auditor — a different model family that re-audits a
+grounded verdict and can only demote it, never promote; `/health` reports whether it is armed) · **gemini-embedding-001** (fabrication forensics —
 classifies a rejected citation as a paraphrase of real evidence or an outright invention; changes
 the explanation, never the verdict) · Cloud Run · Firestore · Playwright · Zod · Vitest · oxlint ·
 GitHub Actions
@@ -167,7 +169,7 @@ employer whose success page is a lie the server never persists, and one more gen
 The honest receipt is 2 proven · 1 safely blocked · 1 unproven — and `/demo/jobs/submissions`
 shows 0 recruiter applications were ever sent.
 
-`pnpm test` runs 180 tests, none of which need a model.
+`pnpm test` runs 188 tests, none of which need a model.
 
 ## Disclosure of pre-existing work
 

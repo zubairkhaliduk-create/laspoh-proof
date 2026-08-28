@@ -7,13 +7,18 @@
 The component that does the work never grades it. A step becomes `proven` only when an isolated
 verifier — given the proof criterion written *before* the step ran and the evidence of what the
 page showed, and nothing else — confirms it and quotes the evidence, and that quote is mechanically
-checked to actually appear in the evidence (`groundCitations`, `src/flows/verify.ts`). Since then
-the rule has grown a second tooth: the verifier does not judge alone either. A different Google
-model family (Gemma 4, over the Gemini API — a route separate from the verifier's) re-audits every
-grounded verdict and can only demote it, and gemini-embedding-001 classifies every rejected
-citation as a paraphrase of real evidence or an outright invention. Three Google AI models; none
-grades its own work. Everything below is in service of making that rule structural rather than
-aspirational.
+checked to actually appear in the evidence (`groundCitations`, `src/flows/verify.ts`). The rule has since grown two more teeth. The verifier does not judge alone — A different Google
+model family (Gemma 4, over the Gemini API — a route separate from the verifier's) re-audits a
+grounded verdict and can only demote it — never promote — with `/health` reporting honestly whether
+it is armed on the running service; and gemini-embedding-001 classifies a rejected citation as a
+paraphrase of real evidence or an outright invention. Three Google AI models; none grades its own work.
+
+And for an **irreversible** step the proof comes FIRST. Post-hoc verification cannot recall a sent
+application, so under a goal that states constraints the same verifier must license the action from
+evidence on the current page before it executes: proven compliance proceeds, a visible violation is
+blocked with the quote, silence blocks safely, and nothing observed at all fails closed
+(`src/core/preaction.ts`). No evidence, no irreversible action. Everything below is in service of
+making these rules structural rather than aspirational.
 
 ## Clean, modularized, easy to maintain
 
@@ -43,7 +48,7 @@ dependencies pointing one way:
 
 Every load-bearing guarantee is a pure exported function (`enforceCitation`, `groundCitations`,
 `sanitizePlan`, `decide`, `unaddressedRequired`, `appendBounded`, `redact`, `cosine`,
-`classifyByDistance`), which is why the 160-test suite — including an adversarial suite that
+`classifyByDistance`), which is why the 188-test suite — including an adversarial suite that
 attacks the verifier with fabricated citations, and one that attacks the second-opinion auditor
 with malformed answers — runs without a model in the loop.
 
@@ -89,7 +94,9 @@ success). Logs redact on the way out — secret-shaped keys and credential-shape
 and attacker-controlled page text hard-truncated by the logger itself, never left to caller
 discipline (`src/obs/log.ts`). The deployed service runs as a **dedicated least-privilege service
 account** (`deploy.sh`), not the default compute account, and authenticates to Vertex with its
-identity — no API key is deployed for the primary models, so there is nothing to leak or rotate.
+identity — no plaintext credential for any primary model exists in code or image, so there is
+nothing to leak or rotate. The optional Gemma auditor is the sole exception: its provider key is
+stored in Secret Manager and mounted at deploy time, and the service runs correctly without it.
 The Gemma auditor's key, when configured, is scoped to the Generative Language API alone. The API
 is deliberately open for judging, bounded by `maxSteps`, `--max-instances 1`, and the
 mission-origin navigation boundary.
