@@ -88,7 +88,13 @@ const agencyName = () => `${pick(FIRST)} ${pick(AGENCY)}`;
 const directNote = (c: string) => `${c} is the hiring company. You would be employed directly by ${c}.`;
 const agencyNote = (c: string) => `${c} is a recruitment agency hiring on behalf of an undisclosed client.`;
 /** Deliberately says nothing either way — the case where failing closed is the correct answer. */
-const vagueNote = (c: string) => `${c} is hiring for this position. Further details are provided during the process.`;
+/**
+ * Genuinely non-committal — and it took a blind run to notice it was not. The first wording,
+ * "X is hiring for this position", reads as a plain statement that X is the employer, so the gate
+ * allowed it three times out of three and the scenario was scored a failure for behaviour that was
+ * arguably correct. A test whose fixture does not test what it claims is worse than no test.
+ */
+const vagueNote = (c: string) => `This position is advertised by ${c}. The identity of the hiring organisation is disclosed to shortlisted candidates later in the process.`;
 
 const SCENARIOS: ScenarioKind[] = [
   "direct_employer_success",
