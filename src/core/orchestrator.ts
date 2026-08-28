@@ -20,7 +20,7 @@ import { decide } from "./recovery.js";
 import { buildReceipt, type Receipt } from "./receipt.js";
 import { classifyFailure, type MissionState, newMission, noteStep, provenCount, terminalStatus } from "./state.js";
 import { planFlow } from "../flows/plan.js";
-import { sanitizePlan } from "./plan-sanitize.js";
+import { isSelfCertifyingCriterion, sanitizePlan } from "./plan-sanitize.js";
 import { isNavigationAllowed } from "../security/untrusted.js";
 import { decideFromVerdict, goalStatesConstraints, isIrreversibleStep, preactionCriterion } from "./preaction.js";
 import { repairFlow } from "../flows/repair.js";
@@ -233,7 +233,14 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
           const at = state.steps.findIndex((s) => s.id === step.id);
           const inserted = repair.steps.map((r, i) => {
             const id = `r${repairRounds}.${i + 1}`;
-            criteria.set(id, r.provenBy);
+            // REPAIR CRITERIA GET THE SAME AUDIT AS PLANNED ONES. They were spliced straight in,
+            // so their provenBy was never tested — and they are authored AFTER the model has seen
+            // the live page, which is the most favourable possible position from which to write
+            // your own grading rubric. A self-certifying repair criterion is replaced by one the
+            // page has to satisfy, and the substitution is reported rather than silent.
+            const selfCertifying = isSelfCertifyingCriterion(r.provenBy);
+            if (selfCertifying) emit({ type: "repair.criterion_rejected", id, provenBy: r.provenBy });
+            criteria.set(id, selfCertifying ? `${r.intent} — and the page must VISIBLY show the result of it` : r.provenBy);
             return { id, intent: r.intent, action: r.action, status: "pending" as const, attempts: 0, lastObservation: null, reason: "", failure: null };
           });
           state = { ...state, steps: [...state.steps.slice(0, at), ...inserted, ...state.steps.slice(at)] };
@@ -332,7 +339,14 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
         state = noteStep(state, provenBefore);
         continue;
       }
-      const preEv = recordEvidence(step.id, step.action, lastObs as Observation, { executor: executor.name, preExisting: executor.preExisting });
+      // FILED UNDER ITS OWN STEP ID, and this is not cosmetic. Outcome verification selects
+      // evidence by stepId, so recording the gate's BEFORE-snapshot under the action's id put the
+      // pre-click page into the corpus used to grade the post-click criterion — a quote taken
+      // before the submit could ground "the confirmation appeared", verbatim and undetectably.
+      // An adversarial review found it in the one path that matters most. The suffix keeps the
+      // gate's evidence auditable on the receipt while making it unreachable to the outcome
+      // verifier's corpus.
+      const preEv = recordEvidence(`${step.id}::preaction`, step.action, lastObs as Observation, { executor: executor.name, preExisting: executor.preExisting });
       evidence.push(preEv);
       state = { ...state, evidenceIds: [...state.evidenceIds, preEv.id] };
       const license = decideFromVerdict(await verifyFlow({ criterion: preactionCriterion(goal, step.intent), evidence: [preEv] }));

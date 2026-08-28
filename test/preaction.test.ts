@@ -221,3 +221,24 @@ describe("a commit verb cannot be disarmed by a later navigational word", () => 
     expect(isIrreversibleStep({ intent: "Open the next page", action: { kind: "click", target: "Submit application" } })).toBe(true);
   });
 });
+
+// LISTED BY AN ADVERSARIAL REVIEW AS MISSING. Every one is a real commit control on a real site;
+// a "Continue" or "Yes, I'm sure" on a confirmation dialog used to commit nothing here.
+describe("the commit vocabulary covers real buttons", () => {
+  it.each(["Continue", "Proceed", "I agree", "Accept", "Checkout", "Subscribe", "Transfer", "Donate", "Withdraw", "Upload", "Place order", "Yes, I'm sure"])(
+    "a %s control arms the gate",
+    (target) => expect(isIrreversibleStep({ intent: "press it", action: { kind: "click", target } })).toBe(true),
+  );
+
+  it.each([
+    "Apply to jobs but skip recruitment agencies",
+    "Apply to jobs and stay away from agencies",
+    "Apply only to direct employers",
+    "Apply to roles other than agency listings",
+    "Apply to at least 3 roles, no more than 5",
+  ])("a constraint stated as %s arms the gate for the mission", (goal) => expect(goalStatesConstraints(goal)).toBe(true));
+
+  it("a goal with genuinely no conditions still leaves the gate off", () => {
+    expect(goalStatesConstraints("Apply for the research grant and obtain the confirmation reference.")).toBe(false);
+  });
+});

@@ -57,9 +57,10 @@ with malformed answers — runs without a model in the loop.
 Mission state is one plain serialisable object (`src/core/state.ts`); a checkpoint is a snapshot.
 Three rules keep it honest: a step's status advances only through evidence, never intent;
 `provenCount` is the only number allowed to describe success (attempts and dispatches are
-*activity*, and the receipt keeps the two visibly apart); and failures are typed (`Failure.class`
-plus `retryable` as a recorded fact) so recovery reads retryability instead of pattern-matching
-prose.
+*activity*, and the receipt keeps the two visibly apart); and failures are typed (`Failure.class` plus `retryable`) and carried onto the
+receipt as recorded facts rather than prose — though `retryable` is currently reported and not yet
+consulted by any decision, which an adversarial review was right to call out as a claim the code
+did not back.
 
 Persistence sits behind the `MissionStore` seam. The default is zero-config in-memory, so a judge
 can clone and run with no cloud at all; setting `MISSION_STORE=firestore` swaps in Firestore (one
@@ -144,8 +145,10 @@ server-side record the agent has no write path to.
 ## Failure tolerance
 
 Recovery is pure predicates over counters, kept out of the model's hands — an LLM asked "are you
-stuck?" says no and tries again (`src/core/recovery.ts`). Blind repeats are refused at two attempts
-with nothing changed; wandering is measured in *proven work*, because page-churn counters are blind
+stuck?" says no and tries again (`src/core/recovery.ts`). Blind repeats are refused at two attempts with nothing changed — a
+pure predicate that is correct and tested, though currently unreachable because no path returns a
+step to `pending`, so it never actually fires (said here rather than left as an implied
+capability); wandering is measured in *proven work*, because page-churn counters are blind
 to a busy agent proving nothing; when the page itself names an unanswered required field the stall
 detector stands down, because escalating over ground truth is what pushes agents to submit
 incomplete forms. Repair is bounded (2 rounds), the step budget is a hard ceiling the agent cannot

@@ -169,3 +169,30 @@ describe("the mission starts where the mission is", () => {
     expect(out.steps).toHaveLength(1);
   });
 });
+
+// SCORED BY AN ADVERSARIAL REVIEW, WHICH RAN THE REGEXES RATHER THAN READING THEM: the filter
+// kept 13 of 14 lazy criteria, including "The page loaded." — the exact example the authority doc
+// claimed it dropped. The redemption list contained `page`, `state`, `value` and `success`, so
+// appending "on the page" to a pure action restatement disarmed the whole check. This file's own
+// comment warns that keyword lists fail silently on the case you did not think of.
+describe("criteria that are true of a page that did nothing", () => {
+  it.each([
+    "The page loaded.",
+    "The Submit button was clicked and the page updated.",
+    "The form was submitted; the page state changed.",
+    "The step ran without an error message.",
+    "No error message appeared.",
+    "The click was performed.",
+    "The action completed successfully.",
+    "The value was saved.",
+  ])("drops %s", (c) => expect(isSelfCertifyingCriterion(c)).toBe(true));
+
+  it.each([
+    "A confirmation reference appears on the page",
+    "The employer note is shown on the posting page",
+    "An application reference is displayed",
+    "After clicking Submit, a confirmation number appears",
+    "The list of submissions contains the new entry",
+    "The field reads Ada Lovelace",
+  ])("keeps %s — a real criterion must survive", (c) => expect(isSelfCertifyingCriterion(c)).toBe(false));
+});

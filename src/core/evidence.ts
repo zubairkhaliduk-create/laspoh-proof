@@ -40,9 +40,19 @@ export function recordEvidence(
   const full = obs.pageText ?? "";
   const formState = obs.formState ?? [];
   // The hash covers the form state too: it is evidence, so it must be as tamper-evident as the text.
-  const sha256 = createHash("sha256").update(`${full}\n${formState.join("\n")}`).digest("hex");
+  // THE URL IS INSIDE THE HASH, because it is inside the grounding corpus.
+  //
+  // An adversarial review found the one field the digest omitted was the one that says WHERE the
+  // evidence came from: the verifier is shown `e.url` and citations can ground against it, so
+  // rewriting a record's url (recruiter → direct employer) changed which quotes ground while
+  // leaving `integrity` bit-identical. Everything the verifier can see must be covered by the
+  // digest, or the digest attests to less than the verdict rests on.
+  const sha256 = createHash("sha256").update(`${obs.url ?? ""}\n${full}\n${formState.join("\n")}`).digest("hex");
   return {
-    id: `ev_${sha256.slice(0, 12)}`,
+    // Scoped by step: the id was derived from page content alone, so two steps observing an
+    // unchanged page — routine on the pre-action and already-satisfied paths — minted colliding
+    // ids that a reader of `evidenceIds` could not tell apart.
+    id: `ev_${stepId}_${sha256.slice(0, 12)}`,
     stepId,
     at: new Date().toISOString(),
     action,

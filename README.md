@@ -46,17 +46,12 @@ action before it executes:
 
 ![Who is allowed to say done](docs/authority.png)
 
-![A real mission receipt](submission/gallery-01-receipt.png)
-
-*A real receipt from a real run. The demo job board contains a recruitment agency the goal
-forbids — and an employer whose page claims success while the server records nothing. Both are
-caught. `0 prohibited applications sent` is a number you can check yourself at
-[`/demo/jobs/submissions`](https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/demo/jobs/submissions),
-which the agent has no write path to.*
-
 **Measured, not asserted:** across 16 controlled end-to-end missions on the deployed stack —
 **0 receipts citing a reference the server never issued, 0 prohibited applications sent**
-([raw data](mission/LIVE_EVAL_RESULTS.md)). Those numbers describe exactly those 16 runs.
+([raw data](mission/LIVE_EVAL_RESULTS.md)). Read the caveat there before quoting the second number:
+on the build those runs measured, the gate was over-blocking, so the agent rarely reached a form —
+a zero that a trivially-safe agent would also produce. The fix landed after the measurement and is
+re-measured by `./finalize.sh`. Numbers describe exactly those runs and nothing more.
 
 ---
 
@@ -158,8 +153,8 @@ The same system, in text (full narrative in [`docs/architecture.md`](docs/archit
                                                       └────────┬─────────┘
                                                                ▼
                                                       ┌──────────────────┐
-                       FIRESTORE ◀── mission state ──▶│ RECEIPT          │
-                       (durable, resumable)           │ "Proven 7 of 8"  │
+                       FIRESTORE ◀── event log ────▶│ RECEIPT          │
+                       (append-only, durable)           │ "Proven 7 of 8"  │
                                                       └──────────────────┘
 ```
 
@@ -171,7 +166,7 @@ Detail in [`docs/architecture.md`](docs/architecture.md).
 |---|---|---|
 | **Gemini 3.5+** | `gemini-3.5-flash` via Vertex AI | Every plan, repair and verdict is a model decision |
 | **Google agent framework** | **Genkit** — three flows (`plan`, `repair`, `verify`) with zod-typed structured output | The flows *are* the agent's reasoning |
-| **Google Cloud infrastructure** | **Cloud Run** (the service) · **Firestore** (durable mission state) | The demo runs there; missions survive a restart |
+| **Google Cloud infrastructure** | **Cloud Run** (the service) · **Firestore** (durable mission state) | The demo runs there; mission RECORDS survive a restart (see Limitations — an interrupted mission is not resumed) |
 | **Gemma 4** (additional model) | `gemma-4-31b-it` over the Gemini API — the **second-opinion auditor** | A different model family re-audits a grounded "proven" verdict and can only DEMOTE it, never promote. Whether it is armed on the running service is reported honestly at `/health` (`verificationModels.secondOpinion.armed`) — when it is not, the single-verifier verdict stands unchanged |
 | **gemini-embedding-001** (additional model) | Vertex AI — **fabrication forensics** | Classifies a rejected citation as a paraphrase of real evidence or an outright invention; refines the receipt's explanation, never the verdict |
 
@@ -354,6 +349,19 @@ Verify any of this yourself:
 Full provenance ledger: [`mission/PREEXISTING_DISCLOSURE.md`](mission/PREEXISTING_DISCLOSURE.md).
 
 ## Limitations
+
+- **An interrupted mission is not resumed.** Firestore persists the append-only event log and the
+  receipt, so the *record* survives an instance eviction — but `MissionState` is never written, and
+  nothing rehydrates it. A mission cut off mid-flight stays `running` and its receipt is never
+  issued. An adversarial review caught the README claiming otherwise while this project's own
+  `mission/TEST_MATRIX.md` already listed resume-after-restart as an open gap; the engineering
+  record was honest and the README had overtaken it.
+- **Idempotency is read-then-write, not atomic.** Two *simultaneous* POSTs with the same key can
+  both miss the lookup and both create a mission. Sequential retries — the real case — are safe.
+- **Blind-repeat detection is currently unreachable.** `isBlindRepeat` needs `attempts >= 2` and no
+  code path returns a step to `pending`, so it never fires. The predicate is correct and tested;
+  the loop simply never asks it. Recorded here rather than left as an implied capability.
+
 
 - The **verifier can be wrong about sufficiency.** Grounding proves a quote is real, not that it
   establishes the criterion. Isolation and a pre-committed criterion mitigate this; nothing

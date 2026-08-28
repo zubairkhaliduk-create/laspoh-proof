@@ -32,7 +32,10 @@
  *  own words (intent + click target), never against a site, company or URL. Conservative in the
  *  irreversible direction — a false positive costs one verification round-trip; a false negative
  *  costs an unrecallable action. */
-const IRREVERSIBLE = /\b(submit|apply|send|confirm|pay|purchase|order|book|publish|post|register|sign\s*up|delete|finali[sz]e)\b/i;
+// An adversarial review listed what was missing, and every one of them is a real commit button
+// on a real site: a "Continue" or "Yes, I'm sure" on a confirmation dialog committed nothing here.
+const IRREVERSIBLE =
+  /\b(submit|apply|send|confirm|pay|purchase|order|book|publish|post|register|sign\s*up|delete|finali[sz]e|continue|proceed|agree|accept|checkout|check\s*out|subscribe|transfer|donate|withdraw|share|upload|place\s+order|yes[, ]+i'?m\s+sure)\b/i;
 
 /**
  * NAVIGATIONAL INTENT DEFEATS THE VERB. "Click Apply to open the application form" contains
@@ -75,7 +78,11 @@ export function isIrreversibleStep(step: { intent: string; action: { kind: strin
 /** Does the goal state constraints — exclusions ("never X", "no X", "not X") or restrictions
  *  ("only X", "must be X", "except X")? Detected from the user's own words, because the gate's
  *  criterion quotes the goal verbatim: it can only enforce what the user actually said. */
-const CONSTRAINT_LANGUAGE = /\b(never|no |not |only |except|exclud|avoid|must (?:be|not)|don'?t|without|unless)\b/i;
+// Also widened from a review: "skip recruitment agencies" and "stay away from agencies" state a
+// constraint as plainly as "never", and neither armed the gate — so it stayed off for the whole
+// mission. This is still a lexical read of the user's prose, and it is the gate's weakest link.
+const CONSTRAINT_LANGUAGE =
+  /\b(never|no |not |only |except|exclud|avoid|must (?:be|not)|don'?t|doesn'?t|without|unless|skip|ignore|stay away|steer clear|other than|apart from|rather than|instead of|prefer|require[sd]?|at least|no more than|under|over|below|above)\b/i;
 
 export function goalStatesConstraints(goal: string): boolean {
   return CONSTRAINT_LANGUAGE.test(goal);

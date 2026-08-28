@@ -44,15 +44,35 @@ export interface SanitizedPlan {
 // submitted" for want of one word, which is how keyword lists fail — silently, on the case you
 // did not think of. Two words covers "the button", "the submit button", "field", and the bare verb.
 const ACTION_RESTATING =
-  /^(?:the\s+|a\s+|an\s+)?(?:[\w-]+\s+){0,2}(?:was\s+|were\s+|has\s+been\s+|is\s+)?(?:successfully\s+)?(?:clicked|pressed|filled|typed|selected|checked|ticked|submitted|dispatched|performed|executed|done|actioned|completed)\b/i;
+  /^(?:the\s+|a\s+|an\s+)?(?:[\w-]+\s+){0,2}(?:was\s+|were\s+|has\s+been\s+|is\s+)?(?:successfully\s+)?(?:clicked|pressed|filled|typed|selected|checked|ticked|submitted|dispatched|performed|executed|done|actioned|completed|loaded|opened|registered|saved|sent|processed|accepted|updated|changed|ran|worked)\b/i;
 
-/** Outcome words that redeem an otherwise action-shaped criterion. */
+/**
+ * Criteria that are self-certifying no matter how they are phrased, because what they assert is
+ * true of a page that did nothing. An adversarial review scored this filter by running it, and
+ * kept 13 of 14 lazy criteria — including "The page loaded.", the example the authority doc
+ * claimed was dropped. These are matched anywhere in the string, not just at the start.
+ */
+const VACUOUS =
+  /\b(?:page|it|the\s+step|the\s+action)\s+(?:was\s+)?(?:loaded|load|opened|updated|changed|responded)\b|\bno\s+error|\bwithout\s+(?:an?\s+)?error|\berror\s+(?:message\s+)?(?:did\s+not|was\s+not|never)\b|\bstate\s+changed\b|\bpage\s+state\b|\bran\s+successfully\b/i;
+
+/**
+ * Outcome words that redeem an otherwise action-shaped criterion.
+ *
+ * `page`, `state`, `value` and `success` were removed. They were the escape hatch: appending "on
+ * the page" to a pure action restatement disarmed the whole check, and this file's own comment
+ * warns that keyword lists "fail silently, on the case you did not think of" — then shipped a
+ * second one whose redemption words include the most common noun on a web page. What redeems a
+ * criterion now has to be something the page must SHOW.
+ */
 const NAMES_AN_OUTCOME =
-  /\b(appears?|appeared|shows?|shown|displays?|displayed|visible|contains?|reads?|confirmation|reference|receipt|message|number|value|state|page|list|empty|closed|updated|success)\b/i;
+  /\b(appears?|appeared|shows?|shown|displays?|displayed|visible|contains?|reads?|confirmation|reference|receipt|message|number|list|empty|closed)\b/i;
 
 export function isSelfCertifyingCriterion(provenBy: string): boolean {
   const t = provenBy.trim();
   if (t.length < 8) return true; // nothing that short can describe an observable outcome
+  // Vacuous whatever else it says: "the page loaded", "no error appeared", "the state changed".
+  // These pass on a page that did nothing, so an outcome word cannot redeem them.
+  if (VACUOUS.test(t)) return true;
   if (!ACTION_RESTATING.test(t)) return false;
   // It opened by restating the action — it survives only if it also names something observable.
   return !NAMES_AN_OUTCOME.test(t);
