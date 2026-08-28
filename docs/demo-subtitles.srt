@@ -1,0 +1,62 @@
+1
+00:00:00,000 --> 00:00:12,000
+I told a browser agent to apply to jobs for me — never recruitment agencies.
+It applied to ten. Five were recruiters.
+
+2
+00:00:12,000 --> 00:00:25,000
+Then it reported the mission a success.
+Another run said ten applications complete. Actual submissions: zero.
+
+3
+00:00:25,000 --> 00:00:38,000
+The browser wasn't broken. The worker was grading itself.
+So: the agent doing the work never decides that the work succeeded.
+
+4
+00:00:38,000 --> 00:00:48,000
+And anything irreversible has to be proven allowed first.
+This is the deployed service — Cloud Run, brain on Vertex AI.
+
+5
+00:00:48,000 --> 00:01:00,000
+One sentence, and I walk away.
+It returns immediately — the mission runs in the background.
+
+6
+00:01:00,000 --> 00:01:30,000
+Each step carries its proof criterion, written before the step runs.
+
+7
+00:01:30,000 --> 00:01:45,000
+This posting is the recruitment agency. Watch the submit.
+
+8
+00:01:45,000 --> 00:02:00,000
+Blocked — before the click. Not detected afterwards. Refused.
+
+9
+00:02:00,000 --> 00:02:15,000
+And this employer's page says thank you while the server records nothing.
+
+10
+00:02:15,000 --> 00:02:30,000
+Two proven, one safely blocked, one unproven.
+
+11
+00:02:30,000 --> 00:02:45,000
+Ground truth. The references match, and zero recruiter applications exist.
+
+12
+00:02:45,000 --> 00:03:00,000
+Running on Cloud Run, in this project, correlated by mission id.
+
+13
+00:03:00,000 --> 00:03:25,000
+Planner proposes. Executor acts. Neither can mark anything proven.
+Quotes are grounded in code; a second model family can only demote.
+
+14
+00:03:25,000 --> 00:03:35,000
+Most agents tell you what they tried.
+Laspoh Proof tells you what it can prove. No proof, no done.

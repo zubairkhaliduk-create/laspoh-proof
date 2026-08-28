@@ -195,6 +195,7 @@ model routes below: a free Gemini API key from https://aistudio.google.com/apike
 CLI logged into a Google Cloud project with Vertex AI.
 
     corepack enable                                # pnpm 11, pinned via packageManager
+    #   needs sudo on some machines; if pnpm 11+ is already on PATH you can skip it entirely
     pnpm install
     pnpm exec playwright-core install chromium     # the browser the executor drives
     # Linux: pnpm exec playwright-core install --with-deps chromium   (adds system libraries)
