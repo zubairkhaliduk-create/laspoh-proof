@@ -34,8 +34,21 @@
  *  costs an unrecallable action. */
 const IRREVERSIBLE = /\b(submit|apply|send|confirm|pay|purchase|order|book|publish|post|register|sign\s*up|delete|finali[sz]e)\b/i;
 
+/**
+ * NAVIGATIONAL INTENT DEFEATS THE VERB. "Click Apply to open the application form" contains
+ * "apply" and commits nothing — it opens a page. The live evaluation caught this over-blocking
+ * immediately: the gate refused the FIRST step of every jobs mission, so the agent never reached
+ * a form and the demo produced zero applications. A gate that blocks honest navigation is not
+ * cautious, it is broken — it would have shipped as "look how safe we are" while proving nothing.
+ *
+ * The signal is the step's own stated purpose: a step that says it is opening, viewing or going
+ * to something is reaching a page, not committing to the world.
+ */
+const NAVIGATIONAL_INTENT = /\b(open|view|go to|navigate|reach|visit|see|read|inspect|find|browse|return to|back to)\b/i;
+
 export function isIrreversibleStep(step: { intent: string; action: { kind: string; target?: string } }): boolean {
   if (step.action.kind !== "click") return false; // navigation, reading and filling commit nothing
+  if (NAVIGATIONAL_INTENT.test(step.intent)) return false;
   return IRREVERSIBLE.test(`${step.intent} ${step.action.target ?? ""}`);
 }
 

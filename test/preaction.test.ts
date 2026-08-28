@@ -129,3 +129,24 @@ describe("the gate in the loop — a refused step never reaches the executor", (
     expect(gateCalls.some((c) => c.includes("PRE-ACTION GATE"))).toBe(false);
   });
 });
+
+// FOUND BY THE LIVE EVALUATION, not by imagination: "Click Apply to open the application form"
+// contains "apply" and commits nothing. The gate blocked it, so the agent never reached a form
+// and every jobs mission proved zero. Over-blocking is not caution — it is a broken gate that
+// would have shipped looking safe while proving nothing.
+describe("navigational intent defeats the irreversible verb", () => {
+  it.each([
+    "Click the Apply button to open the application form",
+    "Open the Backend Engineer role",
+    "Go to the posting to read the employer note",
+    "View the role and inspect the form",
+    "Return to the job board",
+  ])("%s is not irreversible", (intent) => {
+    expect(isIrreversibleStep({ intent, action: { kind: "click", target: "Apply" } })).toBe(false);
+  });
+
+  it("but a real commit still is, even when the target word is mild", () => {
+    expect(isIrreversibleStep({ intent: "Submit the application and record the reference", action: { kind: "click", target: "Submit application" } })).toBe(true);
+    expect(isIrreversibleStep({ intent: "Send the message to the employer", action: { kind: "click", target: "Send" } })).toBe(true);
+  });
+});

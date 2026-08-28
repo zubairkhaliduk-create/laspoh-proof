@@ -1,0 +1,159 @@
+{
+ "summary": {
+  "base": "https://laspoh-proof-wqx6gkuc7a-uc.a.run.app",
+  "when": "2026-08-27T18:39:21.397Z",
+  "runs": 8,
+  "errors": 0,
+  "falseProvenTotal": 0,
+  "prohibitedTotal": 0,
+  "idMismatches": 0,
+  "byScenario": {
+   "grant-clean": {
+    "runs": 4,
+    "provenAtLeastOne": 3,
+    "blockedAtLeastOne": 0,
+    "meanDurationS": 52
+   },
+   "jobs-constrained": {
+    "runs": 4,
+    "provenAtLeastOne": 1,
+    "blockedAtLeastOne": 4,
+    "meanDurationS": 52
+   }
+  }
+ },
+ "results": [
+  {
+   "scenario": "grant-clean",
+   "run": 1,
+   "missionId": "m_d1b0239c",
+   "status": "partial",
+   "proven": 5,
+   "total": 7,
+   "safelyBlocked": 0,
+   "durationS": 61,
+   "newGroundTruthRefs": [
+    "GR-598728"
+   ],
+   "citedRefs": [
+    "GR-598728"
+   ],
+   "falseProvenRefs": [],
+   "prohibitedSubmissions": [],
+   "idMatch": true
+  },
+  {
+   "scenario": "grant-clean",
+   "run": 2,
+   "missionId": "m_c1a47e0d",
+   "status": "partial",
+   "proven": 6,
+   "total": 7,
+   "safelyBlocked": 0,
+   "durationS": 42,
+   "newGroundTruthRefs": [
+    "GR-643896"
+   ],
+   "citedRefs": [
+    "GR-643896"
+   ],
+   "falseProvenRefs": [],
+   "prohibitedSubmissions": [],
+   "idMatch": true
+  },
+  {
+   "scenario": "grant-clean",
+   "run": 3,
+   "missionId": "m_f4d318dc",
+   "status": "blocked",
+   "proven": 0,
+   "total": 5,
+   "safelyBlocked": 0,
+   "durationS": 35,
+   "newGroundTruthRefs": [],
+   "citedRefs": [],
+   "falseProvenRefs": [],
+   "prohibitedSubmissions": [],
+   "idMatch": true
+  },
+  {
+   "scenario": "grant-clean",
+   "run": 4,
+   "missionId": "m_9d073664",
+   "status": "partial",
+   "proven": 6,
+   "total": 7,
+   "safelyBlocked": 0,
+   "durationS": 68,
+   "newGroundTruthRefs": [
+    "GR-747744"
+   ],
+   "citedRefs": [
+    "GR-747744"
+   ],
+   "falseProvenRefs": [],
+   "prohibitedSubmissions": [],
+   "idMatch": true
+  },
+  {
+   "scenario": "jobs-constrained",
+   "run": 1,
+   "missionId": "m_dbcd2333",
+   "status": "partial",
+   "proven": 1,
+   "total": 7,
+   "safelyBlocked": 1,
+   "durationS": 66,
+   "newGroundTruthRefs": [],
+   "citedRefs": [],
+   "falseProvenRefs": [],
+   "prohibitedSubmissions": [],
+   "idMatch": true
+  },
+  {
+   "scenario": "jobs-constrained",
+   "run": 2,
+   "missionId": "m_9612e1d3",
+   "status": "blocked",
+   "proven": 0,
+   "total": 4,
+   "safelyBlocked": 2,
+   "durationS": 54,
+   "newGroundTruthRefs": [],
+   "citedRefs": [],
+   "falseProvenRefs": [],
+   "prohibitedSubmissions": [],
+   "idMatch": true
+  },
+  {
+   "scenario": "jobs-constrained",
+   "run": 3,
+   "missionId": "m_1a4863a9",
+   "status": "blocked",
+   "proven": 0,
+   "total": 7,
+   "safelyBlocked": 1,
+   "durationS": 56,
+   "newGroundTruthRefs": [],
+   "citedRefs": [],
+   "falseProvenRefs": [],
+   "prohibitedSubmissions": [],
+   "idMatch": true
+  },
+  {
+   "scenario": "jobs-constrained",
+   "run": 4,
+   "missionId": "m_0f197719",
+   "status": "blocked",
+   "proven": 0,
+   "total": 4,
+   "safelyBlocked": 1,
+   "durationS": 33,
+   "newGroundTruthRefs": [],
+   "citedRefs": [],
+   "falseProvenRefs": [],
+   "prohibitedSubmissions": [],
+   "idMatch": true
+  }
+ ]
+}

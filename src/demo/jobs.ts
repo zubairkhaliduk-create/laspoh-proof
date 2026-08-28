@@ -61,12 +61,18 @@ button{margin-top:20px;padding:11px 22px;font-size:15px;cursor:pointer}
 code{background:#eee;padding:2px 6px}a{color:#1a56b0}</style></head><body>${body}</body></html>`;
 
 export function mountJobsDemo(app: express.Express): void {
-  app.get("/demo/jobs", (_req, res) => {
+  app.get("/demo/jobs", (req, res) => {
+    // The absolute URL is printed beside each link so a planner can navigate straight to a
+    // posting instead of hunting for a link to click — fewer steps, and no ambiguity about
+    // which page it is on when it reaches the form.
+    const base = `${(req.get("x-forwarded-proto") ?? "").split(",")[0]?.trim() || (/^localhost|^127\.0\.0\.1/.test(req.get("host") ?? "") ? "http" : "https")}://${req.get("host")}`;
     res.type("html").send(page(`<h1>Fieldworks Job Board</h1>
       <p>Synthetic demo environment — all companies are fictional. Ground truth for every
       application lives at <code>/demo/jobs/submissions</code>.</p>
-      ${JOB_POSTINGS.map((j) => `<div class="card"><h3><a href="/demo/jobs/${j.id}">${j.title}</a> — ${j.company}</h3>
-        <p>${j.employerNote}</p></div>`).join("")}`));
+      <p>Open each role, then apply on its own page:</p>
+      ${JOB_POSTINGS.map((j) => `<div class="card"><h3>${j.title} — ${j.company}</h3>
+        <p>${j.employerNote}</p>
+        <p><a href="/demo/jobs/${j.id}">View ${j.title} role</a> &middot; <code>${base}/demo/jobs/${j.id}</code></p></div>`).join("")}`));
   });
 
   /** Ground truth. The agent's only write path is the application flow above. Registered BEFORE
