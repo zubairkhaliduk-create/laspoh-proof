@@ -25,13 +25,14 @@ export const PlanSchema = z.object({
 export type Plan = z.infer<typeof PlanSchema>;
 
 export const planFlow = ai.defineFlow(
-  { name: "plan", inputSchema: z.object({ goal: z.string(), startUrl: z.string().optional() }), outputSchema: PlanSchema },
-  async ({ goal, startUrl }) => {
+  { name: "plan", inputSchema: z.object({ goal: z.string(), startUrl: z.string().optional(), startPageText: z.string().optional() }), outputSchema: PlanSchema },
+  async ({ goal, startUrl, startPageText }) => {
     const { output } = await ai.generate({
       prompt: `You plan a browser mission. Produce the SHORTEST sequence of concrete actions that achieves the goal.
 
 GOAL: ${goal}
 ${startUrl ? `START URL: ${startUrl}\n\nYour FIRST step MUST be: {"kind":"navigate","url":"${startUrl}"}. The browser starts on a blank page, so every later step fails unless you navigate there first. Do not plan a step that clicks a link to reach it.` : ""}
+${startPageText ? `\nWHAT THE START PAGE ACTUALLY SHOWS (read this before naming anything):\n"""\n${startPageText.slice(0, 4000)}\n"""\n\nPlan ONLY against what is really there. Use the exact titles, labels and link text above — never invent an item, role, product or field name that does not appear. If the page lists several items and the goal applies to more than one, plan the steps for each item that qualifies, using the absolute URL printed beside it where one is shown.` : ""}
 
 Rules:
 - Each step is ONE action a browser can perform: navigate, inspect, fill, select, click, read.

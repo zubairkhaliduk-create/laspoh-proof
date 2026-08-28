@@ -150,3 +150,36 @@ describe("navigational intent defeats the irreversible verb", () => {
     expect(isIrreversibleStep({ intent: "Send the message to the employer", action: { kind: "click", target: "Send" } })).toBe(true);
   });
 });
+
+// RECONNAISSANCE BEFORE PLANNING — the live evaluation caught the planner naming two roles that
+// were not on the board at all ("Software Engineer", "Product Manager"), because it planned from
+// the goal and a URL alone. A plan written against an imagined page is not a plan. The mission
+// now navigates and observes FIRST, and hands the planner what the page really says.
+describe("the planner sees the start page before it plans", () => {
+  beforeEach(() => {
+    vi.mocked(planFlow).mockReset();
+    vi.mocked(verifyFlow).mockReset();
+  });
+
+  it("navigates first, then passes the observed text into the plan", async () => {
+    const execute = vi.fn(async () => ({ ok: true, url: "http://localhost:1/demo/jobs", title: "board", pageText: "Backend Engineer — Orbital Systems Ltd", excerpt: "Backend Engineer — Orbital Systems Ltd", identifiers: [], formState: [], outstandingRequired: [] }));
+    const executor = { name: "spy", preExisting: false, execute } as unknown as Executor;
+    vi.mocked(planFlow).mockResolvedValue({ steps: [] } as never);
+    vi.mocked(verifyFlow).mockResolvedValue({ verdict: "unproven", citedEvidence: [], reasoning: "" } as never);
+    await runMission({ goal: "Apply to roles. Never recruitment agencies.", startUrl: "http://localhost:1/demo/jobs", executor, maxSteps: 3, missionId: "m_recon1" });
+    // The FIRST thing the mission did was look.
+    const firstAction = execute.mock.calls[0]?.[0] as { kind: string } | undefined;
+    expect(firstAction?.kind).toBe("navigate");
+    const planArgs = vi.mocked(planFlow).mock.calls[0]?.[0] as { startPageText?: string } | undefined;
+    expect(planArgs?.startPageText).toContain("Orbital Systems");
+  });
+
+  it("a failed reconnaissance is not fatal — the planner falls back to goal-only", async () => {
+    const execute = vi.fn(async () => ({ ok: false, failure: "transport", detail: "dns", url: "", title: "", excerpt: "", identifiers: [], formState: [], outstandingRequired: [] }));
+    const executor = { name: "spy", preExisting: false, execute } as unknown as Executor;
+    vi.mocked(planFlow).mockResolvedValue({ steps: [] } as never);
+    await runMission({ goal: "Apply to roles. Never recruitment agencies.", startUrl: "http://localhost:1/x", executor, maxSteps: 3, missionId: "m_recon2" });
+    const planArgs = vi.mocked(planFlow).mock.calls[0]?.[0] as { startPageText?: string } | undefined;
+    expect(planArgs?.startPageText).toBeUndefined();
+  });
+});

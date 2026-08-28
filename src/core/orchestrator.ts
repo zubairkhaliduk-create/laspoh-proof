@@ -136,8 +136,31 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
 
   emit({ type: "mission.start", missionId, goal, executor: executor.name });
 
-  // ── PLAN ─────────────────────────────────────────────────────────────────────────────────
-  const rawPlan = await planFlow({ goal, startUrl });
+  // ── RECONNAISSANCE, THEN PLAN ────────────────────────────────────────────────────────────
+  // The planner used to work from the goal and a URL alone — so on a listing page it INVENTED
+  // the items. A live evaluation caught it naming two roles ("Software Engineer", "Product
+  // Manager") that were not on the board at all, and every step that targeted them failed
+  // not_found. A plan written against an imagined page is not a plan.
+  //
+  // So the mission opens its eyes first: navigate, observe, and hand the planner what the page
+  // really says. This is reading, not acting — it commits nothing, and a failure here is not
+  // fatal (the planner simply falls back to goal-only, exactly as before).
+  let startPageText: string | undefined;
+  // Declared here rather than with the loop's other state: reconnaissance below produces the
+  // first observation, and the loop must inherit it — the agent should not forget what it just
+  // saw the moment planning ends.
+  let lastObs: Observation | null = null;
+  if (startUrl) {
+    const recon = await executor.execute({ kind: "navigate", url: startUrl });
+    if (recon.ok) {
+      lastObs = recon;
+      startPageText = recon.pageText ?? undefined;
+      emit({ type: "recon.observed", url: recon.url, chars: (recon.pageText ?? "").length });
+    } else {
+      emit({ type: "recon.failed", detail: recon.detail });
+    }
+  }
+  const rawPlan = await planFlow({ goal, startUrl, ...(startPageText ? { startPageText } : {}) });
   // A schema checks the plan's SHAPE. This checks that it is a plan: no repetition, no step whose
   // proof criterion merely restates the action it is meant to prove, nothing beyond the budget.
   // Everything removed is reported rather than swallowed — a plan silently shortened is a plan
@@ -162,7 +185,6 @@ export async function runMission(opts: RunOptions): Promise<RunResult> {
   // Whether the previous dispatch changed anything at all. Tracked ACROSS steps, because "we are
   // acting and the world is not moving" is only visible from one step to the next.
   let worldChanged = false;
-  let lastObs: Observation | null = null;
 
   while (true) {
     const step = state.steps.find((s) => s.status === "pending");
