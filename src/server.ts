@@ -16,6 +16,9 @@ import { modelIdentity } from "./genkit.js";
 import { EMBEDDING_MODEL, GEMMA_MODEL, secondOpinionConfigured } from "./flows/second-opinion.js";
 import { mountDemoTarget } from "./demo/target.js";
 import { mountJobsDemo } from "./demo/jobs.js";
+import { createChallenge, getChallenge, markRevealable, mountChallengeBoard, publicCommitment } from "./challenge/server.js";
+import { scoreChallenge } from "./challenge/score.js";
+import { CHALLENGE_PAGE } from "./challenge/page.js";
 import { selectStore } from "./store/firestore.js";
 import type { MissionRecord, MissionStore } from "./store/types.js";
 import { missionLogger } from "./obs/log.js";
@@ -39,6 +42,8 @@ app.use(express.urlencoded({ extended: true }));
 // and cannot be broken by a third party changing their site.
 mountDemoTarget(app);
 mountJobsDemo(app);
+app.get("/challenge", (_req, res) => res.type("html").send(CHALLENGE_PAGE));
+mountChallengeBoard(app);
 
 // Persistence lives behind one interface (see src/store). The server does not know whether a
 // mission is in a Map or in Firestore, which is what lets the default clone-and-run path need no
@@ -89,6 +94,7 @@ verifier confirms it from evidence <strong>and</strong> the quote it cites is ch
 appear in that evidence.</p>
 <ul>
   <li><a href="/health">/health</a> &mdash; service, model and executor identity</li>
+  <li><a href="/challenge"><strong>/challenge</strong></a> &mdash; <strong>challenge it blind</strong>: the server commits to a hidden answer before the agent runs, then reveals it &mdash; recompute the hash yourself</li>
   <li><a href="/demo/jobs">/demo/jobs</a> &mdash; the jobs board: direct employers, a forbidden recruiter, and one page that lies about success</li>
   <li><a href="/demo/jobs/submissions">/demo/jobs/submissions</a> &mdash; jobs ground truth &mdash; 0 recruiter applications is a checkable number</li>
   <li><a href="/demo">/demo</a> &mdash; the grant-application target</li>
@@ -248,6 +254,77 @@ async function markInterrupted(signal: string): Promise<void> {
 }
 process.on("SIGTERM", () => void markInterrupted("SIGTERM"));
 process.on("SIGINT", () => void markInterrupted("SIGINT"));
+
+/**
+ * START A BLIND CHALLENGE.
+ *
+ * The commitment is published in THIS response, before a mission id exists — so the answer is on
+ * the record before the agent has taken a single action. Everything after that is the ordinary
+ * mission path: same orchestrator, same gate, same verifier, same receipt. The challenge layer
+ * chooses the world and seals the answer; it does not touch how the agent works.
+ */
+app.post("/challenge", async (req, res) => {
+  if (inFlight >= MAX_CONCURRENT_MISSIONS) {
+    return res.status(429).json({ error: "too many missions in flight", inFlight });
+  }
+  const forced = typeof req.body?.scenario === "string" ? req.body.scenario : undefined;
+  const c = createChallenge(forced);
+  const origin = `${(req.get("x-forwarded-proto") ?? "").split(",")[0]?.trim() || (/^localhost|^127\.0\.0\.1/.test(req.get("host") ?? "") ? "http" : "https")}://${req.get("host")}`;
+
+  const id = `m_${randomUUID().slice(0, 8)}`;
+  const now = new Date().toISOString();
+  await store.create({ id, status: "running", goal: c.truth.goal, events: [], receipt: null, error: null, createdAt: now, updatedAt: now });
+  const log = missionLogger(id);
+  const executor = new ReferenceExecutor(process.env.HEADFUL !== "1");
+  inFlight += 1;
+  activeMissions.add(id);
+  void (async () => {
+    try {
+      const { receipt } = await runMission({
+        goal: c.truth.goal,
+        startUrl: `${origin}/challenge/${c.id}/jobs`,
+        executor,
+        missionId: id,
+        maxSteps: 24,
+        onEvent: (e) => {
+          void store.appendEvent(id, { at: new Date().toISOString(), ...e } as never).catch(() => {});
+          log(String(e.type).includes("fail") || String(e.type).includes("refused") ? "WARNING" : "INFO", String(e.type), e as Record<string, unknown>);
+        },
+      });
+      await store.update(id, { receipt, status: receipt.outcome });
+      // TERMINAL — and only now may the answer be published.
+      markRevealable(c.id, id);
+    } catch (e) {
+      await store.update(id, { status: "error", error: String(e).slice(0, 500) }).catch(() => {});
+      markRevealable(c.id, id);
+    } finally {
+      inFlight -= 1;
+      activeMissions.delete(id);
+      await executor.close?.().catch(() => {});
+    }
+  })();
+
+  res.status(202).json({ ...publicCommitment(c), missionId: id, poll: `/missions/${id}`, reveal: `/challenge/${c.id}/reveal` });
+});
+
+/** The scored result: receipt versus hidden truth, with the commitment recomputed. */
+app.get("/challenge/:id/result", async (req, res) => {
+  const c = getChallenge(String(req.params.id));
+  if (!c) return res.status(404).json({ error: "no such challenge" });
+  if (!c.revealed || !c.missionId) return res.status(409).json({ error: "mission has not reached a terminal state", challengeId: c.id, commitment: c.commitment });
+  const rec = await store.get(c.missionId);
+  if (!rec?.receipt) return res.status(409).json({ error: "no receipt yet", challengeId: c.id });
+  const { commit: recommit } = await import("./challenge/scenarios.js");
+  const commitmentValid = recommit(c.truth, c.nonce) === c.commitment;
+  res.json({
+    ...scoreChallenge(c, rec.receipt as never, commitmentValid),
+    commitment: c.commitment,
+    recomputed: recommit(c.truth, c.nonce),
+    receipt: rec.receipt,
+    revealedPayload: c.truth,
+    nonce: c.nonce,
+  });
+});
 
 const port = Number(process.env.PORT ?? 8080);
 app.listen(port, () => console.log(`[laspoh-proof] listening on ${port} · model ${JSON.stringify(modelIdentity())}`));
