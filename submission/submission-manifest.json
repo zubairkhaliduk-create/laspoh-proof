@@ -3,7 +3,7 @@
   "track": "The Taskmaster",
   "entrantType": "individual",
   "repository": "https://github.com/zubairkhaliduk-create/laspoh-proof",
-  "frozenCommit": "4cff4b17078b1ae0aa65d11fda5bed9a3d01aecf",
+  "frozenCommit": "67bce9310c979b446284b135ac2afd5e2bbc42fc",
   "deploymentUrl": "https://laspoh-proof-wqx6gkuc7a-uc.a.run.app",
   "cloudRunService": "laspoh-proof",
   "region": "us-central1",
@@ -18,13 +18,23 @@
     "Cloud Run",
     "Firestore"
   ],
-  "tests": 188,
+  "tests": 278,
   "videoUrl": null,
   "articleUrl": null,
   "socialUrl": null,
   "galleryOrder": [
     "gallery-01-receipt.png",
     "gallery-02-authority.png",
-    "gallery-03-architecture.png"
-  ]
+    "gallery-03-architecture.png",
+    "gallery-04-evals.png"
+  ],
+  "challenge": {
+    "route": "/challenge",
+    "formatVersion": "laspoh-challenge/1",
+    "commitment": "SHA-256 over `<formatVersion> <canonical-json-payload> <nonce>`",
+    "scenarios": 8,
+    "verifyCommand": "node scripts/verify-challenge.mjs <challenge-id>",
+    "deployed": false,
+    "note": "blocked on owner gcloud auth \u2014 see mission/USER_ACTION_REQUIRED.md"
+  }
 }
