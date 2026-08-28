@@ -127,6 +127,16 @@ The asymmetry is the design: the auditor can demote but never promote; the foren
 never excuse; and every check degrades to exactly the behaviour the system shipped with, so an
 outage anywhere makes the system quieter, never more credulous.
 
+## What the receipt's integrity hash does and does not prove
+
+`integrity` is SHA-256 over the evidence chain (each record's own hash, in order), shipped with
+the receipt. It is a **deterministic content digest**: recompute it from the same evidence and you
+get the same value, so a truncated, reordered or substituted chain is detectable, and two parties
+can confirm they are looking at the same receipt. It is **not a signature** — nothing is signed
+with a key, so anyone able to rewrite the receipt can recompute the digest. It is named for what
+it does. The real check on a receipt is not this number; it is `/demo/jobs/submissions`, the
+server-side record the agent has no write path to.
+
 ## Failure tolerance
 
 Recovery is pure predicates over counters, kept out of the model's hands — an LLM asked "are you

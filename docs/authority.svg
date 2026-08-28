@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 900" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#b91c1c"/>
+    </marker>
+  </defs>
+  <rect width="1180" height="900" fill="#ffffff"/>
+
+  <text x="60" y="56" font-size="30" font-weight="bold" fill="#0f172a">Who is allowed to say &#8220;done&#8221;?</text>
+  <text x="60" y="86" font-size="17" fill="#475569">Nobody who did the work. That is the whole design.</text>
+
+  <!-- 1 GOAL -->
+  <rect x="60" y="120" width="330" height="62" rx="9" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+  <text x="225" y="147" font-size="17" font-weight="bold" fill="#0f172a" text-anchor="middle">YOUR GOAL, IN ONE SENTENCE</text>
+  <text x="225" y="169" font-size="13.5" fill="#475569" text-anchor="middle">&#8220;apply to direct employers &#183; never recruiters&#8221;</text>
+
+  <!-- 2 PLANNER -->
+  <rect x="60" y="216" width="330" height="76" rx="9" fill="#eef2ff" stroke="#4338ca" stroke-width="2"/>
+  <text x="225" y="243" font-size="17" font-weight="bold" fill="#312e81" text-anchor="middle">PLANNER &#183; Gemini</text>
+  <text x="225" y="265" font-size="13.5" fill="#4338ca" text-anchor="middle">writes each step&#8217;s proof criterion</text>
+  <text x="225" y="283" font-size="13.5" font-weight="bold" fill="#4338ca" text-anchor="middle">BEFORE the step runs</text>
+
+  <!-- 3 GATE -->
+  <rect x="60" y="326" width="330" height="92" rx="9" fill="#fef2f2" stroke="#b91c1c" stroke-width="2.5"/>
+  <text x="225" y="353" font-size="17" font-weight="bold" fill="#7f1d1d" text-anchor="middle">PRE-ACTION GATE</text>
+  <text x="225" y="375" font-size="13.5" fill="#b91c1c" text-anchor="middle">is this step irreversible? then prove</text>
+  <text x="225" y="393" font-size="13.5" fill="#b91c1c" text-anchor="middle">it is allowed &#8212; from the page itself</text>
+  <text x="225" y="411" font-size="13.5" font-style="italic" fill="#b91c1c" text-anchor="middle">silence is not permission</text>
+
+  <!-- BLOCKED branch -->
+  <rect x="440" y="336" width="290" height="72" rx="9" fill="#fff" stroke="#b91c1c" stroke-width="2" stroke-dasharray="7 4"/>
+  <text x="585" y="363" font-size="16" font-weight="bold" fill="#7f1d1d" text-anchor="middle">SAFELY BLOCKED</text>
+  <text x="585" y="385" font-size="13" fill="#b91c1c" text-anchor="middle">nothing was sent &#183; nothing to recall</text>
+  <text x="585" y="401" font-size="13" fill="#b91c1c" text-anchor="middle">the recruiter never receives an application</text>
+
+  <!-- 4 EXECUTOR -->
+  <rect x="60" y="452" width="330" height="72" rx="9" fill="#ffffff" stroke="#334155" stroke-width="2"/>
+  <text x="225" y="479" font-size="17" font-weight="bold" fill="#0f172a" text-anchor="middle">EXECUTOR &#183; real browser</text>
+  <text x="225" y="501" font-size="13.5" fill="#475569" text-anchor="middle">acts &#183; reports only what the page showed</text>
+  <text x="225" y="518" font-size="13" font-weight="bold" fill="#b91c1c" text-anchor="middle">may not judge its own success</text>
+
+  <!-- 5 EVIDENCE -->
+  <rect x="60" y="558" width="330" height="58" rx="9" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+  <text x="225" y="583" font-size="16" font-weight="bold" fill="#0f172a" text-anchor="middle">EVIDENCE</text>
+  <text x="225" y="603" font-size="13.5" fill="#475569" text-anchor="middle">what the page really showed &#183; hashed</text>
+
+  <!-- 6 VERIFIER CHAIN -->
+  <rect x="440" y="452" width="360" height="238" rx="10" fill="#fff7ed" stroke="#c2410c" stroke-width="2.5"/>
+  <text x="620" y="480" font-size="16" font-weight="bold" fill="#c2410c" text-anchor="middle">THE ONLY ROUTE TO &#8220;PROVEN&#8221;</text>
+
+  <rect x="462" y="496" width="316" height="56" rx="7" fill="#fff" stroke="#c2410c" stroke-width="1.6"/>
+  <text x="620" y="518" font-size="14.5" font-weight="bold" fill="#7c2d12" text-anchor="middle">ISOLATED VERIFIER &#183; Gemini</text>
+  <text x="620" y="538" font-size="12.5" fill="#9a3412" text-anchor="middle">never sees the planner or the executor</text>
+
+  <rect x="462" y="562" width="316" height="56" rx="7" fill="#fff" stroke="#7c2d12" stroke-width="1.6"/>
+  <text x="620" y="584" font-size="14.5" font-weight="bold" fill="#7c2d12" text-anchor="middle">GROUNDING &#183; code, not a model</text>
+  <text x="620" y="604" font-size="12.5" fill="#9a3412" text-anchor="middle">the quote must really be in the evidence</text>
+
+  <rect x="462" y="628" width="316" height="48" rx="7" fill="#fff" stroke="#7c2d12" stroke-width="1.6"/>
+  <text x="620" y="649" font-size="14.5" font-weight="bold" fill="#7c2d12" text-anchor="middle">AUDITOR &#183; Gemma, a 2nd family</text>
+  <text x="620" y="668" font-size="12.5" fill="#9a3412" text-anchor="middle">can only DEMOTE &#183; never promote</text>
+
+  <!-- 7 RECEIPT -->
+  <rect x="60" y="726" width="740" height="106" rx="10" fill="#f1f5f9" stroke="#0f172a" stroke-width="2.5"/>
+  <text x="86" y="756" font-size="18" font-weight="bold" fill="#0f172a">THE RECEIPT</text>
+  <rect x="86" y="770" width="200" height="44" rx="7" fill="#e7f6ec" stroke="#1b7f3b" stroke-width="2"/>
+  <text x="186" y="789" font-size="14" font-weight="bold" fill="#0f5228" text-anchor="middle">PROVEN</text>
+  <text x="186" y="806" font-size="11.5" fill="#0f5228" text-anchor="middle">with the quote that proves it</text>
+  <rect x="300" y="770" width="200" height="44" rx="7" fill="#fdeeee" stroke="#b91c1c" stroke-width="2"/>
+  <text x="400" y="789" font-size="14" font-weight="bold" fill="#7f1d1d" text-anchor="middle">SAFELY BLOCKED</text>
+  <text x="400" y="806" font-size="11.5" fill="#7f1d1d" text-anchor="middle">refused before acting</text>
+  <rect x="514" y="770" width="200" height="44" rx="7" fill="#fff6e5" stroke="#b45309" stroke-width="2"/>
+  <text x="614" y="789" font-size="14" font-weight="bold" fill="#7c4a06" text-anchor="middle">UNPROVEN</text>
+  <text x="614" y="806" font-size="11.5" fill="#7c4a06" text-anchor="middle">and we say so</text>
+
+  <!-- GROUND TRUTH -->
+  <rect x="850" y="726" width="270" height="106" rx="10" fill="#fff" stroke="#b91c1c" stroke-width="2.5"/>
+  <text x="985" y="754" font-size="15" font-weight="bold" fill="#7f1d1d" text-anchor="middle">GROUND TRUTH</text>
+  <text x="985" y="776" font-size="12.5" fill="#991b1b" text-anchor="middle">the server&#8217;s own record</text>
+  <text x="985" y="796" font-size="12.5" font-weight="bold" fill="#b91c1c" text-anchor="middle">the agent cannot write here</text>
+  <text x="985" y="816" font-size="12.5" fill="#991b1b" text-anchor="middle">check the receipt against it</text>
+
+  <!-- edges -->
+  <path d="M 225 182 L 225 212" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M 225 292 L 225 322" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M 390 372 L 436 372" fill="none" stroke="#b91c1c" stroke-width="2.2" marker-end="url(#ar)"/>
+  <text x="413" y="364" font-size="11.5" font-weight="bold" fill="#b91c1c" text-anchor="middle">no</text>
+  <path d="M 225 418 L 225 448" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#a)"/>
+  <text x="243" y="438" font-size="11.5" font-weight="bold" fill="#0f5228">proven &#8594; act</text>
+  <path d="M 225 524 L 225 554" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M 390 587 L 436 570" fill="none" stroke="#c2410c" stroke-width="2.2" marker-end="url(#a)"/>
+  <path d="M 620 690 L 620 706 L 430 706 L 430 722" fill="none" stroke="#b45309" stroke-width="2.2" marker-end="url(#a)"/>
+  <path d="M 800 779 L 846 779" fill="none" stroke="#b91c1c" stroke-width="2.2" stroke-dasharray="6 4" marker-end="url(#ar)"/>
+  <text x="823" y="770" font-size="11" font-weight="bold" fill="#b91c1c" text-anchor="middle">verify</text>
+
+  <text x="60" y="870" font-size="14" font-weight="bold" fill="#334155">No arrow runs from the planner or the executor to &#8220;proven&#8221;. No arrow runs from the agent to ground truth. That absence is the product.</text>
+</svg>

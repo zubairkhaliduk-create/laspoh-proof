@@ -59,7 +59,19 @@ export interface Receipt {
   usedPreExistingExecutor: boolean;
   startedAt: string;
   durationMs: number;
-  /** Hash over the evidence chain, so a receipt cannot be edited without detection. */
+  /**
+   * A DETERMINISTIC DIGEST OVER THE EVIDENCE CHAIN — and precisely that, not a signature.
+   *
+   * It is SHA-256 over each evidence record's own sha256, in order, and it ships alongside the
+   * receipt it describes. So it detects ACCIDENTAL divergence — a truncated chain, a dropped or
+   * reordered record, a receipt rebuilt from different evidence — and it lets anyone recompute
+   * the same value from the same evidence. It does NOT authenticate: nothing here is signed with
+   * a key, so an actor who can rewrite the receipt can recompute this too.
+   *
+   * Called an integrity hash rather than proof of tamper-resistance, deliberately. A project whose
+   * entire thesis is that claims must be checkable does not get to overstate its own checksum, and
+   * "cannot be edited without detection" was exactly that overstatement.
+   */
   integrity: string;
   issuedAt: string;
 }

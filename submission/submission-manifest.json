@@ -1,0 +1,30 @@
+{
+  "project": "Laspoh Proof",
+  "track": "The Taskmaster",
+  "entrantType": "individual",
+  "repository": "https://github.com/zubairkhaliduk-create/laspoh-proof",
+  "frozenCommit": "4cff4b17078b1ae0aa65d11fda5bed9a3d01aecf",
+  "deploymentUrl": "https://laspoh-proof-wqx6gkuc7a-uc.a.run.app",
+  "cloudRunService": "laspoh-proof",
+  "region": "us-central1",
+  "googleProjectId": "laspoh-proof-251233",
+  "models": {
+    "primary": "gemini-3.5-flash (Vertex AI, asia-southeast1)",
+    "auditor": "gemma-4-31b-it (Gemini API, demotion-only)",
+    "forensics": "gemini-embedding-001 (Vertex AI)"
+  },
+  "agentFramework": "Genkit 1.41 (@genkit-ai/google-genai)",
+  "infrastructure": [
+    "Cloud Run",
+    "Firestore"
+  ],
+  "tests": 188,
+  "videoUrl": null,
+  "articleUrl": null,
+  "socialUrl": null,
+  "galleryOrder": [
+    "gallery-01-receipt.png",
+    "gallery-02-authority.png",
+    "gallery-03-architecture.png"
+  ]
+}

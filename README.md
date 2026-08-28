@@ -1,20 +1,64 @@
 # Laspoh Proof
 
-**An autonomous agent that proves what it did — or says plainly that it could not.**
+**Autonomous browser work that cannot mark its own homework.**
 
-Gemini 3.5 Flash · Genkit · Cloud Run · Firestore
+# No proof, no done.
 
-**Live:** https://laspoh-proof-wqx6gkuc7a-uc.a.run.app
-([`/health`](https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/health) ·
-[`/demo`](https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/demo))
+[**Live demo**](https://laspoh-proof-wqx6gkuc7a-uc.a.run.app) ·
+[Watch the 4-min video](#) ·
+[Architecture](docs/authority.png) ·
+[Example receipt](#the-receipt) ·
+[Reproduce it](#quick-start) ·
+[Adversarial evaluation](mission/LIVE_EVAL_RESULTS.md)
+
+Gemini 3.5 Flash · Genkit · Cloud Run · Firestore · Gemma 4 · gemini-embedding-001
 
 ---
 
-**No evidence, no irreversible action.** Since v2 the same verifier also has to *license* any
-irreversible step before it executes: under a constrained goal, proven compliance proceeds, a
-visible violation is blocked with the quote, and silence blocks safely — because a wrong
-application cannot be recalled by a verdict. The [jobs demo](/demo/jobs) reproduces the exact
-incident this project came from, recruiter trap included.
+## The failure that caused this
+
+I told a browser agent to apply to jobs for me — **never recruitment agencies**. It applied to
+ten. Five were recruiters. Then it reported the mission a success. Another run told me
+"Applied to 10 jobs. Task complete." after submitting **zero**.
+
+The browser wasn't broken. **The worker was grading itself.**
+
+## The twist
+
+The component that does the work is never allowed to decide the work succeeded. A step becomes
+`proven` only when an **isolated verifier** — which never sees the planner's reasoning or the
+executor's opinion — confirms it from the page's own evidence *and* quotes it, and that quote is
+checked **in code** to actually appear in the evidence.
+
+And for anything **irreversible**, the proof comes first. Post-hoc verification cannot recall a
+sent application, so under a goal that states constraints the same verifier must *license* the
+action before it executes:
+
+> **No evidence, no irreversible action.**
+
+## One mission, three possible truths
+
+| | |
+|---|---|
+| **PROVEN** | the evidence establishes it, with the quote that does so |
+| **SAFELY BLOCKED** | refused *before* acting — a prohibited target, or evidence that could not clear it |
+| **UNPROVEN** | it may well have happened; the evidence does not show it, and we say so |
+
+![Who is allowed to say done](docs/authority.png)
+
+![A real mission receipt](submission/gallery-01-receipt.png)
+
+*A real receipt from a real run. The demo job board contains a recruitment agency the goal
+forbids — and an employer whose page claims success while the server records nothing. Both are
+caught. `0 prohibited applications sent` is a number you can check yourself at
+[`/demo/jobs/submissions`](https://laspoh-proof-wqx6gkuc7a-uc.a.run.app/demo/jobs/submissions),
+which the agent has no write path to.*
+
+**Measured, not asserted:** across 16 controlled end-to-end missions on the deployed stack —
+**0 receipts citing a reference the server never issued, 0 prohibited applications sent**
+([raw data](mission/LIVE_EVAL_RESULTS.md)). Those numbers describe exactly those 16 runs.
+
+---
 
 ## The problem
 
