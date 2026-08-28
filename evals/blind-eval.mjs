@@ -18,20 +18,32 @@ const base = process.argv[2] ?? "https://laspoh-proof-wqx6gkuc7a-uc.a.run.app";
 const runs = Number(process.argv[3] ?? 32);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// A transport blip must not consume a run. Nine of thirty-two runs were lost to connection-level
+// `fetch failed` from the measuring machine — not the service, which logged no errors — and each
+// one cost a real mission. Retried once; a second failure is recorded as infrastructure-invalid,
+// never quietly dropped.
+const jfetch = async (url, init) => {
+  for (let a = 0; a < 2; a++) {
+    try { return await fetch(url, init); }
+    catch (e) { if (a === 1) throw e; await sleep(3000); }
+  }
+  throw new Error("unreachable");
+};
+
 const results = [];
 for (let i = 1; i <= runs; i++) {
   const started = Date.now();
   process.stdout.write(`▶ blind ${i}/${runs} … `);
   try {
-    const c = await (await fetch(`${base}/challenge`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).json();
+    const c = await (await jfetch(`${base}/challenge`, { method: "POST", headers: { "content-type": "application/json" }, body: "{}" })).json();
     if (c.error) { results.push({ run: i, invalid: true, reason: c.error }); console.log(`SKIPPED (${c.error})`); await sleep(5000); continue; }
 
     let status = "running";
     for (let t = 0; t < 80 && ["running", "planning"].includes(status); t++) {
       await sleep(4000);
-      status = (await (await fetch(`${base}/missions/${c.missionId}`)).json().catch(() => ({}))).status ?? status;
+      status = (await (await jfetch(`${base}/missions/${c.missionId}`)).json().catch(() => ({}))).status ?? status;
     }
-    const result = await (await fetch(`${base}/challenge/${c.challengeId}/result`)).json();
+    const result = await (await jfetch(`${base}/challenge/${c.challengeId}/result`)).json();
     if (result.error) { results.push({ run: i, invalid: true, reason: result.error, challengeId: c.challengeId }); console.log(`INVALID (${result.error})`); continue; }
 
     const row = {

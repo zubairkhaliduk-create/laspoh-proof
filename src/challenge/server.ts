@@ -17,6 +17,7 @@
  */
 import type express from "express";
 import { buildChallenge, type ChallengeTruth, commit, newNonce, type ScenarioKind, verifyCommitment } from "./scenarios.js";
+import { loadChallenge, saveChallenge } from "./persist.js";
 
 export interface ChallengeRecord {
   id: string;
@@ -43,6 +44,7 @@ export function createChallenge(forced?: ScenarioKind): ChallengeRecord {
     committedAt: truth.committedAt, submissions: [], missionId: null, revealed: false,
   };
   challenges.set(id, rec);
+  void saveChallenge(rec);
   return rec;
 }
 
@@ -50,12 +52,21 @@ export function getChallenge(id: string): ChallengeRecord | undefined {
   return challenges.get(id);
 }
 
+/** Memory first, then Firestore — so a challenge from a recycled instance is still verifiable. */
+export async function findChallenge(id: string): Promise<ChallengeRecord | undefined> {
+  const local = challenges.get(id);
+  if (local) return local;
+  const stored = await loadChallenge(id);
+  if (stored) challenges.set(id, stored);
+  return stored ?? undefined;
+}
+
 /** Called by the mission runner when a mission reaches a terminal state. The ONLY way `revealed`
  *  becomes true — no request can set it, so a judge cannot be shown an answer the agent could
  *  also have fetched mid-run. */
 export function markRevealable(challengeId: string, missionId: string): void {
   const c = challenges.get(challengeId);
-  if (c) { c.revealed = true; c.missionId = missionId; }
+  if (c) { c.revealed = true; c.missionId = missionId; void saveChallenge(c); }
 }
 
 export function resetChallenges(): void {
@@ -159,6 +170,7 @@ export function mountChallengeBoard(app: express.Express): void {
     // recalled. Only refusing BEFORE this handler runs prevents it.
     const ref = `JA-${String(Date.now()).slice(-6)}`;
     c.submissions.push({ ref, postingId: p.id, company: p.company, at: new Date().toISOString() });
+    void saveChallenge(c);
     res.type("html").send(page(`<h1>Application submitted</h1>
       <div class="ok"><p><strong>Your application has been submitted successfully.</strong></p>
       <p>Application reference: <code>${ref}</code></p>
@@ -168,8 +180,8 @@ export function mountChallengeBoard(app: express.Express): void {
   // GROUND TRUTH. Readable at any time — it says what the server RECORDED, which is a fact about
   // the world rather than a hint about the scenario. It carries no classification, no expectation
   // and no posting-level labelling beyond what the board already shows.
-  app.get("/challenge/:id/truth", (req, res) => {
-    const c = challenges.get(String(req.params.id));
+  app.get("/challenge/:id/truth", async (req, res) => {
+    const c = await findChallenge(String(req.params.id));
     if (!c) return res.status(404).json({ error: "no such challenge" });
     res.json({ challengeId: c.id, count: c.submissions.length, submissions: c.submissions });
   });
@@ -177,8 +189,8 @@ export function mountChallengeBoard(app: express.Express): void {
   // THE REVEAL — refused until the mission is terminal. While the agent is running, publishing
   // this would put the answer one fetch away from it, and the commitment would then prove only
   // that WE knew the answer early, not that the agent didn't.
-  app.get("/challenge/:id/reveal", (req, res) => {
-    const c = challenges.get(String(req.params.id));
+  app.get("/challenge/:id/reveal", async (req, res) => {
+    const c = await findChallenge(String(req.params.id));
     if (!c) return res.status(404).json({ error: "no such challenge" });
     if (!c.revealed) {
       return res.status(409).json({

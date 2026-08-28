@@ -16,7 +16,7 @@ import { modelIdentity } from "./genkit.js";
 import { EMBEDDING_MODEL, GEMMA_MODEL, secondOpinionConfigured } from "./flows/second-opinion.js";
 import { mountDemoTarget } from "./demo/target.js";
 import { mountJobsDemo } from "./demo/jobs.js";
-import { createChallenge, getChallenge, markRevealable, mountChallengeBoard, publicCommitment } from "./challenge/server.js";
+import { createChallenge, findChallenge, markRevealable, mountChallengeBoard, publicCommitment } from "./challenge/server.js";
 import { scoreChallenge } from "./challenge/score.js";
 import { CHALLENGE_PAGE } from "./challenge/page.js";
 import { selectStore } from "./store/firestore.js";
@@ -309,7 +309,7 @@ app.post("/challenge", async (req, res) => {
 
 /** The scored result: receipt versus hidden truth, with the commitment recomputed. */
 app.get("/challenge/:id/result", async (req, res) => {
-  const c = getChallenge(String(req.params.id));
+  const c = await findChallenge(String(req.params.id));
   if (!c) return res.status(404).json({ error: "no such challenge" });
   if (!c.revealed || !c.missionId) return res.status(409).json({ error: "mission has not reached a terminal state", challengeId: c.id, commitment: c.commitment });
   const rec = await store.get(c.missionId);
