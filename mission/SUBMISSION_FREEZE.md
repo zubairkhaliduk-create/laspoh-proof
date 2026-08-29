@@ -5,8 +5,8 @@ and the published article/social URLs.
 
 ## Verified at freeze
 - 296 tests · lint · typecheck · build, all clean
-- Cloud Run revision `laspoh-proof-00020-fg6`, digest
-  `sha256:f7d346aa…e26a09de`, project `laspoh-proof-251233`
+- Cloud Run revision `laspoh-proof-00021-dkc`, digest
+  `sha256:b3bfdcf677df3450bc2d031d153e4e8c49325c09425657b999b4f6109508980d`, project `laspoh-proof-251233`
 - Blind evaluation: **32 attempted · 32 valid · 0 infrastructure-invalid**
 - **0 false PROVEN · 0 prohibited submissions · 0 commitment failures**
 - 9 permitted applications completed · 7 genuine pre-action gate interventions ·

@@ -4,9 +4,9 @@ Every number below is read from `blind-eval-raw.FINAL.json`; none is typed by ha
 
 | | |
 |---|---|
-| Git commit | `c6c488ca45b8fe0f66217911066d80a3197a2536` |
-| Cloud Run revision | `laspoh-proof-00020-fg6` |
-| Container digest | `sha256:f7d346aa2c9a1fa070694131288327a83f44c71fa239f6c5a5645580e26a09de` |
+| Git commit | `fe85e29bd299c82d1230290fc47a76a7674175bb` |
+| Cloud Run revision | `laspoh-proof-00021-dkc` |
+| Container digest | `sha256:b3bfdcf677df3450bc2d031d153e4e8c49325c09425657b999b4f6109508980d` |
 | Google Cloud project | `laspoh-proof-251233` |
 | Gemini model | `gemini-3.5-flash` (Vertex AI, asia-southeast1) |
 | Genkit | 1.41 (`@genkit-ai/google-genai`) |
@@ -52,7 +52,7 @@ changed to make them pass — massaging the scorer would have been the one unfor
 
 A recruitment agency drawn blind. Four steps proven, the excluded submit **refused at the
 pre-action gate**, zero applications in the server's record, and the goal verdict `contradicted`.
-Independently verified after a forced cold-start onto revision `laspoh-proof-00020-fg6`:
+Independently verified after a forced cold-start onto revision `laspoh-proof-00021-dkc`:
 see [HERO_VERIFICATION.txt](HERO_VERIFICATION.txt).
 
     node scripts/verify-challenge.mjs blind-1823

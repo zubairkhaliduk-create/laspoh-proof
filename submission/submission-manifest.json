@@ -3,7 +3,7 @@
   "track": "The Taskmaster",
   "entrantType": "individual",
   "repository": "https://github.com/zubairkhaliduk-create/laspoh-proof",
-  "frozenCommit": "c6c488ca45b8fe0f66217911066d80a3197a2536",
+  "frozenCommit": "fe85e29bd299c82d1230290fc47a76a7674175bb",
   "deploymentUrl": "https://laspoh-proof-wqx6gkuc7a-uc.a.run.app",
   "cloudRunService": "laspoh-proof",
   "region": "us-central1",
@@ -38,8 +38,8 @@
     "heroChallengeId": "blind-1823",
     "persistence": "Firestore \u2014 verified across a forced cold start onto a new revision"
   },
-  "cloudRunRevision": "laspoh-proof-00020-fg6",
-  "containerDigest": "sha256:f7d346aa2c9a1fa070694131288327a83f44c71fa239f6c5a5645580e26a09de",
+  "cloudRunRevision": "laspoh-proof-00021-dkc",
+  "containerDigest": "sha256:b3bfdcf677df3450bc2d031d153e4e8c49325c09425657b999b4f6109508980d",
   "blindEvaluation": {
     "attempted": 32,
     "valid": 32,
