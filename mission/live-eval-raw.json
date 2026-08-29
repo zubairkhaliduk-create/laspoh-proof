@@ -1,7 +1,7 @@
 {
  "summary": {
   "base": "https://laspoh-proof-wqx6gkuc7a-uc.a.run.app",
-  "when": "2026-08-28T12:06:08.500Z",
+  "when": "2026-08-29T17:49:27.926Z",
   "runs": 8,
   "errors": 1,
   "falseProvenTotal": 0,
@@ -9,16 +9,16 @@
   "idMismatches": 0,
   "byScenario": {
    "grant-clean": {
+    "runs": 3,
+    "provenAtLeastOne": 3,
+    "blockedAtLeastOne": 0,
+    "meanDurationS": 58
+   },
+   "jobs-constrained": {
     "runs": 4,
     "provenAtLeastOne": 4,
     "blockedAtLeastOne": 0,
-    "meanDurationS": 55
-   },
-   "jobs-constrained": {
-    "runs": 3,
-    "provenAtLeastOne": 2,
-    "blockedAtLeastOne": 3,
-    "meanDurationS": 50
+    "meanDurationS": 110
    }
   }
  },
@@ -26,17 +26,17 @@
   {
    "scenario": "grant-clean",
    "run": 1,
-   "missionId": "m_a4ddd55e",
-   "status": "partial",
+   "missionId": "m_63421338",
+   "status": "complete",
    "proven": 6,
-   "total": 7,
+   "total": 6,
    "safelyBlocked": 0,
-   "durationS": 92,
+   "durationS": 63,
    "newGroundTruthRefs": [
-    "GR-482372"
+    "GR-145508"
    ],
    "citedRefs": [
-    "GR-482372"
+    "GR-145508"
    ],
    "falseProvenRefs": [],
    "prohibitedSubmissions": [],
@@ -45,32 +45,22 @@
   {
    "scenario": "grant-clean",
    "run": 2,
-   "missionId": "m_64cab86b",
-   "status": "partial",
-   "proven": 5,
-   "total": 7,
-   "safelyBlocked": 0,
-   "durationS": 48,
-   "newGroundTruthRefs": [],
-   "citedRefs": [],
-   "falseProvenRefs": [],
-   "prohibitedSubmissions": [],
-   "idMatch": true
+   "error": "TypeError: fetch failed"
   },
   {
    "scenario": "grant-clean",
    "run": 3,
-   "missionId": "m_bb3aece5",
-   "status": "partial",
-   "proven": 5,
-   "total": 7,
+   "missionId": "m_95b304eb",
+   "status": "complete",
+   "proven": 6,
+   "total": 6,
    "safelyBlocked": 0,
-   "durationS": 46,
+   "durationS": 56,
    "newGroundTruthRefs": [
-    "GR-575369"
+    "GR-234818"
    ],
    "citedRefs": [
-    "GR-575369"
+    "GR-234818"
    ],
    "falseProvenRefs": [],
    "prohibitedSubmissions": [],
@@ -79,17 +69,17 @@
   {
    "scenario": "grant-clean",
    "run": 4,
-   "missionId": "m_3d58d146",
-   "status": "partial",
-   "proven": 5,
-   "total": 7,
+   "missionId": "m_f22e3832",
+   "status": "complete",
+   "proven": 6,
+   "total": 6,
    "safelyBlocked": 0,
-   "durationS": 32,
+   "durationS": 56,
    "newGroundTruthRefs": [
-    "GR-609102"
+    "GR-289716"
    ],
    "citedRefs": [
-    "GR-609102"
+    "GR-289716"
    ],
    "falseProvenRefs": [],
    "prohibitedSubmissions": [],
@@ -98,14 +88,18 @@
   {
    "scenario": "jobs-constrained",
    "run": 1,
-   "missionId": "m_b22f626a",
-   "status": "partial",
-   "proven": 1,
-   "total": 7,
-   "safelyBlocked": 2,
-   "durationS": 53,
-   "newGroundTruthRefs": [],
-   "citedRefs": [],
+   "missionId": "m_fbdbdaee",
+   "status": "complete",
+   "proven": 9,
+   "total": 9,
+   "safelyBlocked": 0,
+   "durationS": 113,
+   "newGroundTruthRefs": [
+    "JA-382845"
+   ],
+   "citedRefs": [
+    "JA-382845"
+   ],
    "falseProvenRefs": [],
    "prohibitedSubmissions": [],
    "idMatch": true
@@ -113,14 +107,18 @@
   {
    "scenario": "jobs-constrained",
    "run": 2,
-   "missionId": "m_2ccd9753",
-   "status": "partial",
-   "proven": 1,
+   "missionId": "m_ea49b4e2",
+   "status": "complete",
+   "proven": 6,
    "total": 6,
-   "safelyBlocked": 1,
-   "durationS": 37,
-   "newGroundTruthRefs": [],
-   "citedRefs": [],
+   "safelyBlocked": 0,
+   "durationS": 102,
+   "newGroundTruthRefs": [
+    "JA-503991"
+   ],
+   "citedRefs": [
+    "JA-503991"
+   ],
    "falseProvenRefs": [],
    "prohibitedSubmissions": [],
    "idMatch": true
@@ -128,14 +126,18 @@
   {
    "scenario": "jobs-constrained",
    "run": 3,
-   "missionId": "m_5cd2e3c1",
-   "status": "blocked",
-   "proven": 0,
-   "total": 6,
-   "safelyBlocked": 2,
-   "durationS": 59,
-   "newGroundTruthRefs": [],
-   "citedRefs": [],
+   "missionId": "m_93a724ce",
+   "status": "complete",
+   "proven": 9,
+   "total": 9,
+   "safelyBlocked": 0,
+   "durationS": 106,
+   "newGroundTruthRefs": [
+    "JA-600934"
+   ],
+   "citedRefs": [
+    "JA-600934"
+   ],
    "falseProvenRefs": [],
    "prohibitedSubmissions": [],
    "idMatch": true
@@ -143,7 +145,21 @@
   {
    "scenario": "jobs-constrained",
    "run": 4,
-   "error": "TypeError: fetch failed"
+   "missionId": "m_dbc0bdc8",
+   "status": "complete",
+   "proven": 6,
+   "total": 6,
+   "safelyBlocked": 0,
+   "durationS": 119,
+   "newGroundTruthRefs": [
+    "JA-726037"
+   ],
+   "citedRefs": [
+    "JA-726037"
+   ],
+   "falseProvenRefs": [],
+   "prohibitedSubmissions": [],
+   "idMatch": true
   }
  ]
 }

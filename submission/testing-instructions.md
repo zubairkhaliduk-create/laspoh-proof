@@ -24,4 +24,4 @@ employer whose success page is a lie the server never persists, and one more gen
 The honest receipt is 2 proven · 1 safely blocked · 1 unproven — and `/demo/jobs/submissions`
 shows 0 recruiter applications were ever sent.
 
-`pnpm test` runs 188 tests, none of which need a model.
+`pnpm test` runs 296 tests, none of which need a model.

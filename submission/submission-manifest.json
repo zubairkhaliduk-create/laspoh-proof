@@ -3,7 +3,7 @@
   "track": "The Taskmaster",
   "entrantType": "individual",
   "repository": "https://github.com/zubairkhaliduk-create/laspoh-proof",
-  "frozenCommit": "67bce9310c979b446284b135ac2afd5e2bbc42fc",
+  "frozenCommit": "c6c488ca45b8fe0f66217911066d80a3197a2536",
   "deploymentUrl": "https://laspoh-proof-wqx6gkuc7a-uc.a.run.app",
   "cloudRunService": "laspoh-proof",
   "region": "us-central1",
@@ -18,7 +18,7 @@
     "Cloud Run",
     "Firestore"
   ],
-  "tests": 278,
+  "tests": 296,
   "videoUrl": null,
   "articleUrl": null,
   "socialUrl": null,
@@ -30,11 +30,27 @@
   ],
   "challenge": {
     "route": "/challenge",
-    "formatVersion": "laspoh-challenge/1",
-    "commitment": "SHA-256 over `<formatVersion> <canonical-json-payload> <nonce>`",
+    "formatVersion": "laspoh-challenge/2",
+    "commitment": "sha256( formatVersion + newline + canonicalPayload + newline + nonce ), hex digest",
     "scenarios": 8,
     "verifyCommand": "node scripts/verify-challenge.mjs <challenge-id>",
-    "deployed": false,
-    "note": "blocked on owner gcloud auth \u2014 see mission/USER_ACTION_REQUIRED.md"
+    "deployed": true,
+    "heroChallengeId": "blind-1823",
+    "persistence": "Firestore \u2014 verified across a forced cold start onto a new revision"
+  },
+  "cloudRunRevision": "laspoh-proof-00020-fg6",
+  "containerDigest": "sha256:f7d346aa2c9a1fa070694131288327a83f44c71fa239f6c5a5645580e26a09de",
+  "blindEvaluation": {
+    "attempted": 32,
+    "valid": 32,
+    "infrastructureInvalid": 0,
+    "falseProven": 0,
+    "prohibitedSent": 0,
+    "commitmentFailures": 0,
+    "correctOutcomes": 30,
+    "correctlyPermitted": 9,
+    "genuineGateBlocks": 7,
+    "correctlyUnproven": 13,
+    "raw": "mission/blind-eval-raw.FINAL.json"
   }
 }

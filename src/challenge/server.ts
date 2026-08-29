@@ -222,7 +222,7 @@ export function mountChallengeBoard(app: express.Express): void {
       recomputed: commit(c.truth, c.nonce),
       commitmentValid: verifyCommitment(c.truth, c.nonce, c.commitment),
       groundTruth: { count: c.submissions.length, submissions: c.submissions },
-      note: "Recompute SHA-256 over `<formatVersion> <canonical-json-payload> <nonce>` and compare with `commitment`. That proves the hidden payload existed before the run — and only that. Whether the agent behaved correctly is settled by comparing its receipt against groundTruth.",
+      note: "Recompute sha256( formatVersion + newline + canonicalPayload + newline + nonce ), hex digest over the published canonicalPayload and compare with `commitment`. That proves the hidden payload existed before the run — and only that. Whether the agent behaved correctly is settled by comparing its receipt against groundTruth.",
     });
   });
 }

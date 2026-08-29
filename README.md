@@ -70,12 +70,7 @@ is not established"**, which is the honest description of a plan that graded its
 
 ![Who is allowed to say done](docs/authority.png)
 
-**Measured, not asserted:** across 16 controlled end-to-end missions on the deployed stack —
-**0 receipts citing a reference the server never issued, 0 prohibited applications sent**
-([raw data](mission/LIVE_EVAL_RESULTS.md)). Read the caveat there before quoting the second number:
-on the build those runs measured, the gate was over-blocking, so the agent rarely reached a form —
-a zero that a trivially-safe agent would also produce. The fix landed after the measurement and is
-re-measured by `./finalize.sh`. Numbers describe exactly those runs and nothing more.
+**Measured, not asserted:** in **32 randomized blind production challenges** — the server committing to a hidden answer before each run — Laspoh Proof produced **0 false PROVEN verdicts** and executed **0 prohibited irreversible actions**. It completed 9 genuinely permitted applications, refused 7 at the pre-action gate before anything irreversible happened, and correctly declined to prove 13 false successes. 32 attempted, 0 infrastructure-invalid ([raw data](mission/blind-eval-raw.FINAL.json) · [report](mission/BLIND_EVAL_RESULTS.md) · [release record](mission/FINAL_RELEASE_RECORD.md)). Those numbers describe exactly those runs.
 
 ---
 
@@ -209,7 +204,7 @@ committed, and the service runs without it.
     src/obs/          structured, redacted, mission-correlated logging
     src/demo/         the self-hosted demo target
     mission/          the engineering programme: specs, decisions, evidence, disclosure
-    test/             188 tests
+    test/             296 tests
 
 ## Quick start
 
@@ -322,7 +317,7 @@ ground-truth source — and where none exists the receipt reflects what the page
 
 ## Tests
 
-    pnpm test        # 188
+    pnpm test        # 296
     pnpm typecheck
     pnpm lint
 

@@ -139,20 +139,31 @@ subtracts what the plan already covers; whatever is left gets filled first.
 
 ## Measured reliability
 
-Numbers a judge can re-run, not a chart I graded myself
-([`mission/DEMO_EVIDENCE.md`](https://github.com/zubairkhaliduk-create/laspoh-proof/blob/main/mission/DEMO_EVIDENCE.md)
-has the raw runs and the harness):
+Numbers a judge can re-run, from **32 randomized blind production challenges** where the
+server committed to a hidden answer before each run
+([raw](https://github.com/zubairkhaliduk-create/laspoh-proof/blob/main/mission/blind-eval-raw.FINAL.json)):
 
-| Metric (consecutive production missions) | Before the navigate-first fix | After |
-|---|---|---|
-| Honest — no fabricated reference | 9/9 | **8/8** |
-| Proved a confirmation reference | 7/9 (78%) | **8/8 (100%)** |
-| `blocked` — proved nothing | 2/8 | **0/8** |
+| | |
+|---|---|
+| **False PROVEN verdicts** | **0** |
+| **Prohibited irreversible actions executed** | **0** |
+| Commitment verification failures | **0** |
+| Genuinely permitted applications completed | 9 |
+| Refused at the pre-action gate, before acting | 7 |
+| False successes correctly not proven | 13 |
+| Outcomes correct for the drawn scenario | 30 / 32 |
+| Attempted / infrastructure-invalid | 32 / 0 |
 
-One disclosure that belongs next to any reliability table: my first harness printed `proved: 8/8`
-when the truth was 6/8 — a field-parsing bug. It was caught, fixed, and recorded in the repo rather
-than published, because a reliability report that overstates its own success rate would be this
-project failing in exactly the way it exists to prevent.
+Two runs were scored incorrect and are preserved rather than removed: in both, a permitted
+application was never completed because the agent failed to finish the form flow. In neither did
+the system claim anything it could not show — false PROVEN and prohibited submissions were zero.
+Nothing was changed to make them pass.
+
+One disclosure that belongs beside any reliability table: an earlier harness of mine printed
+`proved: 8/8` when the truth was 6/8, and an earlier blind run produced a genuine false PROVEN when
+an injected page supplied its own reference number. Both were found by measurement, fixed, and kept
+in the repository rather than quietly deleted.
+
 
 ## Technologies
 
@@ -193,7 +204,7 @@ employer whose success page is a lie the server never persists, and one more gen
 The honest receipt is 2 proven · 1 safely blocked · 1 unproven — and `/demo/jobs/submissions`
 shows 0 recruiter applications were ever sent.
 
-`pnpm test` runs 188 tests, none of which need a model.
+`pnpm test` runs 296 tests, none of which need a model.
 
 ## Disclosure of pre-existing work
 
