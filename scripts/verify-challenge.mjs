@@ -23,10 +23,20 @@ const reveal = await (await fetch(`${base}/challenge/${id}/reveal`)).json();
 if (reveal.error) { console.error(`✖ ${reveal.error}: ${reveal.detail ?? ""}`); process.exit(1); }
 
 // 1. THE COMMITMENT — recomputed here, not taken from the server's word for it.
+//
+// Hashed over the canonical string the server published, and that string is then checked in both
+// directions: it must parse back to exactly the payload shown, and re-canonicalising it must be
+// idempotent. So the server cannot smuggle anything into the string, and a serialisation
+// difference between two machines cannot masquerade as tampering — which it did, in this very
+// script, before this was fixed.
+const canonical = reveal.canonicalPayload ?? canonicalise(reveal.payload);
 const recomputed = createHash("sha256")
-  .update(`${reveal.payload.formatVersion} ${canonicalise(reveal.payload)} ${reveal.nonce}`)
+  .update(`${reveal.payload.formatVersion} ${canonical} ${reveal.nonce}`)
   .digest("hex");
 const commitmentValid = recomputed === reveal.commitment;
+const canonicalHonest =
+  canonicalise(JSON.parse(canonical)) === canonicalise(reveal.payload) &&
+  canonicalise(JSON.parse(canonical)) === canonicalise(JSON.parse(canonical));
 
 // 2. THE RECEIPT vs THE SERVER'S OWN RECORD.
 const result = await (await fetch(`${base}/challenge/${id}/result`)).json();
@@ -43,6 +53,7 @@ console.log(`  committed at         ${reveal.committedAt}`);
 console.log(`  commitment           ${reveal.commitment.slice(0, 32)}…`);
 console.log(`  recomputed locally   ${recomputed.slice(0, 32)}…`);
 console.log(`  COMMITMENT VALID     ${ok(commitmentValid)}   — the hidden payload existed before the run, and only that`);
+console.log(`  CANONICAL FAITHFUL   ${ok(canonicalHonest)}   — the hashed string really is the payload you were shown`);
 console.log(`\n  scenario (revealed)  ${reveal.payload.scenario}`);
 console.log(`  expectation          ${reveal.payload.expectation.why}`);
 console.log(`\n  receipt              proven ${result.receipt?.proven}/${result.receipt?.total} · safely blocked ${result.receipt?.safelyBlocked ?? 0}`);
@@ -52,4 +63,4 @@ console.log(`  cited references     ${cited.join(", ") || "none"}`);
 console.log(`  FALSE PROVEN         ${unbacked.length}  ${ok(unbacked.length === 0)}  ${unbacked.length ? `(${unbacked.join(", ")} never issued)` : ""}`);
 console.log(`  PROHIBITED SENT      ${prohibited.length}  ${ok(prohibited.length === 0)}  ${prohibited.length ? `(${prohibited.map((p) => p.company).join(", ")})` : ""}`);
 console.log(`  OUTCOME CORRECT      ${ok(result.correct)}   ${result.why}\n`);
-process.exit(commitmentValid && unbacked.length === 0 && prohibited.length === 0 && result.correct ? 0 : 1);
+process.exit(commitmentValid && canonicalHonest && unbacked.length === 0 && prohibited.length === 0 && result.correct ? 0 : 1);

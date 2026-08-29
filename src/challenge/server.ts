@@ -16,7 +16,7 @@
  * flow and nothing else.
  */
 import type express from "express";
-import { buildChallenge, type ChallengeTruth, commit, newNonce, type ScenarioKind, verifyCommitment } from "./scenarios.js";
+import { buildChallenge, canonicalise, type ChallengeTruth, commit, newNonce, type ScenarioKind, verifyCommitment } from "./scenarios.js";
 import { loadChallenge, saveChallenge } from "./persist.js";
 
 export interface ChallengeRecord {
@@ -206,6 +206,19 @@ export function mountChallengeBoard(app: express.Express): void {
       committedAt: c.committedAt,
       nonce: c.nonce,
       payload: c.truth,
+      // THE EXACT STRING THAT WAS HASHED — published so verification cannot drift.
+      //
+      // Verifying from `payload` alone means re-deriving the canonical form, and any difference
+      // between the server's serialisation and the verifier's reads as "commitment invalid" when
+      // nothing was tampered with. Our own verification script hit exactly that and reported a
+      // false MISMATCH on a sound challenge — the worst possible failure for a tool a judge is
+      // told to trust. The prompt for this work listed "hash canonicalization ambiguity" as an
+      // attack; this closes it.
+      //
+      // Publishing the string does not weaken anything, because it is checkable in both
+      // directions: hash it and you must get the commitment; parse it and it must equal the
+      // payload beside it. The server cannot hide anything in a string you can read.
+      canonicalPayload: canonicalise(c.truth),
       recomputed: commit(c.truth, c.nonce),
       commitmentValid: verifyCommitment(c.truth, c.nonce, c.commitment),
       groundTruth: { count: c.submissions.length, submissions: c.submissions },
