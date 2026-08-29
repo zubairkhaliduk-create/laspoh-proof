@@ -80,7 +80,7 @@ export function publicCommitment(c: ChallengeRecord) {
     challengeId: c.id,
     commitment: c.commitment,
     committedAt: c.committedAt,
-    algorithm: "SHA-256 over `<formatVersion> <canonical-json-payload> <nonce>`",
+    algorithm: "sha256( formatVersion + newline + canonicalPayload + newline + nonce ), hex digest",
     formatVersion: c.truth.formatVersion,
     goal: c.truth.goal,
     groundTruth: "HIDDEN until the mission reaches a terminal state",

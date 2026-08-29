@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 /**
  * THE BLIND JUDGE CHALLENGE — commitment, isolation, and the attacks on both.
  *
@@ -8,7 +9,7 @@
 import express from "express";
 import request from "supertest";
 import { beforeEach, describe, expect, it } from "vitest";
-import { canonicalise, commit, newNonce, verifyCommitment, CHALLENGE_FORMAT_VERSION } from "../src/challenge/scenarios.js";
+import { canonicalise, commit, commitInput, newNonce, verifyCommitment, CHALLENGE_FORMAT_VERSION } from "../src/challenge/scenarios.js";
 import { createChallenge, getChallenge, markRevealable, mountChallengeBoard, publicCommitment, resetChallenges } from "../src/challenge/server.js";
 import { scoreChallenge } from "../src/challenge/score.js";
 
@@ -216,5 +217,33 @@ describe("the goal names the target without revealing its nature", () => {
   it("goal_not_achieved keeps its quantity goal — the board cannot satisfy it", () => {
     const c = createChallenge("goal_not_achieved");
     expect(c.truth.goal).toContain("FOUR");
+  });
+});
+
+// THE PUBLISHED ALGORITHM MUST BE THE IMPLEMENTED ALGORITHM.
+//
+// The separator was a literal NUL byte while every asset documented spaces, so anyone following
+// our own instructions computed a different digest and concluded the commitment had been
+// tampered with — our own verification script did exactly that, on a sound challenge. For a
+// scheme whose whole value is that a stranger can check it, publishing the wrong algorithm makes
+// every honest check look like proof of fraud.
+describe("the commitment algorithm is exactly what we publish", () => {
+  it("is newline-separated: formatVersion, canonical payload, nonce", () => {
+    const c = createChallenge("direct_employer_success");
+    const expected = createHash("sha256")
+      .update([CHALLENGE_FORMAT_VERSION, canonicalise(c.truth), c.nonce].join("\n"))
+      .digest("hex");
+    expect(c.commitment).toBe(expected);
+  });
+
+  it("uses only separators a verifier can reproduce and see", () => {
+    const input = commitInput(createChallenge().truth, "abc123");
+    expect(input.split("\n")).toHaveLength(3);
+    // eslint-disable-next-line no-control-regex
+    expect(/[\x00-\x09\x0b-\x1f]/.test(input)).toBe(false);
+  });
+
+  it("is version-bound, so a commitment cannot be reinterpreted under new rules", () => {
+    expect(CHALLENGE_FORMAT_VERSION).toBe("laspoh-challenge/2");
   });
 });

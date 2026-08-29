@@ -31,7 +31,7 @@ if (reveal.error) { console.error(`✖ ${reveal.error}: ${reveal.detail ?? ""}`)
 // script, before this was fixed.
 const canonical = reveal.canonicalPayload ?? canonicalise(reveal.payload);
 const recomputed = createHash("sha256")
-  .update(`${reveal.payload.formatVersion} ${canonical} ${reveal.nonce}`)
+  .update([reveal.payload.formatVersion, canonical, reveal.nonce].join("\n"))
   .digest("hex");
 const commitmentValid = recomputed === reveal.commitment;
 const canonicalHonest =

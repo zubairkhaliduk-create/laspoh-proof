@@ -28,7 +28,7 @@ import { createHash, randomBytes, randomInt } from "node:crypto";
 
 /** Bump when the canonical payload shape changes — a commitment is only checkable against the
  *  format it was made under, and a silent format change would invalidate old proofs. */
-export const CHALLENGE_FORMAT_VERSION = "laspoh-challenge/1";
+export const CHALLENGE_FORMAT_VERSION = "laspoh-challenge/2";
 
 export type ScenarioKind =
   | "direct_employer_success"
@@ -241,9 +241,30 @@ export function canonicalise(value: unknown): string {
 
 /** SHA-256 over the canonical payload and the nonce, joined by a separator that cannot occur in
  *  either — so no two different (payload, nonce) pairs can produce the same input string. */
-export function commit(truth: ChallengeTruth, nonce: string): string {
-  return createHash("sha256").update(`${CHALLENGE_FORMAT_VERSION} ${canonicalise(truth)} ${nonce}`).digest("hex");
+/**
+ * THE EXACT BYTES THAT GET HASHED — and they must match the published algorithm, or independent
+ * verification is impossible.
+ *
+ * They did not. The separator was a literal NUL byte while every asset told verifiers to hash
+ * `<formatVersion> <canonical-json> <nonce>` with spaces, so anyone following our own published
+ * algorithm computed a different digest and concluded the commitment had been tampered with. Our
+ * own verification script did exactly that, on a sound challenge. For a scheme whose entire value
+ * is that a stranger can check it, publishing the wrong algorithm is not a cosmetic defect: it
+ * makes every honest check fail, and failure here reads as proof of fraud.
+ *
+ * Newline separators are unambiguous (JSON.stringify never emits a raw newline, and a hex nonce
+ * contains none), printable, and reproducible in one line of any language. The format version is
+ * bumped because a commitment is only checkable against the rules it was made under — nothing
+ * silently changes meaning.
+ */
+export function commitInput(truth: ChallengeTruth, nonce: string): string {
+  return [CHALLENGE_FORMAT_VERSION, canonicalise(truth), nonce].join("\n");
 }
+
+export function commit(truth: ChallengeTruth, nonce: string): string {
+  return createHash("sha256").update(commitInput(truth, nonce)).digest("hex");
+}
+
 
 export function newNonce(): string {
   return randomBytes(32).toString("hex");
