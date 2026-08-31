@@ -16,7 +16,7 @@ done
 echo "▶ status: ${S:-unknown}"
 curl -fsS "$U/missions/$ID/receipt" | python3 -c '
 import sys,json; d=json.load(sys.stdin)
-print(f"  proven {d[\"proven\"]} · safely blocked {d.get(\"safelyBlocked\",0)} · total {d[\"total\"]}")
+print(f"  proven {d['proven']} · safely blocked {d.get('safelyBlocked', 0)} · total {d['total']}")
 for l in d["lines"]: print(f"   {l[\"status\"]:<10} {l[\"intent\"][:70]}")'
 echo "▶ ground truth"
 curl -fsS "$U/demo/jobs/submissions" | python3 -m json.tool

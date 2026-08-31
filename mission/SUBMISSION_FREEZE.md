@@ -1,7 +1,25 @@
 # SUBMISSION FREEZE — final
 
-**CODE IS FROZEN.** No further feature development. The only remaining changes are the video link
-and the published article/social URLs.
+**THE APPLICATION IS FROZEN** at `fe85e29`, which is what Cloud Run revision
+`laspoh-proof-00021-dkc` was built from. No further feature development: no application code,
+prompts, architecture, challenge scenarios, scoring logic, tests or deployment.
+
+**Documentation may still be corrected**, and this distinction is the point rather than a loophole.
+The first version of this file said the only permitted changes were the video and social links,
+which would have barred fixing a factual error in the README — an outcome that serves nobody. What
+is frozen is the artifact the evidence describes; what stays open is our ability to describe it
+accurately. Every documentation commit must leave the deployed artifact, the test count and every
+evaluation number untouched, and must say so.
+
+**Documentation commits since the freeze**
+- `0102c86` — release metadata, hero verification output, recording-script reference
+- `03bfab7` — development attribution: GitHub lists two contributors (the submitter's blissio.ai
+  identity and a `Co-Authored-By` trailer for the AI coding assistant), and neither is a second
+  human. Added because a reviewer could reasonably have read that contributor list as an
+  undisclosed team.
+
+Neither changed application code, tests (296, unchanged), the deployed revision, or any measured
+number.
 
 ## Verified at freeze
 - 296 tests · lint · typecheck · build, all clean
