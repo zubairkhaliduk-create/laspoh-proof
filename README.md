@@ -13,6 +13,22 @@
 
 Gemini 3.5 Flash · Genkit · Cloud Run · Firestore · Gemma 4 · gemini-embedding-001
 
+## Development attribution
+
+Laspoh Proof is an **individual** hackathon submission by Zubair Khalid. GitHub lists two
+contributors, and neither is an additional human team member: every commit is authored and
+committed from my `blissio.ai` GitHub identity, and **Claude** appears because most commits carry a
+`Co-Authored-By` trailer crediting the AI coding assistant used to build this — which the rules
+expressly permit. Blissio.ai does not own Laspoh Proof, and no second person worked on it.
+
+Verify both claims directly:
+
+    git log --format='%an <%ae>' | sort -u          # one human author
+    git log --format='%(trailers:key=Co-Authored-By)' | sort -u
+
+Separately, and unrelated to the above: **Laspoh** — the pre-existing browser-automation platform
+this project is named after — is disclosed under [Hackathon disclosure](#hackathon-disclosure).
+
 ---
 
 ## Challenge it blind
